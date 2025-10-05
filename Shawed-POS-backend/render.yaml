@@ -17,7 +17,7 @@ services:
       - key: JWT_SECRET
         generateValue: true
       - key: CORS_ORIGIN
-        value: https://shawed-pos-frontend.onrender.com
+        value: https://shawed-pos.vercel.app
     healthCheckPath: /health
 
 databases:
