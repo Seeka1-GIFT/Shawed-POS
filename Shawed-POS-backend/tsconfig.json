@@ -26,8 +26,7 @@
     "allowUnreachableCode": true,
     "exactOptionalPropertyTypes": false,
     "moduleResolution": "node",
-    "allowSyntheticDefaultImports": true,
-    "types": ["node"]
+    "allowSyntheticDefaultImports": true
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
