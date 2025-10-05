@@ -2,35 +2,15 @@
   "compilerOptions": {
     "target": "ES2020",
     "module": "commonjs",
-    "lib": ["ES2020"],
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "strict": false,
+    "outDir": "dist",
+    "rootDir": "src",
     "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true,
-    "declaration": false,
-    "declarationMap": false,
-    "sourceMap": false,
-    "removeComments": true,
-    "noImplicitAny": false,
-    "strictNullChecks": false,
-    "strictFunctionTypes": false,
-    "noImplicitThis": false,
-    "noImplicitReturns": false,
-    "noFallthroughCasesInSwitch": false,
-    "noUncheckedIndexedAccess": false,
-    "noImplicitOverride": false,
-    "allowUnusedLabels": true,
-    "allowUnreachableCode": true,
-    "exactOptionalPropertyTypes": false,
+    "strict": true,
     "moduleResolution": "node",
-    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
     "types": ["node"]
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["src"]
 }
 
 
