@@ -5,7 +5,7 @@ import { generateToken } from '../middleware/auth';
 import { isValidEmail, isValidPassword } from '../utils/validation';
 import { asyncHandler } from '../middleware/errorHandler';
 import { AuthenticatedRequest } from '../middleware/auth';
-import { randomUUID } from 'node:crypto';
+const { randomUUID } = require('crypto');
 
 // Register user
 export const register = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {

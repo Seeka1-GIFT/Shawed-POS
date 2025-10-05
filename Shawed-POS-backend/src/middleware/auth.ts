@@ -12,6 +12,10 @@ export interface AuthenticatedRequest extends Request {
     name: string;
     role: string;
   };
+  body: any;
+  headers: any;
+  query: any;
+  params: any;
 }
 
 export const protect = asyncHandler(async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
