@@ -24,8 +24,7 @@
     "noImplicitOverride": true,
     "allowUnusedLabels": false,
     "allowUnreachableCode": false,
-    "exactOptionalPropertyTypes": true,
-    "types": ["node"]
+    "exactOptionalPropertyTypes": true
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
