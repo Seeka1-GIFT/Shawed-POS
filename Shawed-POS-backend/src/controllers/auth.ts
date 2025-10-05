@@ -5,7 +5,7 @@ import { generateToken } from '../middleware/auth';
 import { isValidEmail, isValidPassword } from '../utils/validation';
 import { asyncHandler } from '../middleware/errorHandler';
 import { AuthenticatedRequest } from '../middleware/auth';
-import { randomUUID } from 'crypto';
+import * as crypto from 'crypto';
 
 // Register user
 export const register = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
@@ -57,7 +57,7 @@ export const register = asyncHandler(async (req: Request, res: Response, next: N
   const hashedPassword = await hashPassword(password);
 
   // Generate UUID for user
-  const userId = randomUUID();
+  const userId = crypto.randomUUID();
 
   // Create user
   const user = await prisma.user.create({
