@@ -4,11 +4,4 @@ declare global {
   var console: Console;
 }
 
-// Import Node.js crypto module
-declare module 'crypto' {
-  export function randomBytes(size: number): Buffer;
-  export function createHash(algorithm: string): any;
-  export function createHmac(algorithm: string, key: string | Buffer): any;
-}
-
 export {};
