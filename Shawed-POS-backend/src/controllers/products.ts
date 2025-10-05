@@ -6,7 +6,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../index';
 import asyncHandler from 'express-async-handler';
-const { randomUUID } = require('crypto');
+import crypto from 'crypto';
 
 // Get all products
 export const getProducts = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
