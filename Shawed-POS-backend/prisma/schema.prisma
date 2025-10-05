@@ -1,0 +1,141 @@
+// Shawed-POS Prisma Schema - PostgreSQL
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      UserRole @default(USER)
+  createdAt DateTime @map("created_at") @default(now())
+  updatedAt DateTime @map("updated_at") @updatedAt
+
+  @@map("users")
+}
+
+model Supplier {
+  id       String   @id @default(uuid())
+  name     String
+  phone    String?
+  address  String?
+  email    String?
+  createdAt DateTime @map("created_at") @default(now())
+  updatedAt DateTime @map("updated_at") @updatedAt
+
+  // Relations
+  products Product[]
+  purchaseOrders PurchaseOrder[]
+
+  @@map("suppliers")
+}
+
+model Product {
+  id           String   @id @default(uuid())
+  name         String
+  category     String
+  barcode      String?  @unique
+  quantity     Int      @default(0)
+  buyPrice     Decimal  @map("buy_price")
+  sellPrice    Decimal  @map("sell_price")
+  expiryDate   DateTime? @map("expiry_date")
+  supplierId   String?  @map("supplier_id")
+  lowStockThreshold Int? @map("low_stock_threshold")
+  createdAt    DateTime @map("created_at") @default(now())
+  updatedAt    DateTime @map("updated_at") @updatedAt
+
+  // Relations
+  supplier  Supplier?  @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  saleItems SaleItem[]
+
+  @@map("products")
+}
+
+model Customer {
+  id       String   @id @default(uuid())
+  name     String
+  phone    String?
+  address  String?
+  email    String?
+  balance  Decimal  @default(0.00)
+  createdAt DateTime @map("created_at") @default(now())
+  updatedAt DateTime @map("updated_at") @updatedAt
+
+  // Relations
+  sales Sale[]
+
+  @@map("customers")
+}
+
+model Sale {
+  id           String     @id @default(uuid())
+  saleDate     DateTime   @map("sale_date") @default(now())
+  total        Decimal
+  discount     Decimal    @default(0.00)
+  tax          Decimal    @default(0.00)
+  paymentMethod String    @map("payment_method")
+  customerId   String?    @map("customer_id")
+  createdAt    DateTime   @map("created_at") @default(now())
+  updatedAt    DateTime   @map("updated_at") @updatedAt
+
+  // Relations
+  customer Customer?  @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  saleItems SaleItem[]
+
+  @@map("sales")
+}
+
+model SaleItem {
+  id        String   @id @default(uuid())
+  saleId    String   @map("sale_id")
+  productId String   @map("product_id")
+  quantity  Int
+  price     Decimal
+  total     Decimal
+  createdAt DateTime @map("created_at") @default(now())
+
+  // Relations
+  sale     Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  product  Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("sale_items")
+}
+
+model Expense {
+  id          String   @id @default(uuid())
+  description String
+  amount      Decimal
+  category    String
+  date        DateTime @default(now())
+  createdAt   DateTime @map("created_at") @default(now())
+  updatedAt   DateTime @map("updated_at") @updatedAt
+
+  @@map("expenses")
+}
+
+model PurchaseOrder {
+  id           String   @id @default(uuid())
+  supplierId    String   @map("supplier_id")
+  orderDate     DateTime @map("order_date") @default(now())
+  totalAmount   Decimal  @map("total_amount")
+  status        String   @default("PENDING")
+  createdAt     DateTime @map("created_at") @default(now())
+  updatedAt     DateTime @map("updated_at") @updatedAt
+
+  // Relations
+  supplier Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+
+  @@map("purchase_orders")
+}
+
+// Enums
+enum UserRole {
+  ADMIN
+  USER
+}
