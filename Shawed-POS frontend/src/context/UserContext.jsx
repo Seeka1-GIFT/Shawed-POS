@@ -1,4 +1,5 @@
 import React, { createContext, useState, useEffect } from 'react';
+import apiService from '../services/api';
 
 export const UserContext = createContext();
 
@@ -120,86 +121,55 @@ export function UserProvider({ children }) {
   }, [state]);
 
   // Authentication functions
-  const login = (username, password) => {
-    const user = state.users.find(u => 
-      (u.username === username || u.email === username) && u.isActive
-    );
-
-    if (!user) {
-      return { success: false, message: 'Invalid credentials' };
-    }
-
-    // Check if user is locked out
-    const now = Date.now();
-    const lockoutKey = `${user.id}-lockout`;
-    const lockoutEnd = state.loginAttempts[lockoutKey];
-    
-    if (lockoutEnd && now < lockoutEnd) {
-      const remainingTime = Math.ceil((lockoutEnd - now) / 60000);
-      return { 
-        success: false, 
-        message: `Account locked. Try again in ${remainingTime} minutes.` 
-      };
-    }
-
-    // Simple password check (in production, use proper hashing)
-    const correctPassword = user.password || 'password123';
-    if (password !== correctPassword) {
-      // Increment login attempts
-      const attemptKey = `${user.id}-attempts`;
-      const attempts = (state.loginAttempts[attemptKey] || 0) + 1;
+  const login = async (username, password) => {
+    try {
+      console.log('🔐 Attempting login with:', username);
       
-      setState(prev => ({
-        ...prev,
-        loginAttempts: {
-          ...prev.loginAttempts,
-          [attemptKey]: attempts
-        }
-      }));
+      // Call the backend API for authentication
+      const response = await apiService.login({
+        email: username,
+        password: password
+      });
 
-      if (attempts >= state.maxLoginAttempts) {
-        // Lock account
+      console.log('🔐 Login API response:', response);
+
+      if (response.success && response.user) {
+        // Map backend user to frontend format
+        const user = {
+          id: response.user.id,
+          name: response.user.name,
+          email: response.user.email,
+          role: response.user.role.toLowerCase(),
+          lastLogin: new Date().toISOString(),
+          permissions: ROLE_PERMISSIONS[response.user.role.toLowerCase()] || [],
+          token: response.token
+        };
+
+        // Store token for future API calls
+        localStorage.setItem('authToken', response.token);
+
         setState(prev => ({
           ...prev,
-          loginAttempts: {
-            ...prev.loginAttempts,
-            [lockoutKey]: now + state.lockoutDuration
-          }
+          currentUser: user,
+          isAuthenticated: true
         }));
-        return { 
-          success: false, 
-          message: 'Too many failed attempts. Account locked for 15 minutes.' 
-        };
-      }
 
-      return { 
-        success: false, 
-        message: `Invalid credentials. ${state.maxLoginAttempts - attempts} attempts remaining.` 
-      };
+        console.log('✅ Login successful:', user);
+        return { success: true, user };
+      } else {
+        console.log('❌ Login failed:', response.message);
+        return { success: false, message: response.message || 'Invalid credentials' };
+      }
+    } catch (error) {
+      console.error('❌ Login error:', error);
+      return { success: false, message: 'Login failed. Please try again.' };
     }
-
-    // Successful login
-    const updatedUser = {
-      ...user,
-      lastLogin: new Date().toISOString(),
-      permissions: ROLE_PERMISSIONS[user.role] || []
-    };
-
-    setState(prev => ({
-      ...prev,
-      currentUser: updatedUser,
-      isAuthenticated: true,
-      loginAttempts: {
-        ...prev.loginAttempts,
-        [`${user.id}-attempts`]: 0,
-        [`${user.id}-lockout`]: 0
-      }
-    }));
-
-    return { success: true, user: updatedUser };
   };
 
   const logout = () => {
+    // Clear token from localStorage
+    localStorage.removeItem('authToken');
+    
     setState(prev => ({
       ...prev,
       currentUser: null,

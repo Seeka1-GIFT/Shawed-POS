@@ -11,8 +11,8 @@ export default function Login() {
   const navigate = useNavigate();
   
   const [formData, setFormData] = useState({
-    username: '',
-    password: ''
+    username: 'mainadmin@shawedpos.com',
+    password: 'admin123'
   });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
@@ -37,7 +37,7 @@ export default function Login() {
     setError('');
 
     try {
-      const result = login(formData.username, formData.password);
+      const result = await login(formData.username, formData.password);
       
       if (result.success) {
         navigate('/dashboard');
@@ -54,7 +54,7 @@ export default function Login() {
 
   const handleForgotPassword = () => {
     // In a real app, this would trigger password reset flow
-    alert('Password reset functionality would be implemented here.\n\nFor demo purposes, use:\nUsername: admin\nPassword: password123');
+    alert('Password reset functionality would be implemented here.\n\nFor demo purposes, use:\nEmail: mainadmin@shawedpos.com\nPassword: admin123');
   };
 
   const handleUnlockAccount = () => {
