@@ -376,6 +376,43 @@ export function RealDataProvider({ children }) {
     deleteProduct,
     deleteCustomer,
     
+    // Expense CRUD Operations (placeholder functions)
+    addExpense: async (expenseData) => {
+      console.log('addExpense called with:', expenseData);
+      // TODO: Implement actual API call
+      return { success: true, data: { ...expenseData, id: Date.now().toString() } };
+    },
+    updateExpense: async (id, expenseData) => {
+      console.log('updateExpense called with:', id, expenseData);
+      // TODO: Implement actual API call
+      return { success: true, data: { ...expenseData, id } };
+    },
+    deleteExpense: async (id) => {
+      console.log('deleteExpense called with:', id);
+      // TODO: Implement actual API call
+      return { success: true };
+    },
+    addExpenseCategory: async (categoryData) => {
+      console.log('addExpenseCategory called with:', categoryData);
+      // TODO: Implement actual API call
+      return { success: true, data: { ...categoryData, id: Date.now().toString() } };
+    },
+    addRecurringExpense: async (expenseData) => {
+      console.log('addRecurringExpense called with:', expenseData);
+      // TODO: Implement actual API call
+      return { success: true, data: { ...expenseData, id: Date.now().toString() } };
+    },
+    processRecurringExpenses: async () => {
+      console.log('processRecurringExpenses called');
+      // TODO: Implement actual API call
+      return { success: true };
+    },
+    setExpenseStatus: async (id, status) => {
+      console.log('setExpenseStatus called with:', id, status);
+      // TODO: Implement actual API call
+      return { success: true };
+    },
+    
     // Helper Functions
     getStatistics,
     getDashboardData,

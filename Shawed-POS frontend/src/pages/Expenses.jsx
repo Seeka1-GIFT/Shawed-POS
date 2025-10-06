@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useMemo, useState } from 'react';
-import { DataContext } from '../context/DataContextNew';
+import { RealDataContext } from '../context/RealDataContext';
 import { ThemeContext } from '../context/ThemeContext';
 import InputField from '../components/InputField';
 import { Plus, Download, Printer } from 'lucide-react';
@@ -14,7 +14,7 @@ import { UserContext, PERMISSIONS } from '../context/UserContext';
  * DataContext.
  */
 export default function Expenses() {
-  const { data, addExpense, updateExpense, deleteExpense, addExpenseCategory, addRecurringExpense, processRecurringExpenses, setExpenseStatus } = useContext(DataContext);
+  const { expenses, addExpense, updateExpense, deleteExpense, addExpenseCategory, addRecurringExpense, processRecurringExpenses, setExpenseStatus } = useContext(RealDataContext);
   const { isDarkMode } = useContext(ThemeContext);
   const { hasPermission } = useContext(UserContext);
   const [form, setForm] = useState({
@@ -90,15 +90,15 @@ export default function Expenses() {
     // categories may be objects; allow both id/name and raw name
     const base = (data.expenseCategories || []).map(c => ({ id: c.id, name: c.name }));
     // also include ad-hoc category names used by existing expenses
-    const names = [...new Set(data.expenses.map(e => e.category).filter(Boolean))];
+    const names = [...new Set(expenses.map(e => e.category).filter(Boolean))];
     names.forEach(n => { if (!base.some(b=> b.name === n || b.id === n)) base.push({ id: n, name: n }); });
     return base;
-  }, [data.expenseCategories, data.expenses]);
+  }, [data.expenseCategories, expenses]);
 
   const filteredExpenses = useMemo(()=>{
     const start = filters.start ? new Date(filters.start) : null;
     const end = filters.end ? new Date(filters.end + 'T23:59:59') : null;
-    return data.expenses.filter(e=>{
+    return expenses.filter(e=>{
       const inQ = !filters.q || `${e.description} ${e.category}`.toLowerCase().includes(filters.q.toLowerCase());
       const inCat = filters.category === 'all' || e.category === filters.category || e.category === categories.find(c=>c.id===filters.category)?.name;
       const inMethod = filters.method === 'all' || e.method === filters.method;
@@ -108,7 +108,7 @@ export default function Expenses() {
       const inEnd = !end || d <= end;
       return inQ && inCat && inMethod && inStatus && inStart && inEnd;
     });
-  }, [data.expenses, filters, categories]);
+  }, [expenses, filters, categories]);
 
   const totalFiltered = useMemo(()=> filteredExpenses.reduce((s,e)=> s + (e.amount||0), 0), [filteredExpenses]);
   const byCategory = useMemo(()=>{
@@ -187,7 +187,7 @@ export default function Expenses() {
             </select>
             <select value={filters.method} onChange={(e)=>setFilters(f=>({...f,method:e.target.value}))} className={`${isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : 'bg-white border-gray-300 text-gray-900'} border rounded-lg px-3 py-2`}>
               <option value="all">All Methods</option>
-              {(data.paymentMethods || ['Cash','Bank Transfer','Mobile Money','Card']).map(m=> (<option key={m} value={m}>{m}</option>))}
+              {['Cash','Bank Transfer','Mobile Money','Card'].map(m=> (<option key={m} value={m}>{m}</option>))}
             </select>
             <select value={filters.status} onChange={(e)=>setFilters(f=>({...f,status:e.target.value}))} className={`${isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : 'bg-white border-gray-300 text-gray-900'} border rounded-lg px-3 py-2`}>
               <option value="all">All Statuses</option>
@@ -307,7 +307,7 @@ export default function Expenses() {
               <div>
                 <label className={`block text-sm mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Payment Method</label>
                 <select name="method" value={form.method} onChange={handleChange} className={`w-full px-3 py-2 border rounded-lg ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-100' : 'border-gray-300 bg-white text-gray-900'}`}>
-                  {(data.paymentMethods || ['Cash','Bank Transfer','Mobile Money','Card']).map(m=> (<option key={m}>{m}</option>))}
+                  {['Cash','Bank Transfer','Mobile Money','Card'].map(m=> (<option key={m}>{m}</option>))}
                 </select>
               </div>
               <InputField
