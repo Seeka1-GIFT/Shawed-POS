@@ -1,10 +1,18 @@
 import React, { createContext, useContext } from 'react';
-import { DataContext } from './DataContextNew';
+import { RealDataContext } from './RealDataContext';
 
 export const BusinessContext = createContext();
 
 export function BusinessProvider({ children }) {
-  const { data } = useContext(DataContext);
+  const context = useContext(RealDataContext);
+  
+  // Add null safety
+  if (!context) {
+    console.error('BusinessProvider: RealDataContext is undefined');
+    return <div>Loading business settings...</div>;
+  }
+  
+  const { businessSettings } = context;
   
   // Helper function to clean business text fields
   const cleanBusinessText = (text) => {
@@ -13,12 +21,12 @@ export function BusinessProvider({ children }) {
   };
   
   const businessInfo = {
-    name: cleanBusinessText(data.businessSettings?.name) || 'Business Name',
-    address: cleanBusinessText(data.businessSettings?.address) || 'Business Address',
-    phone: cleanBusinessText(data.businessSettings?.phone) || 'Business Phone',
-    email: cleanBusinessText(data.businessSettings?.email) || 'business@email.com',
-    taxRate: data.businessSettings?.taxRate || 0,
-    logo: data.businessSettings?.logo || null,
+    name: cleanBusinessText(businessSettings?.name) || 'Business Name',
+    address: cleanBusinessText(businessSettings?.address) || 'Business Address',
+    phone: cleanBusinessText(businessSettings?.phone) || 'Business Phone',
+    email: cleanBusinessText(businessSettings?.email) || 'business@email.com',
+    taxRate: businessSettings?.taxRate || 0,
+    logo: businessSettings?.logo || null,
   };
 
   const updateBusinessInfo = (updates) => {
@@ -50,7 +58,25 @@ export function BusinessProvider({ children }) {
 export const useBusiness = () => {
   const context = useContext(BusinessContext);
   if (!context) {
-    throw new Error('useBusiness must be used within a BusinessProvider');
+    console.error('useBusiness: BusinessContext is undefined');
+    return {
+      businessInfo: {
+        name: 'Business Name',
+        address: 'Business Address',
+        phone: 'Business Phone',
+        email: 'business@email.com',
+        taxRate: 0,
+        logo: null,
+      },
+      updateBusinessInfo: () => {},
+      cleanBusinessText: (text) => text || '',
+      getBusinessName: () => 'Business Name',
+      getBusinessAddress: () => 'Business Address',
+      getBusinessPhone: () => 'Business Phone',
+      getBusinessEmail: () => 'business@email.com',
+      getTaxRate: () => 0,
+      getBusinessLogo: () => null,
+    };
   }
   return context;
 };
