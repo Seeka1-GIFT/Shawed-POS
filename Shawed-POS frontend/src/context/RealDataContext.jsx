@@ -45,6 +45,12 @@ export function RealDataProvider({ children }) {
     }
   });
 
+  // Add null safety check for data
+  if (!data) {
+    console.error('RealDataContext: data state is null/undefined');
+    return <div>Loading data context...</div>;
+  }
+
   // API Integration Functions
   const apiCall = async (action, key, apiFunction, data = null) => {
     setData(prev => ({
@@ -357,7 +363,7 @@ export function RealDataProvider({ children }) {
 
   const contextValue = {
     // Data
-    ...data,
+    ...(data || {}),
     
     // API Functions
     fetchProducts,
