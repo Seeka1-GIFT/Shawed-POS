@@ -1,5 +1,5 @@
 import React, { useContext, useState, useMemo } from 'react';
-import { DataContext } from '../context/DataContextNew';
+import { RealDataContext } from '../context/RealDataContext';
 import { ThemeContext } from '../context/ThemeContext';
 import InputField from '../components/InputField';
 import { motion } from 'framer-motion';
@@ -31,7 +31,7 @@ import {
  * until paid in full; partial payments are not tracked.
  */
 export default function Customers() {
-  const { data, addCustomer, updateCustomer, deleteCustomer, addPayment, addDebt } = useContext(DataContext);
+  const { customers, addCustomer, updateCustomer, deleteCustomer, addPayment, addDebt } = useContext(RealDataContext);
   const { isDarkMode } = useContext(ThemeContext);
   const [form, setForm] = useState({ name: '', phone: '', address: '', email: '' });
   const [isFormVisible, setIsFormVisible] = useState(false);

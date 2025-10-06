@@ -1,5 +1,5 @@
 import React, { useContext, useMemo, useRef, useState } from 'react';
-import { DataContext } from '../context/DataContextNew';
+import { RealDataContext } from '../context/RealDataContext';
 import { ThemeContext } from '../context/ThemeContext';
 import InputField from '../components/InputField';
 import BarcodeScanner from '../components/BarcodeScanner';
@@ -13,7 +13,7 @@ import { Plus, Edit2, Trash2, Package, ChevronDown, ChevronUp, Camera, Download,
  * DataContext. When editing a product the form is prefilled.
  */
 export default function Products() {
-  const { data, addProduct, updateProduct, deleteProduct } = useContext(DataContext);
+  const { products, suppliers, addProduct, updateProduct, deleteProduct } = useContext(RealDataContext);
   const { isDarkMode } = useContext(ThemeContext);
   const [form, setForm] = useState({
     id: '',
@@ -38,7 +38,7 @@ export default function Products() {
   const [filters, setFilters] = useState({ q: '', category: 'all', supplier: 'all', stock: 'all', expiry: 'all' });
   const fileInputRef = useRef(null);
   const [showHistoryFor, setShowHistoryFor] = useState(null);
-  const supplierMap = useMemo(()=> Object.fromEntries(data.suppliers.map(s=> [s.id, s.name])), [data.suppliers]);
+  const supplierMap = useMemo(()=> Object.fromEntries(suppliers.map(s=> [s.id, s.name])), [suppliers]);
   const addVariant = () => setForm(f=> ({ ...f, variants: [...(f.variants||[]), { unit: '', size: '', color: '', qtyPerUnit: '', barcode: '' }] }));
   const updateVariant = (i, key, val) => setForm(f=> ({ ...f, variants: f.variants.map((v,idx)=> idx===i ? { ...v, [key]: val } : v) }));
   const removeVariant = (i) => setForm(f=> ({ ...f, variants: f.variants.filter((_,idx)=> idx!==i) }));
@@ -141,7 +141,7 @@ export default function Products() {
   };
 
   const filteredProducts = useMemo(() => {
-    return data.products.filter(product => {
+    return products.filter(product => {
       const matchesSearch = product.name.toLowerCase().includes(filters.q.toLowerCase()) ||
                           product.category?.toLowerCase().includes(filters.q.toLowerCase()) ||
                           product.barcode?.toLowerCase().includes(filters.q.toLowerCase());
@@ -171,7 +171,7 @@ export default function Products() {
       
       return matchesSearch && matchesCategory && matchesSupplier && matchesStock && matchesExpiry;
     });
-  }, [data.products, filters]);
+  }, [products, filters]);
 
   const toggleForm = () => {
     setIsFormExpanded(!isFormExpanded);
@@ -373,11 +373,11 @@ export default function Products() {
             
             <select value={filters.category} onChange={(e)=>setFilters(f=>({...f,category:e.target.value}))} className={`px-4 py-2 border rounded-lg ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-100 focus:border-indigo-400' : 'border-gray-300 focus:border-indigo-500'} focus:outline-none transition-colors`}>
               <option value="all">All Categories</option>
-              {[...new Set(data.products.map(p=> p.category || 'General'))].map((c,i)=> (<option key={i} value={c}>{c}</option>))}
+              {[...new Set(products.map(p=> p.category || 'General'))].map((c,i)=> (<option key={i} value={c}>{c}</option>))}
             </select>
             <select value={filters.supplier} onChange={(e)=>setFilters(f=>({...f,supplier:e.target.value}))} className={`px-4 py-2 border rounded-lg ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-100 focus:border-indigo-400' : 'border-gray-300 focus:border-indigo-500'} focus:outline-none transition-colors`}>
               <option value="all">All Suppliers</option>
-              {data.suppliers.map(s=> (<option key={s.id} value={s.id}>{s.name}</option>))}
+              {suppliers.map(s=> (<option key={s.id} value={s.id}>{s.name}</option>))}
             </select>
             <select value={filters.stock} onChange={(e)=>setFilters(f=>({...f,stock:e.target.value}))} className={`px-4 py-2 border rounded-lg ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-100 focus:border-indigo-400' : 'border-gray-300 focus:border-indigo-500'} focus:outline-none transition-colors`}>
               <option value="all">All Stock</option>
@@ -430,7 +430,7 @@ export default function Products() {
         {/* Product List */}
       <div className="lg:col-span-2">
           <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-lg border ${isDarkMode ? 'border-slate-700' : 'border-slate-200'} overflow-hidden`}>
-          {data.products.length === 0 ? (
+          {products.length === 0 ? (
               <div className="p-8 text-center">
                 <Package className="h-16 w-16 mx-auto mb-4 text-gray-400" />
                 <p className={`text-lg ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>No products added yet.</p>
@@ -636,7 +636,7 @@ export default function Products() {
                       className={`w-full px-3 py-2 border rounded-lg ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-100' : 'border-gray-300'} focus:ring-indigo-500 focus:border-indigo-500`}
                     >
                       <option value="">Select Supplier</option>
-                      {data.suppliers.map(supplier => (
+                      {suppliers.map(supplier => (
                         <option key={supplier.id} value={supplier.id}>{supplier.name}</option>
                       ))}
                     </select>

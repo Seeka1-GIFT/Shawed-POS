@@ -1,5 +1,5 @@
 import React, { useContext, useState, useMemo } from 'react';
-import { DataContext } from '../context/DataContextNew';
+import { RealDataContext } from '../context/RealDataContext';
 import { ThemeContext } from '../context/ThemeContext';
 import Receipt from '../components/Receipt';
 import BarcodeScanner from '../components/BarcodeScanner';
@@ -15,7 +15,7 @@ import { motion } from 'framer-motion';
  * including subtotal, discount and total are derived on the fly.
  */
 export default function Sales() {
-  const { data, addSale, updateProduct } = useContext(DataContext);
+  const { products, addSale, updateProduct } = useContext(RealDataContext);
   const { isDarkMode } = useContext(ThemeContext);
   const [query, setQuery] = useState('');
   const [cart, setCart] = useState([]);
