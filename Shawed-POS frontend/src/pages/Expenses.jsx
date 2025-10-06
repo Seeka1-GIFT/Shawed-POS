@@ -14,7 +14,21 @@ import { UserContext, PERMISSIONS } from '../context/UserContext';
  * DataContext.
  */
 export default function Expenses() {
-  const { expenses, addExpense, updateExpense, deleteExpense, addExpenseCategory, addRecurringExpense, processRecurringExpenses, setExpenseStatus } = useContext(RealDataContext);
+  const context = useContext(RealDataContext);
+  
+  // Add null safety check
+  if (!context) {
+    console.error('RealDataContext is undefined');
+    return <div className="p-4 text-red-500">Loading expenses data...</div>;
+  }
+  
+  const { expenses = [], addExpense, updateExpense, deleteExpense, addExpenseCategory, addRecurringExpense, processRecurringExpenses, setExpenseStatus } = context;
+  
+  // Debug logging
+  console.log('Expenses page - context:', !!context);
+  console.log('Expenses page - expenses:', expenses);
+  console.log('Expenses page - expenses length:', expenses?.length);
+  
   const { isDarkMode } = useContext(ThemeContext);
   const { hasPermission } = useContext(UserContext);
   const [form, setForm] = useState({
@@ -88,12 +102,12 @@ export default function Expenses() {
 
   const categories = useMemo(()=>{
     // categories may be objects; allow both id/name and raw name
-    const base = (data.expenseCategories || []).map(c => ({ id: c.id, name: c.name }));
+    const base = ([]).map(c => ({ id: c.id, name: c.name }));
     // also include ad-hoc category names used by existing expenses
     const names = [...new Set(expenses.map(e => e.category).filter(Boolean))];
     names.forEach(n => { if (!base.some(b=> b.name === n || b.id === n)) base.push({ id: n, name: n }); });
     return base;
-  }, [data.expenseCategories, expenses]);
+  }, [expenses]);
 
   const filteredExpenses = useMemo(()=>{
     const start = filters.start ? new Date(filters.start) : null;
