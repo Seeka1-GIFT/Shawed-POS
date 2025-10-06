@@ -1,5 +1,5 @@
 import React, { useContext, useState, useMemo } from 'react';
-import { DataContext } from '../context/DataContextNew';
+import { RealDataContext } from '../context/RealDataContext';
 import { ThemeContext } from '../context/ThemeContext';
 import { motion } from 'framer-motion';
 import { Plus, Edit2, Trash2, Truck } from 'lucide-react';
@@ -8,8 +8,16 @@ import PermissionGuard from '../components/PermissionGuard';
 import { PERMISSIONS } from '../context/UserContext';
 
 export default function Suppliers() {
-  const { data, addSupplier, updateSupplier, deleteSupplier } = useContext(DataContext);
+  const context = useContext(RealDataContext);
   const { isDarkMode } = useContext(ThemeContext);
+  
+  // Add null safety check
+  if (!context) {
+    console.error('RealDataContext is undefined in Suppliers page');
+    return <div className="p-4 text-red-500">Loading suppliers data...</div>;
+  }
+  
+  const { suppliers = [], addSupplier, updateSupplier, deleteSupplier } = context;
 
   const [form, setForm] = useState({ id: '', name: '', phone: '', email: '', address: '' });
   const [editing, setEditing] = useState(false);
@@ -18,12 +26,12 @@ export default function Suppliers() {
 
   const filteredSuppliers = useMemo(() => {
     const q = filters.q.trim().toLowerCase();
-    return data.suppliers.filter(s => {
+    return suppliers.filter(s => {
       const matchesQ = !q || [s.name, s.email, s.phone].some(v => (v||'').toLowerCase().includes(q));
       const locOk = !filters.location || (s.address||'').toLowerCase().includes(filters.location.toLowerCase());
       return matchesQ && locOk;
     });
-  }, [data.suppliers, filters]);
+  }, [suppliers, filters]);
 
   const exportCSV = () => {
     const headers = ['Name','Phone','Email','Address'];

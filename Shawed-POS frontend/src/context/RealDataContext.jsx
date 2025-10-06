@@ -419,6 +419,23 @@ export function RealDataProvider({ children }) {
       return { success: true };
     },
     
+    // Supplier CRUD Operations (placeholder functions)
+    addSupplier: async (supplierData) => {
+      console.log('addSupplier called with:', supplierData);
+      // TODO: Implement actual API call
+      return { success: true, data: { ...supplierData, id: Date.now().toString() } };
+    },
+    updateSupplier: async (id, supplierData) => {
+      console.log('updateSupplier called with:', id, supplierData);
+      // TODO: Implement actual API call
+      return { success: true, data: { ...supplierData, id } };
+    },
+    deleteSupplier: async (id) => {
+      console.log('deleteSupplier called with:', id);
+      // TODO: Implement actual API call
+      return { success: true };
+    },
+    
     // Helper Functions
     getStatistics,
     getDashboardData,
