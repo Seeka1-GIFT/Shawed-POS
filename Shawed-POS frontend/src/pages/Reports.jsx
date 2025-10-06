@@ -48,7 +48,20 @@ export default function Reports() {
     return <div className="p-4 text-red-500">Loading reports data...</div>;
   }
   
-  const { products = [], customers = [], sales = [], expenses = [], suppliers = [], purchaseOrders = [] } = context;
+  const { 
+    products = [], 
+    customers = [], 
+    sales = [], 
+    expenses = [], 
+    suppliers = [], 
+    purchaseOrders = [], 
+    businessSettings = {} 
+  } = context;
+  
+  // Placeholder data for properties not yet implemented in RealDataContext
+  const purchases = []; // Placeholder - not yet implemented
+  const debts = []; // Placeholder - not yet implemented  
+  const payments = []; // Placeholder - not yet implemented
   const { isDarkMode } = useContext(ThemeContext);
   const [selectedPeriod, setSelectedPeriod] = useState('7'); // days
   const [customRange, setCustomRange] = useState({ start: '', end: '' });
@@ -170,11 +183,11 @@ export default function Reports() {
       lowStockCount: lowStockProducts.length,
       outOfStockCount: outOfStockProducts.length,
       totalProducts: products.length,
-      categoryBreakdown: Object.entries(categoryBreakdown).map(([name, data]) => ({
+      categoryBreakdown: Object.entries(categoryBreakdown).map(([name, categoryData]) => ({
         name,
-        value: data.value,
-        count: data.count,
-        inventoryValue: data.inventoryValue,
+        value: categoryData.value,
+        count: categoryData.count,
+        inventoryValue: categoryData.inventoryValue,
       })),
     };
   }, [products]);
@@ -184,7 +197,7 @@ export default function Reports() {
     const supplierStats = {};
     
     // Analyze purchase orders and purchases data
-    [...purchaseOrders, ...data.purchases].forEach(order => {
+    [...purchaseOrders, ...purchases].forEach(order => {
       if (!supplierStats[order.supplierId]) {
         supplierStats[order.supplierId] = {
           name: order.supplierName,
@@ -232,7 +245,7 @@ export default function Reports() {
       arr = arr.filter(s => (suppliers.find(x => x.id === supplierFilter)?.name || '') === s.name);
     }
     return arr;
-  }, [purchaseOrders, data.purchases, supplierFilter, suppliers]);
+  }, [purchaseOrders, purchases, supplierFilter, suppliers]);
 
   // Sales Trends
   const salesTrends = useMemo(() => {
@@ -318,19 +331,19 @@ export default function Reports() {
   const cashFlow = useMemo(() => {
     const inflow = filteredSales.reduce((sum, s) => sum + s.total, 0);
     const expensesTotal = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
-    const purchaseOut = (data.purchases || []).filter(p=>{
+    const purchaseOut = (purchases || []).filter(p=>{
       const d = new Date(p.date); return d >= start && d <= end;
     }).reduce((sum,p)=> sum + p.totalAmount, 0);
     const outflow = expensesTotal + purchaseOut;
     return { inflow, outflow, net: inflow - outflow };
-  }, [filteredSales, filteredExpenses, data.purchases, start, end]);
+  }, [filteredSales, filteredExpenses, purchases, start, end]);
 
   const taxReport = useMemo(() => {
-    const rate = (data.businessSettings?.taxRate || 0) / 100;
+    const rate = (businessSettings?.taxRate || 0) / 100;
     const taxable = filteredSales.reduce((sum, s) => sum + s.total, 0);
     const taxCollected = taxable * rate;
     return { rate: rate * 100, taxable, taxCollected };
-  }, [filteredSales, data.businessSettings]);
+  }, [filteredSales, businessSettings]);
 
   // Customers outstanding balances helper
   const customerBalances = useMemo(() => {
@@ -343,18 +356,18 @@ export default function Reports() {
         balances[sale.customerId].purchases += 1;
       }
     });
-    (data.debts || []).forEach((debt) => {
+    (debts || []).forEach((debt) => {
       if (debt.customerId && balances[debt.customerId]) {
         balances[debt.customerId].owed += debt.amount;
       }
     });
-    (data.payments || []).forEach((payment) => {
+    (payments || []).forEach((payment) => {
       if (payment.customerId && balances[payment.customerId]) {
         balances[payment.customerId].owed -= payment.amount;
       }
     });
     return Object.values(balances).sort((a,b)=> b.owed - a.owed);
-  }, [customers, sales, data.payments, data.debts]);
+  }, [customers, sales, payments, debts]);
 
   const COLORS = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#84cc16', '#f97316'];
 
@@ -382,7 +395,7 @@ export default function Reports() {
           return Object.values(byUser).map(u => ({ User: u.name, Transactions: u.transactions, Sales: u.sales.toFixed(2) }));
         }
       case 'purchases':
-        return (data.purchases || []).filter(p=> new Date(p.date) >= start && new Date(p.date) <= end)
+        return (purchases || []).filter(p=> new Date(p.date) >= start && new Date(p.date) <= end)
           .map(p => ({ OrderId: p.id, Supplier: p.supplierName, Date: p.date, Items: p.items.length, Total: p.totalAmount.toFixed(2), Status: p.status }));
       default:
         return salesTrends.map(d => ({ Date: d.date, Sales: d.Sales, Expenses: d.Expenses, Profit: d.Profit }));
@@ -809,7 +822,7 @@ export default function Reports() {
               </tr>
             </thead>
             <tbody>
-              {data.purchases
+              {purchases
                 .filter(purchase => {
                   const purchaseDate = new Date(purchase.date);
                   return purchaseDate >= start && purchaseDate <= end;
@@ -849,7 +862,7 @@ export default function Reports() {
             <div>
               <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Purchases</p>
               <p className={`text-2xl font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-                ${data.purchases
+                ${purchases
                   .filter(purchase => {
                     const purchaseDate = new Date(purchase.date);
                     return purchaseDate >= start && purchaseDate <= end;
@@ -867,7 +880,7 @@ export default function Reports() {
             <div>
               <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Orders Count</p>
               <p className={`text-2xl font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-                {data.purchases
+                {purchases
                   .filter(purchase => {
                     const purchaseDate = new Date(purchase.date);
                     return purchaseDate >= start && purchaseDate <= end;
@@ -883,7 +896,7 @@ export default function Reports() {
             <div>
               <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Avg Order Value</p>
               <p className={`text-2xl font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-                ${data.purchases
+                ${purchases
                   .filter(purchase => {
                     const purchaseDate = new Date(purchase.date);
                     return purchaseDate >= start && purchaseDate <= end;
@@ -1166,16 +1179,16 @@ export default function Reports() {
       {/* Header Controls */}
       <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-6 rounded-2xl shadow-sm`}>
         <div className="flex items-center mb-6">
-          {data.businessSettings?.logo && (
+          {businessSettings?.logo && (
             <img 
-              src={data.businessSettings.logo} 
+              src={businessSettings.logo} 
               alt="Business Logo" 
               className="w-12 h-12 rounded mr-4 object-cover"
             />
           )}
           <div>
             <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
-              {(data.businessSettings?.name || 'Business').trim().replace(/\n/g, '')} Reports
+              {(businessSettings?.name || 'Business').trim().replace(/\n/g, '')} Reports
             </h2>
             <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
               Comprehensive Business Analytics • {new Date().toLocaleDateString()}
