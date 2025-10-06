@@ -1,16 +1,9 @@
 // API service for communicating with the backend
 const API_BASE_URL = 'https://shawed-pos.onrender.com/api';
 
-// Debug: Log the API URL
-console.log('🔧 API_BASE_URL:', API_BASE_URL);
-console.log('🔧 VITE_API_URL env var:', import.meta.env.VITE_API_URL);
-
 class ApiService {
   async request(endpoint, options = {}) {
     const url = `${API_BASE_URL}${endpoint}`;
-    
-    // Debug: Log the full URL being requested
-    console.log('🌐 Making API request to:', url);
     
     // Get auth token from localStorage
     const token = localStorage.getItem('authToken');
