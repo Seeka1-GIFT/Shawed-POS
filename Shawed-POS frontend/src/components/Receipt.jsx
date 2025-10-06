@@ -20,7 +20,7 @@ export default function Receipt({
   // Print functionality - moved before conditional return
   const handlePrint = useReactToPrint({
     content: () => receiptRef.current,
-    documentTitle: sale ? `Receipt-${sale.id.slice(-8)}` : 'Receipt',
+    documentTitle: sale ? `Receipt-${(sale.id || 'unknown').slice(-8)}` : 'Receipt',
     pageStyle: `
       @media print {
         body { margin: 0; padding: 10px; }
@@ -31,10 +31,23 @@ export default function Receipt({
           box-shadow: none !important; 
         }
       }
-    `
+    `,
+    onBeforeGetContent: () => {
+      console.log('Print: Preparing content for printing...');
+    },
+    onAfterPrint: () => {
+      console.log('Print: Print dialog closed');
+    },
+    onPrintError: (error) => {
+      console.error('Print error:', error);
+    }
   });
   
   if (!isVisible || !sale) return null;
+  
+  // Debug logging
+  console.log('Receipt component - sale:', sale);
+  console.log('Receipt component - businessSettings:', businessSettings);
   
   const businessInfo = businessSettings || {};
 
@@ -46,16 +59,16 @@ export default function Receipt({
   // Generate QR code data
   const generateQRData = () => {
     const receiptData = {
-      id: sale.id,
-      date: sale.date,
-      total: sale.total,
-      items: sale.items.map(item => ({
-        name: item.product.name,
-        quantity: item.quantity,
-        price: item.product.sellPrice || item.product.sellingPrice || 0
+      id: sale.id || 'N/A',
+      date: sale.date || sale.saleDate || new Date().toISOString(),
+      total: sale.total || 0,
+      items: (sale.items || sale.saleItems || []).map(item => ({
+        name: item.product?.name || item.name || 'Unknown Item',
+        quantity: item.quantity || 1,
+        price: item.product?.sellPrice || item.product?.sellingPrice || item.price || 0
       })),
-      paymentMethod: sale.paymentMethod,
-      customerId: sale.customerId
+      paymentMethod: sale.paymentMethod || 'Cash',
+      customerId: sale.customerId || null
     };
     return JSON.stringify(receiptData);
   };
