@@ -55,12 +55,12 @@ export default function ReceiptHistory() {
 
   // Filter and sort sales
   const filteredSales = useMemo(() => {
-    const sales = sales || [];
+    const salesData = sales || [];
     const today = new Date();
     const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
     const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-    let filtered = sales.filter(sale => {
+    let filtered = salesData.filter(sale => {
       // Search filter
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
@@ -103,7 +103,7 @@ export default function ReceiptHistory() {
 
   // Analytics data
   const analyticsData = useMemo(() => {
-    const sales = sales || [];
+    const salesData = sales || [];
     const days = [];
     const now = new Date();
     
@@ -114,7 +114,7 @@ export default function ReceiptHistory() {
       const dateStr = d.toISOString().slice(0, 10);
       const dayLabel = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
       
-      const salesOfDay = sales.filter(sale => sale.date === dateStr);
+      const salesOfDay = salesData.filter(sale => sale.date === dateStr);
       const totalRevenue = salesOfDay.reduce((sum, sale) => sum + sale.total, 0);
       const totalTransactions = salesOfDay.length;
       const avgTransactionValue = totalTransactions > 0 ? totalRevenue / totalTransactions : 0;
@@ -133,10 +133,10 @@ export default function ReceiptHistory() {
 
   // Payment method breakdown
   const paymentBreakdown = useMemo(() => {
-    const sales = sales || [];
+    const salesData = sales || [];
     const breakdown = {};
     
-    sales.forEach(sale => {
+    salesData.forEach(sale => {
       if (!breakdown[sale.paymentMethod]) {
         breakdown[sale.paymentMethod] = { count: 0, total: 0 };
       }
@@ -144,11 +144,11 @@ export default function ReceiptHistory() {
       breakdown[sale.paymentMethod].total += sale.total;
     });
     
-    const totalSalesValue = sales.reduce((sum, s) => sum + s.total, 0);
+    const totalSalesValue = salesData.reduce((sum, s) => sum + s.total, 0);
     
-    return Object.entries(breakdown).map(([method, data]) => ({
+    return Object.entries(breakdown).map(([method, methodData]) => ({
       method,
-      count: sales.length,
+      count: salesData.length,
       total: totalSalesValue,
       percentage: 100,
     }));
