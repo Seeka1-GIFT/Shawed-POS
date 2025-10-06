@@ -59,10 +59,17 @@ export const getExpenses = asyncHandler(async (req: Request, res: Response, next
     });
   } catch (error) {
     console.error('❌ getExpenses error:', error);
+    console.error('❌ Error details:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+      code: error.code
+    });
     res.status(500).json({
       success: false,
       message: 'Failed to fetch expenses',
-      error: error.message
+      error: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 });

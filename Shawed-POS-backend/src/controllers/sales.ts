@@ -86,10 +86,17 @@ export const getSales = asyncHandler(async (req: Request, res: Response, next: N
     });
   } catch (error) {
     console.error('❌ getSales error:', error);
+    console.error('❌ Error details:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+      code: error.code
+    });
     res.status(500).json({
       success: false,
       message: 'Failed to fetch sales',
-      error: error.message
+      error: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 });
