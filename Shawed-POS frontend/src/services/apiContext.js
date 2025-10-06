@@ -18,10 +18,14 @@ export function ApiProvider({ children }) {
   const checkApiConnection = async () => {
     try {
       setLoading(true);
-      const response = await api.healthAPI.checkHealth();
-      setApiConnected(true);
-      setApiError(null);
-      return true;
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'https://shawed-pos.onrender.com/api'}/status`);
+      if (response.ok) {
+        setApiConnected(true);
+        setApiError(null);
+        return true;
+      } else {
+        throw new Error(`API returned ${response.status}`);
+      }
     } catch (error) {
       console.warn('Backend API not available:', error.message);
       setApiConnected(false);
@@ -37,7 +41,7 @@ export function ApiProvider({ children }) {
     getProducts: async () => {
       if (apiConnected) {
         try {
-          const response = await api.productsAPI.getProducts();
+          const response = await api.getProducts();
           return response.data || [];
         } catch (error) {
           console.error('Failed to fetch products from API:', error);
@@ -50,7 +54,7 @@ export function ApiProvider({ children }) {
     createProduct: async (productData) => {
       if (apiConnected) {
         try {
-          const response = await api.productsAPI.createProduct(productData);
+          const response = await api.createProduct(productData);
           return response.data;
         } catch (error) {
           console.error('Failed to create product:', error);
@@ -63,7 +67,7 @@ export function ApiProvider({ children }) {
     updateProduct: async (id, productData) => {
       if (apiConnected) {
         try {
-          const response = await api.productsAPI.updateProduct(id, productData);
+          const response = await api.updateProduct(id, productData);
           return response.data;
         } catch (error) {
           console.error('Failed to update product:', error);
@@ -76,7 +80,7 @@ export function ApiProvider({ children }) {
     deleteProduct: async (id) => {
       if (apiConnected) {
         try {
-          const response = await api.productsAPI.deleteProduct(id);
+          const response = await api.deleteProduct(id);
           return response.success;
         } catch (error) {
           console.error('Failed to delete product:', error);
@@ -92,7 +96,7 @@ export function ApiProvider({ children }) {
     getCustomers: async () => {
       if (apiConnected) {
         try {
-          const response = await api.customersAPI.getCustomers();
+          const response = await api.getCustomers();
           return response.data || [];
         } catch (error) {
           console.error('Failed to fetch customers from API:', error);
@@ -105,7 +109,7 @@ export function ApiProvider({ children }) {
     createCustomer: async (customerData) => {
       if (apiConnected) {
         try {
-          const response = await api.customersAPI.createCustomer(customerData);
+          const response = await api.createCustomer(customerData);
           return response.data;
         } catch (error) {
           console.error('Failed to create customer:', error);
@@ -118,7 +122,7 @@ export function ApiProvider({ children }) {
     updateCustomer: async (id, customerData) => {
       if (apiConnected) {
         try {
-          const response = await api.customersAPI.updateCustomer(id, customerData);
+          const response = await api.updateCustomer(id, customerData);
           return response.data;
         } catch (error) {
           console.error('Failed to update customer:', error);
@@ -131,7 +135,7 @@ export function ApiProvider({ children }) {
     deleteCustomer: async (id) => {
       if (apiConnected) {
         try {
-          const response = await api.customersAPI.deleteCustomer(id);
+          const response = await api.deleteCustomer(id);
           return response.success;
         } catch (error) {
           console.error('Failed to delete customer:', error);
@@ -147,7 +151,7 @@ export function ApiProvider({ children }) {
     getSales: async () => {
       if (apiConnected) {
         try {
-          const response = await api.salesAPI.getSales();
+          const response = await api.getSales();
           return response.data || [];
         } catch (error) {
           console.error('Failed to fetch sales from API:', error);
@@ -160,7 +164,7 @@ export function ApiProvider({ children }) {
     createSale: async (saleData) => {
       if (apiConnected) {
         try {
-          const response = await api.salesAPI.createSale(saleData);
+          const response = await api.createSale(saleData);
           return response.data;
         } catch (error) {
           console.error('Failed to create sale:', error);
@@ -173,7 +177,7 @@ export function ApiProvider({ children }) {
     getSalesReport: async (dateRange) => {
       if (apiConnected) {
         try {
-          const response = await api.salesAPI.getSalesReport(dateRange);
+          const response = await api.getSalesReport(dateRange);
           return response.data;
         } catch (error) {
           console.error('Failed to fetch sales report:', error);
@@ -189,7 +193,7 @@ export function ApiProvider({ children }) {
     login: async (email, password) => {
       if (apiConnected) {
         try {
-          const response = await api.authAPI.login(email, password);
+          const response = await api.login(email, password);
           if (response.success && response.data.token) {
             localStorage.setItem('authToken', response.data.token);
             localStorage.setItem('user', JSON.stringify(response.data));
@@ -207,7 +211,7 @@ export function ApiProvider({ children }) {
     register: async (userData) => {
       if (apiConnected) {
         try {
-          const response = await api.authAPI.register(userData);
+          const response = await api.register(userData);
           if (response.success && response.data.token) {
             localStorage.setItem('authToken', response.data.token);
             localStorage.setItem('user', JSON.stringify(response.data));
@@ -225,7 +229,7 @@ export function ApiProvider({ children }) {
     getCurrentUser: async () => {
       if (apiConnected) {
         try {
-          const response = await api.authAPI.getCurrentUser();
+          const response = await api.getCurrentUser();
           return response.data;
         } catch (error) {
           console.error('Failed to get current user:', error);
@@ -237,7 +241,7 @@ export function ApiProvider({ children }) {
 
     logout: () => {
       if (apiConnected) {
-        api.authAPI.logout();
+        api.logout();
       }
       localStorage.removeItem('authToken');
       localStorage.removeItem('user');
