@@ -69,6 +69,14 @@ try {
     console.log('⚠️  Seeding failed (this is optional)\n');
   }
 
+  console.log('🔄 Creating admin user...');
+  try {
+    execSync('npm run db:create-admin', { stdio: 'inherit' });
+    console.log('✅ Admin user created successfully\n');
+  } catch (error) {
+    console.log('⚠️  Admin user creation failed (this is optional)\n');
+  }
+
   console.log('🎉 Database setup completed successfully!');
   console.log('Your Neon database now has all the required tables.');
   console.log('\nNext steps:');

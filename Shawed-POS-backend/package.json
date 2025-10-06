@@ -17,6 +17,7 @@
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:seed": "node prisma/seed.js",
+    "db:create-admin": "node create-admin.js",
     "db:studio": "prisma studio",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
