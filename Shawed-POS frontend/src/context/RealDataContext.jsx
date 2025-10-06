@@ -9,6 +9,9 @@ import apiService from '../services/api';
 export const RealDataContext = createContext();
 
 export function RealDataProvider({ children }) {
+  // Debug: Check if API service is available
+  console.log('RealDataProvider: apiService available?', !!apiService);
+  
   const [data, setData] = useState({
     products: [],
     customers: [],
@@ -76,21 +79,81 @@ export function RealDataProvider({ children }) {
   };
 
   // Data Fetching Functions
-  const fetchProducts = () => apiCall('fetch', 'products', apiService.getProducts);
-  const fetchCustomers = () => apiCall('fetch', 'customers', apiService.getCustomers);
-  const fetchSales = () => apiCall('fetch', 'sales', apiService.getSales);
+  const fetchProducts = () => {
+    if (!apiService) {
+      console.error('API service is not available');
+      return Promise.resolve([]);
+    }
+    return apiCall('fetch', 'products', apiService.getProducts);
+  };
+  const fetchCustomers = () => {
+    if (!apiService) {
+      console.error('API service is not available');
+      return Promise.resolve([]);
+    }
+    return apiCall('fetch', 'customers', apiService.getCustomers);
+  };
+  const fetchSales = () => {
+    if (!apiService) {
+      console.error('API service is not available');
+      return Promise.resolve([]);
+    }
+    return apiCall('fetch', 'sales', apiService.getSales);
+  };
   const fetchDashboardStats = () => apiCall('fetch', 'dashboard', () => Promise.resolve({ data: {} }));
 
   // CRUD Operations
-  const addProduct = (productData) => apiCall('add', 'products', apiService.createProduct, productData);
-  const updateProduct = (id, productData) => apiCall('update', 'products', () => apiService.updateProduct(id, productData));
-  const deleteProduct = (id) => apiCall('delete', 'products', apiService.deleteProduct, id);
+  const addProduct = (productData) => {
+    if (!apiService) {
+      console.error('API service is not available');
+      return Promise.resolve(null);
+    }
+    return apiCall('add', 'products', apiService.createProduct, productData);
+  };
+  const updateProduct = (id, productData) => {
+    if (!apiService) {
+      console.error('API service is not available');
+      return Promise.resolve(null);
+    }
+    return apiCall('update', 'products', () => apiService.updateProduct(id, productData));
+  };
+  const deleteProduct = (id) => {
+    if (!apiService) {
+      console.error('API service is not available');
+      return Promise.resolve(false);
+    }
+    return apiCall('delete', 'products', apiService.deleteProduct, id);
+  };
 
-  const addCustomer = (customerData) => apiCall('add', 'customers', apiService.createCustomer, customerData);
-  const updateCustomer = (id, customerData) => apiCall('update', 'customers', () => apiService.updateCustomer(id, customerData));
-  const deleteCustomer = (id) => apiCall('delete', 'customers', apiService.deleteCustomer, id);
+  const addCustomer = (customerData) => {
+    if (!apiService) {
+      console.error('API service is not available');
+      return Promise.resolve(null);
+    }
+    return apiCall('add', 'customers', apiService.createCustomer, customerData);
+  };
+  const updateCustomer = (id, customerData) => {
+    if (!apiService) {
+      console.error('API service is not available');
+      return Promise.resolve(null);
+    }
+    return apiCall('update', 'customers', () => apiService.updateCustomer(id, customerData));
+  };
+  const deleteCustomer = (id) => {
+    if (!apiService) {
+      console.error('API service is not available');
+      return Promise.resolve(false);
+    }
+    return apiCall('delete', 'customers', apiService.deleteCustomer, id);
+  };
 
-  const addSale = (saleData) => apiCall('add', 'sales', () => apiService.createSale(saleData, data.token), saleData);
+  const addSale = (saleData) => {
+    if (!apiService) {
+      console.error('API service is not available');
+      return Promise.resolve(null);
+    }
+    return apiCall('add', 'sales', () => apiService.createSale(saleData, data.token), saleData);
+  };
 
   // Load initial data when component mounts
   useEffect(() => {
