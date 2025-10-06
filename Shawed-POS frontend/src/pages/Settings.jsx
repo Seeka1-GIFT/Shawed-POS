@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { ThemeContext } from '../context/ThemeContext';
-import { DataContext } from '../context/DataContextNew';
+import { RealDataContext } from '../context/RealDataContext';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import i18n from '../i18n';
@@ -14,7 +14,15 @@ import i18n from '../i18n';
  */
 export default function Settings() {
   const { isDarkMode, toggleDarkMode } = useContext(ThemeContext);
-  const { data, updateBusinessSettings, updateReceiptSettings, updateDisplaySettings } = useContext(DataContext);
+  const context = useContext(RealDataContext);
+  
+  // Add null safety check
+  if (!context) {
+    console.error('RealDataContext is undefined in Settings page');
+    return <div className="p-4 text-red-500">Loading settings data...</div>;
+  }
+  
+  const { businessSettings = {}, updateBusinessSettings, updateReceiptSettings, updateDisplaySettings } = context;
   const { t } = useTranslation();
   const [language, setLanguage] = useState('en');
   const [currency, setCurrency] = useState('USD');
@@ -59,7 +67,7 @@ export default function Settings() {
     if (storedLogoPreview) setLogoPreview(storedLogoPreview);
     
     // Load business settings from DataContext
-    const businessSettings = data.businessSettings;
+    // Use businessSettings from context
     if (businessSettings) {
       setBusinessName(businessSettings.name || '');
       setBusinessAddress(businessSettings.address || '');
@@ -69,7 +77,7 @@ export default function Settings() {
     }
     
     // Load receipt settings from DataContext
-    const receiptSettings = data.receiptSettings;
+    const receiptSettings = {}; // Placeholder - not yet implemented in RealDataContext
     if (receiptSettings) {
       setReceiptHeader(receiptSettings.header || '');
       setReceiptFooter(receiptSettings.footer || '');
@@ -79,14 +87,14 @@ export default function Settings() {
     }
     
     // Load display settings from DataContext
-    const displaySettings = data.displaySettings;
+    const displaySettings = {}; // Placeholder - not yet implemented in RealDataContext
     if (displaySettings) {
       setCompactMode(displaySettings.compactMode || false);
       setShowProductImagesInLists(displaySettings.showProductImagesInLists !== false);
       setItemsPerPage(displaySettings.itemsPerPage || 20);
       setDefaultDashboardView(displaySettings.defaultDashboardView || 'overview');
     }
-  }, [data.businessSettings, data.receiptSettings, data.displaySettings]);
+  }, [businessSettings]);
 
   const handleLogoUpload = (event) => {
     const file = event.target.files[0];
