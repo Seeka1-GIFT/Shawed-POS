@@ -46,83 +46,83 @@ class ApiService {
   }
 
   // Products API
-  async getProducts() {
+  getProducts = async () => {
     return this.request('/products');
   }
 
-  async getProduct(id) {
+  getProduct = async (id) => {
     return this.request(`/products/${id}`);
   }
 
-  async createProduct(productData) {
+  createProduct = async (productData) => {
     return this.request('/products', {
       method: 'POST',
       body: JSON.stringify(productData),
     });
   }
 
-  async updateProduct(id, productData) {
+  updateProduct = async (id, productData) => {
     return this.request(`/products/${id}`, {
       method: 'PUT',
       body: JSON.stringify(productData),
     });
   }
 
-  async deleteProduct(id) {
+  deleteProduct = async (id) => {
     return this.request(`/products/${id}`, {
       method: 'DELETE',
     });
   }
 
-  async getLowStockProducts(threshold = 5) {
+  getLowStockProducts = async (threshold = 5) => {
     return this.request(`/products/low-stock?threshold=${threshold}`);
   }
 
   // Customers API
-  async getCustomers() {
+  getCustomers = async () => {
     return this.request('/customers');
   }
 
-  async getCustomer(id) {
+  getCustomer = async (id) => {
     return this.request(`/customers/${id}`);
   }
 
-  async createCustomer(customerData) {
+  createCustomer = async (customerData) => {
     return this.request('/customers', {
       method: 'POST',
       body: JSON.stringify(customerData),
     });
   }
 
-  async updateCustomer(id, customerData) {
+  updateCustomer = async (id, customerData) => {
     return this.request(`/customers/${id}`, {
       method: 'PUT',
       body: JSON.stringify(customerData),
     });
   }
 
-  async deleteCustomer(id) {
+  deleteCustomer = async (id) => {
     return this.request(`/customers/${id}`, {
       method: 'DELETE',
     });
   }
 
   // Auth API
-  async register(userData) {
+  register = async (userData) => {
     return this.request('/auth/register', {
       method: 'POST',
       body: JSON.stringify(userData),
     });
   }
 
-  async login(credentials) {
+  login = async (credentials) => {
     return this.request('/auth/login', {
       method: 'POST',
       body: JSON.stringify(credentials),
     });
   }
 
-  async getMe(token) {
+  getMe = async (token) => {
     return this.request('/auth/me', {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -131,7 +131,7 @@ class ApiService {
   }
 
   // Sales API (protected routes)
-  async getSales(token) {
+  getSales = async (token) => {
     return this.request('/sales', {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -139,7 +139,7 @@ class ApiService {
     });
   }
 
-  async createSale(saleData, token) {
+  createSale = async (saleData, token) => {
     return this.request('/sales', {
       method: 'POST',
       headers: {
@@ -150,7 +150,7 @@ class ApiService {
   }
 
   // Expenses API (protected routes)
-  async getExpenses(token) {
+  getExpenses = async (token) => {
     return this.request('/expenses', {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -158,7 +158,7 @@ class ApiService {
     });
   }
 
-  async createExpense(expenseData, token) {
+  createExpense = async (expenseData, token) => {
     return this.request('/expenses', {
       method: 'POST',
       headers: {
