@@ -9,7 +9,10 @@ import asyncHandler from 'express-async-handler';
 
 // Get all customers
 export const getCustomers = asyncHandler(async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  const { search, page = '1', limit = '10' } = req.query;
+  try {
+    console.log('🔍 getCustomers called with query:', req.query);
+    
+    const { search, page = '1', limit = '10' } = req.query;
   
   const pageNum = parseInt(page as string) || 1;
   const limitNum = parseInt(limit as string) || 10;
@@ -43,14 +46,31 @@ export const getCustomers = asyncHandler(async (req: Request, res: Response, nex
 
   const total = await prisma.customer.count({ where });
 
-  res.json({
-    success: true,
-    count: customers.length,
-    total,
-    page: pageNum,
-    limit: limitNum,
-    data: customers
-  });
+    console.log(`✅ getCustomers successful: ${customers.length} customers found`);
+    
+    res.json({
+      success: true,
+      count: customers.length,
+      total,
+      page: pageNum,
+      limit: limitNum,
+      data: customers
+    });
+  } catch (error) {
+    console.error('❌ getCustomers error:', error);
+    console.error('❌ Error details:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+      code: error.code
+    });
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch customers',
+      error: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
 });
 
 // Get single customer

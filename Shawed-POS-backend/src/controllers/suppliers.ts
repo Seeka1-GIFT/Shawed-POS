@@ -4,13 +4,16 @@ import { asyncHandler } from '../middleware/errorHandler';
 import { isValidEmail, isValidPhone, isValidDecimal } from '../utils/validation';
 
 export const getSuppliers = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-  const {
-    page = '1',
-    limit = '10',
-    search,
-    sortBy = 'name',
-    sortOrder = 'asc'
-  } = req.query;
+  try {
+    console.log('🔍 getSuppliers called with query:', req.query);
+    
+    const {
+      page = '1',
+      limit = '10',
+      search,
+      sortBy = 'name',
+      sortOrder = 'asc'
+    } = req.query;
 
   const pageNum = parseInt(page as string);
   const limitNum = parseInt(limit as string);
@@ -44,14 +47,31 @@ export const getSuppliers = asyncHandler(async (req: Request, res: Response, nex
     prisma.supplier.count({ where })
   ]);
 
-  res.status(200).json({
-    success: true,
-    count: suppliers.length,
-    total,
-    data: suppliers,
-    page: pageNum,
-    pages: Math.ceil(total / limitNum)
-  });
+    console.log(`✅ getSuppliers successful: ${suppliers.length} suppliers found`);
+    
+    res.status(200).json({
+      success: true,
+      count: suppliers.length,
+      total,
+      data: suppliers,
+      page: pageNum,
+      pages: Math.ceil(total / limitNum)
+    });
+  } catch (error) {
+    console.error('❌ getSuppliers error:', error);
+    console.error('❌ Error details:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+      code: error.code
+    });
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch suppliers',
+      error: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
 });
 
 export const getSupplier = asyncHandler(async (req: Request, res: Response, next: NextFunction): Promise<void> => {
