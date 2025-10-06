@@ -4,15 +4,18 @@ import { asyncHandler } from '../middleware/errorHandler';
 import { isValidDecimal } from '../utils/validation';
 
 export const getExpenses = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-  const {
-    page = '1',
-    limit = '10',
-    category,
-    startDate,
-    endDate,
-    sortBy = 'date',
-    sortOrder = 'desc'
-  } = req.query;
+  try {
+    console.log('🔍 getExpenses called with query:', req.query);
+    
+    const {
+      page = '1',
+      limit = '10',
+      category,
+      startDate,
+      endDate,
+      sortBy = 'date',
+      sortOrder = 'desc'
+    } = req.query;
 
   const pageNum = parseInt(page as string);
   const limitNum = parseInt(limit as string);
@@ -44,14 +47,24 @@ export const getExpenses = asyncHandler(async (req: Request, res: Response, next
     prisma.expense.count({ where })
   ]);
 
-  res.status(200).json({
-    success: true,
-    count: expenses.length,
-    total,
-    data: expenses,
-    page: pageNum,
-    pages: Math.ceil(total / limitNum)
-  });
+    console.log(`✅ getExpenses successful: ${expenses.length} expenses found`);
+    
+    res.status(200).json({
+      success: true,
+      count: expenses.length,
+      total,
+      data: expenses,
+      page: pageNum,
+      pages: Math.ceil(total / limitNum)
+    });
+  } catch (error) {
+    console.error('❌ getExpenses error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch expenses',
+      error: error.message
+    });
+  }
 });
 
 export const getExpense = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {

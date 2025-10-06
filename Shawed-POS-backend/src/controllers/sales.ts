@@ -10,14 +10,17 @@ import { AuthenticatedRequest } from '../middleware/auth';
 
 // Get all sales
 export const getSales = asyncHandler(async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  const { 
-    startDate, 
-    endDate, 
-    customerId, 
-    paymentMethod, 
-    page = '1', 
-    limit = '10' 
-  } = req.query;
+  try {
+    console.log('🔍 getSales called with query:', req.query);
+    
+    const { 
+      startDate, 
+      endDate, 
+      customerId, 
+      paymentMethod, 
+      page = '1', 
+      limit = '10' 
+    } = req.query;
   
   const pageNum = parseInt(page as string) || 1;
   const limitNum = parseInt(limit as string) || 10;
@@ -71,14 +74,24 @@ export const getSales = asyncHandler(async (req: Request, res: Response, next: N
 
   const total = await prisma.sale.count({ where });
 
-  res.json({
-    success: true,
-    count: sales.length,
-    total,
-    page: pageNum,
-    limit: limitNum,
-    data: sales
-  });
+    console.log(`✅ getSales successful: ${sales.length} sales found`);
+    
+    res.json({
+      success: true,
+      count: sales.length,
+      total,
+      page: pageNum,
+      limit: limitNum,
+      data: sales
+    });
+  } catch (error) {
+    console.error('❌ getSales error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch sales',
+      error: error.message
+    });
+  }
 });
 
 // Get single sale
