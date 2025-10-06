@@ -51,7 +51,7 @@ app.get('/health', (req, res) => {
     message: 'Shawed-POS Backend API is running',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development',
-    cors: 'Configured for Vercel deployment'
+    cors: 'Configured for Vercel deployment - Updated'
   });
 });
 
