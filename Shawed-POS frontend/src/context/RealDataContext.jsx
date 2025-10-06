@@ -436,6 +436,38 @@ export function RealDataProvider({ children }) {
       return { success: true };
     },
     
+    // Purchase Order CRUD Operations (placeholder functions)
+    addPurchaseOrder: async (orderData) => {
+      console.log('addPurchaseOrder called with:', orderData);
+      // TODO: Implement actual API call
+      return { success: true, data: { ...orderData, id: Date.now().toString() } };
+    },
+    updatePurchaseOrder: async (id, orderData) => {
+      console.log('updatePurchaseOrder called with:', id, orderData);
+      // TODO: Implement actual API call
+      return { success: true, data: { ...orderData, id } };
+    },
+    deletePurchaseOrder: async (id) => {
+      console.log('deletePurchaseOrder called with:', id);
+      // TODO: Implement actual API call
+      return { success: true };
+    },
+    receivePurchaseOrder: async (id, receivedItems) => {
+      console.log('receivePurchaseOrder called with:', id, receivedItems);
+      // TODO: Implement actual API call
+      return { success: true };
+    },
+    createProductFromPurchase: async (productName, category) => {
+      console.log('createProductFromPurchase called with:', productName, category);
+      // TODO: Implement actual API call
+      return { id: Date.now().toString(), name: productName, category };
+    },
+    addPurchasePayment: async (orderId, paymentData) => {
+      console.log('addPurchasePayment called with:', orderId, paymentData);
+      // TODO: Implement actual API call
+      return { success: true };
+    },
+    
     // Helper Functions
     getStatistics,
     getDashboardData,

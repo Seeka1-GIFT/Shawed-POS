@@ -1,5 +1,5 @@
 import React, { useContext, useState, useEffect, useRef, useMemo } from 'react';
-import { DataContext } from '../context/DataContextNew';
+import { RealDataContext } from '../context/RealDataContext';
 import { ThemeContext } from '../context/ThemeContext';
 import PermissionGuard from '../components/PermissionGuard';
 import { PERMISSIONS } from '../context/UserContext';
@@ -27,7 +27,15 @@ import {
  * purchase orders from suppliers. Orders can be pending, received, or cancelled.
  */
 export default function PurchaseOrders() {
-  const { data, addPurchaseOrder, updatePurchaseOrder, deletePurchaseOrder, receivePurchaseOrder, createProductFromPurchase, addPurchasePayment } = useContext(DataContext);
+  const context = useContext(RealDataContext);
+  
+  // Add null safety check
+  if (!context) {
+    console.error('RealDataContext is undefined in PurchaseOrders page');
+    return <div className="p-4 text-red-500">Loading purchase orders data...</div>;
+  }
+  
+  const { products = [], suppliers = [], purchaseOrders = [], addPurchaseOrder, updatePurchaseOrder, deletePurchaseOrder, receivePurchaseOrder, createProductFromPurchase, addPurchasePayment } = context;
   const { isDarkMode } = useContext(ThemeContext);
   
   const [form, setForm] = useState({
@@ -65,7 +73,7 @@ export default function PurchaseOrders() {
   const [filters, setFilters] = useState({ q: '', supplierId: 'all', status: 'all', from: '', to: '' });
   const [view, setView] = useState('cards'); // cards | table
 
-  const filteredOrders = data.purchaseOrders.filter(o => {
+  const filteredOrders = purchaseOrders.filter(o => {
     const q = filters.q.trim().toLowerCase();
     const inSearch = !q || o.id.includes(q) || o.items.some(it => it.productName.toLowerCase().includes(q));
     const supplierOk = filters.supplierId === 'all' || o.supplierId === filters.supplierId;
@@ -149,7 +157,7 @@ export default function PurchaseOrders() {
     setShowAddNewProduct(false);
     
     // Check if there are matching products
-    const filteredProducts = data.products.filter(product =>
+    const filteredProducts = products.filter(product =>
       product.name.toLowerCase().includes(value.toLowerCase())
     );
     
@@ -202,7 +210,7 @@ export default function PurchaseOrders() {
       setNewItem(prev => ({ ...prev, productId: product.id }));
     } else {
       // Existing product
-      product = data.products.find(p => p.id === newItem.productId);
+      product = products.find(p => p.id === newItem.productId);
     }
     
     if (!product) return;
@@ -255,7 +263,7 @@ export default function PurchaseOrders() {
     const order = {
       id: editing ? form.id : Date.now().toString(),
       supplierId: form.supplierId,
-      supplierName: data.suppliers.find(s => s.id === form.supplierId)?.name || 'Unknown',
+      supplierName: suppliers.find(s => s.id === form.supplierId)?.name || 'Unknown',
       orderDate: form.orderDate,
       expectedDate: form.expectedDate,
       status: 'pending',
@@ -389,7 +397,7 @@ export default function PurchaseOrders() {
             <input className={`px-3 py-2 border ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-100' : 'border-gray-300'} rounded-lg`} placeholder="Search order # or product" value={filters.q} onChange={(e)=>setFilters(f=>({...f,q:e.target.value}))} />
             <select className={`px-3 py-2 border ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-100' : 'border-gray-300'} rounded-lg`} value={filters.supplierId} onChange={(e)=>setFilters(f=>({...f,supplierId:e.target.value}))}>
               <option value="all">All Suppliers</option>
-              {data.suppliers.map(s=> <option key={s.id} value={s.id}>{s.name}</option>)}
+              {suppliers.map(s=> <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
             <select className={`px-3 py-2 border ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-100' : 'border-gray-300'} rounded-lg`} value={filters.status} onChange={(e)=>setFilters(f=>({...f,status:e.target.value}))}>
               <option value="all">All Statuses</option>
@@ -529,7 +537,7 @@ export default function PurchaseOrders() {
                     className={`w-full px-3 py-2 border ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-100' : 'border-gray-300 bg-white text-gray-900'} rounded-lg shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500`}
                   >
                     <option value="">Select Supplier</option>
-                    {data.suppliers.map((s) => (
+                    {suppliers.map((s) => (
                       <option key={s.id} value={s.id}>
                         {s.name}
                       </option>
@@ -620,7 +628,7 @@ export default function PurchaseOrders() {
                       {/* Product Dropdown */}
                       {showProductDropdown && (
                         <div className={`absolute z-10 w-full mt-1 ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'} border rounded-lg shadow-lg max-h-60 overflow-y-auto`}>
-                          {data.products
+                          {products
                             .filter(product =>
                               product.name.toLowerCase().includes(productSearch.toLowerCase())
                             )
