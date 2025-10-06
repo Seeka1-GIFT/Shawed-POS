@@ -31,7 +31,7 @@ import {
  * until paid in full; partial payments are not tracked.
  */
 export default function Customers() {
-  const { customers, addCustomer, updateCustomer, deleteCustomer, addPayment, addDebt } = useContext(RealDataContext);
+  const { customers, sales, addCustomer, updateCustomer, deleteCustomer, addPayment, addDebt } = useContext(RealDataContext);
   const { isDarkMode } = useContext(ThemeContext);
   const [form, setForm] = useState({ name: '', phone: '', address: '', email: '' });
   const [isFormVisible, setIsFormVisible] = useState(false);
@@ -185,12 +185,12 @@ export default function Customers() {
   // totals of all sales referencing their id, adding manual debts, and subtracting payments.
   const creditMap = useMemo(() => {
     const map = {};
-    data.customers.forEach((c) => {
+    customers.forEach((c) => {
       map[c.id] = 0;
     });
     
     // Add sales amounts
-    data.sales.forEach((sale) => {
+    sales.forEach((sale) => {
       if (sale.customerId && map[sale.customerId] != null) {
         map[sale.customerId] += sale.total;
       }
@@ -211,24 +211,24 @@ export default function Customers() {
     });
     
     return map;
-  }, [data.customers, data.sales, data.payments, data.debts]);
+  }, [customers, sales, data.payments, data.debts]);
 
   // Filter customers based on search term
   const filteredCustomers = useMemo(() => {
-    if (!searchTerm) return data.customers;
-    return data.customers.filter(customer =>
+    if (!searchTerm) return customers;
+    return customers.filter(customer =>
       customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (customer.phone && customer.phone.includes(searchTerm)) ||
       (customer.address && customer.address.toLowerCase().includes(searchTerm.toLowerCase()))
     );
-  }, [data.customers, searchTerm]);
+  }, [customers, searchTerm]);
 
   // Calculate statistics
   const stats = useMemo(() => {
-    const totalCustomers = data.customers.length;
+    const totalCustomers = customers.length;
     const totalOwed = Object.values(creditMap).reduce((sum, amount) => sum + amount, 0);
-    const customersWithDebt = data.customers.filter(c => creditMap[c.id] > 0).length;
-    const totalSales = data.sales.filter(s => s.customerId).length;
+    const customersWithDebt = customers.filter(c => creditMap[c.id] > 0).length;
+    const totalSales = sales.filter(s => s.customerId).length;
     
     return {
       totalCustomers,
@@ -236,11 +236,11 @@ export default function Customers() {
       customersWithDebt,
       totalSales
     };
-  }, [data.customers, data.sales, creditMap]);
+  }, [customers, sales, creditMap]);
 
   // Calculate transaction history (payments and debts) with running balances
   const getPaymentHistoryWithBalances = (customerId) => {
-    const customerSales = data.sales.filter(sale => sale.customerId === customerId);
+    const customerSales = sales.filter(sale => sale.customerId === customerId);
     const customerPayments = data.payments.filter(payment => payment.customerId === customerId);
     const customerDebts = data.debts.filter(debt => debt.customerId === customerId);
 

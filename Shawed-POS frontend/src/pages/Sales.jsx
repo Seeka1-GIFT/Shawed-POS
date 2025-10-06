@@ -15,7 +15,7 @@ import { motion } from 'framer-motion';
  * including subtotal, discount and total are derived on the fly.
  */
 export default function Sales() {
-  const { products, addSale, updateProduct } = useContext(RealDataContext);
+  const { products, customers, addSale, updateProduct } = useContext(RealDataContext);
   const { isDarkMode } = useContext(ThemeContext);
   const [query, setQuery] = useState('');
   const [cart, setCart] = useState([]);
@@ -35,7 +35,7 @@ export default function Sales() {
   const results = useMemo(() => {
     if (!query) return [];
     const q = query.toLowerCase();
-    return (data.products || []).filter(
+    return (products || []).filter(
       (p) =>
         p.name.toLowerCase().includes(q) ||
         p.category.toLowerCase().includes(q) ||
@@ -45,7 +45,7 @@ export default function Sales() {
       sellPrice: product.sellPrice || product.sellingPrice || 0,
       buyPrice: product.buyPrice || product.purchasePrice || 0
     }));
-  }, [query, data.products]);
+  }, [query, products]);
 
   const addToCart = (product) => {
     setCart((prev) => {
@@ -78,7 +78,7 @@ export default function Sales() {
     console.log(`Scanned barcode: ${barcode}`);
     
     // Find product by barcode
-    const product = data.products.find(p => p.barcode === barcode);
+    const product = products.find(p => p.barcode === barcode);
     if (product) {
       // Normalize product data to ensure proper field names and types
       const normalizedProduct = {
@@ -428,7 +428,7 @@ export default function Sales() {
                     className="px-3 py-2 border border-gray-300 rounded-lg"
                   >
                     <option value="">Walk-in</option>
-                    {data.customers.map((c) => (
+                    {customers.map((c) => (
                       <option key={c.id} value={c.id}>
                         {c.name}
                       </option>
@@ -480,8 +480,8 @@ export default function Sales() {
       amount={total}
       customerInfo={{
         id: customerId,
-        name: data.customers.find(c => c.id === customerId)?.name || 'Walk-in Customer',
-        phone: data.customers.find(c => c.id === customerId)?.phone || ''
+        name: customers.find(c => c.id === customerId)?.name || 'Walk-in Customer',
+        phone: customers.find(c => c.id === customerId)?.phone || ''
       }}
       onPaymentSuccess={(paymentResult) => {
         console.log('Payment successful:', paymentResult);
