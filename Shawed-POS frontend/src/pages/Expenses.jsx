@@ -110,6 +110,7 @@ export default function Expenses() {
   }, [expenses]);
 
   const filteredExpenses = useMemo(()=>{
+    if (!expenses || !Array.isArray(expenses)) return [];
     const start = filters.start ? new Date(filters.start) : null;
     const end = filters.end ? new Date(filters.end + 'T23:59:59') : null;
     return expenses.filter(e=>{
@@ -180,7 +181,7 @@ export default function Expenses() {
 
   const printList = () => {
     const headers = ['Description','Category','Method','Amount','Date','Status'];
-    const rows = filteredExpenses.map(r => ({ Description: r.description, Category: r.category, Method: r.method, Amount: r.amount.toFixed(2), Date: r.date, Status: r.status }));
+    const rows = filteredExpenses.map(r => ({ Description: r.description, Category: r.category, Method: r.method, Amount: (r.amount || 0).toFixed(2), Date: r.date, Status: r.status }));
     const styles = `body{font-family:ui-sans-serif; padding:16px;} h1{font-size:18px;margin-bottom:12px;} table{width:100%;border-collapse:collapse;} th,td{padding:8px;border-bottom:1px solid #e5e7eb;font-size:12px;text-align:left;} th{background:#f5f5f5;}`;
     const html = `<html><head><title>Expenses</title><style>${styles}</style></head><body><h1>Expenses</h1><table><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${headers.map(h=>`<td>${r[h] ?? ''}</td>`).join('')}</tr>`).join('')}</tbody></table></body></html>`;
     const w = window.open('', '_blank'); if (!w) return; w.document.open(); w.document.write(html); w.document.close(); w.focus(); w.print();
@@ -212,7 +213,7 @@ export default function Expenses() {
             <input type="date" value={filters.start} onChange={(e)=>setFilters(f=>({...f,start:e.target.value}))} className={`${isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : 'bg-white border-gray-300 text-gray-900'} border rounded-lg px-3 py-2`} />
             <input type="date" value={filters.end} onChange={(e)=>setFilters(f=>({...f,end:e.target.value}))} className={`${isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : 'bg-white border-gray-300 text-gray-900'} border rounded-lg px-3 py-2`} />
           </div>
-          <div className={`mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Total: ${totalFiltered.toFixed(2)}</div>
+          <div className={`mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Total: ${(totalFiltered || 0).toFixed(2)}</div>
           <div className="flex items-center gap-2 mb-2">
             <button onClick={exportCSV} className="btn-primary"><Download className="h-4 w-4 mr-2"/>CSV</button>
             <button onClick={printList} className="btn-success"><Printer className="h-4 w-4 mr-2"/>Print</button>
@@ -239,7 +240,7 @@ export default function Expenses() {
                     <td className={`py-2 px-1 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>{e.description}</td>
                     <td className={`py-2 px-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>{e.category || '-'}</td>
                     <td className={`py-2 px-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>{e.method || '-'}</td>
-                    <td className={`py-2 px-1 ${isDarkMode ? 'text-red-400' : 'text-red-600'} font-medium`}>${e.amount.toFixed(2)}</td>
+                    <td className={`py-2 px-1 ${isDarkMode ? 'text-red-400' : 'text-red-600'} font-medium`}>${(e.amount || 0).toFixed(2)}</td>
                     <td className={`py-2 px-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>{e.date}</td>
                     <td className={`py-2 px-1`}>
                       <span className={`badge ${ (e.status||'Pending')==='Approved' ? 'badge-success' : (e.status||'Pending')==='Rejected' ? 'badge-danger' : 'badge-warning'}`}>{e.status || 'Pending'}</span>
