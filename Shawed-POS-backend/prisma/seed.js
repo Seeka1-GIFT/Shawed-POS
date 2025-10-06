@@ -37,7 +37,6 @@ async function main() {
         phone: '+1234567890',
         address: '123 Supplier Street, City',
         email: 'contact@freshfoods.com',
-        balance: 0.0,
       },
     }),
     prisma.supplier.upsert({
@@ -49,7 +48,6 @@ async function main() {
         phone: '+0987654321',
         address: '456 Distribution Ave, Town',
         email: 'orders@beverages.com',
-        balance: 0.0,
       },
     }),
   ]);

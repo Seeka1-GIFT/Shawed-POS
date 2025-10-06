@@ -26,10 +26,25 @@ if (!fs.existsSync(envPath)) {
 // Read .env file
 require('dotenv').config();
 
+console.log('🔍 Checking environment variables...');
+console.log(`📁 Current directory: ${__dirname}`);
+console.log(`📄 Environment file path: ${envPath}`);
+
+// Debug: Show all environment variables that start with DATABASE
+const dbVars = Object.keys(process.env).filter(key => key.includes('DATABASE'));
+console.log(`🔧 Database-related env vars: ${dbVars.join(', ')}`);
+
 if (!process.env.DATABASE_URL) {
-  console.log('❌ DATABASE_URL not found in .env file!');
-  console.log('Please add your Neon database connection string to .env file');
-  console.log('Example:');
+  console.log('❌ DATABASE_URL not found in environment variables!');
+  console.log('Available environment variables:');
+  Object.keys(process.env).filter(key => key.includes('DATABASE') || key.includes('DB')).forEach(key => {
+    console.log(`  ${key}: ${process.env[key] ? 'SET' : 'NOT SET'}`);
+  });
+  console.log('\nPlease check your .env file and make sure:');
+  console.log('1. The file is named exactly ".env" (with a dot at the beginning)');
+  console.log('2. The DATABASE_URL line has no spaces around the = sign');
+  console.log('3. The value is properly quoted');
+  console.log('\nExample:');
   console.log('DATABASE_URL="postgresql://username:password@host:port/database?sslmode=require"');
   process.exit(1);
 }
