@@ -1,7 +1,7 @@
 import React, { useContext, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Printer, Download, X, QrCode, Share2 } from 'lucide-react';
-import { DataContext } from '../context/DataContextNew';
+import { RealDataContext } from '../context/RealDataContext';
 import { useReactToPrint } from 'react-to-print';
 
 /**
@@ -14,7 +14,7 @@ export default function Receipt({
   onClose, 
   isDarkMode = false 
 }) {
-  const { data } = useContext(DataContext);
+  const { businessSettings } = useContext(RealDataContext);
   const receiptRef = useRef();
 
   // Print functionality - moved before conditional return
@@ -36,7 +36,7 @@ export default function Receipt({
   
   if (!isVisible || !sale) return null;
   
-  const businessInfo = data.businessSettings || {};
+  const businessInfo = businessSettings || {};
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);

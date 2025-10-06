@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { DataContext } from '../context/DataContextNew';
+import { RealDataContext } from '../context/RealDataContext';
 import { ThemeContext } from '../context/ThemeContext';
 import { motion } from 'framer-motion';
 import { AlertCircle, Package, Clock, DollarSign } from 'lucide-react';
@@ -9,17 +9,17 @@ import { AlertCircle, Package, Clock, DollarSign } from 'lucide-react';
  * inventory management insights for better stock control.
  */
 export default function InventoryAlerts() {
-  const { data } = useContext(DataContext);
+  const { products } = useContext(RealDataContext);
   const { isDarkMode } = useContext(ThemeContext);
 
   // Calculate low stock products (quantity <= 5)
-  const lowStockProducts = data.products.filter(product => product.quantity <= 5);
+  const lowStockProducts = products.filter(product => product.quantity <= 5);
   
   // Calculate out of stock products
-  const outOfStockProducts = data.products.filter(product => product.quantity === 0);
+  const outOfStockProducts = products.filter(product => product.quantity === 0);
   
   // Calculate products near expiry (within 30 days)
-  const nearExpiryProducts = data.products.filter(product => {
+  const nearExpiryProducts = products.filter(product => {
     if (!product.expiryDate) return false;
     const expiryDate = new Date(product.expiryDate);
     const today = new Date();
@@ -28,7 +28,7 @@ export default function InventoryAlerts() {
   });
 
   // Calculate total inventory value
-  const totalInventoryValue = data.products.reduce((total, product) => {
+  const totalInventoryValue = products.reduce((total, product) => {
     return total + (product.purchasePrice * product.quantity);
   }, 0);
 
