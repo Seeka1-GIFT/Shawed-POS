@@ -2,7 +2,7 @@ import React, { useContext } from 'react';
 import { NavLink } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { DataContext } from '../context/DataContextNew';
+import { RealDataContext } from '../context/RealDataContext';
 import {
   Home,
   Package2,
@@ -30,9 +30,9 @@ import {
  */
 export default function Sidebar({ onLogout, onMobileClose, isDarkMode, toggleDarkMode }) {
   const { t } = useTranslation();
-  const { data } = useContext(DataContext);
+  const { products, sales, expenses } = useContext(RealDataContext);
   
-  const businessInfo = data.businessSettings || {};
+  const businessInfo = { name: 'Shawed-POS' }; // Simplified for now
   const businessName = businessInfo.name || 'Business Name';
   const navItems = [
     { to: '/dashboard', label: t('dashboard'), icon: Home },

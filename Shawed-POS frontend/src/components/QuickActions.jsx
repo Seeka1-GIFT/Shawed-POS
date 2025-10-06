@@ -1,5 +1,5 @@
 import React, { useContext, useState } from 'react';
-import { DataContext } from '../context/DataContextNew';
+import { RealDataContext } from '../context/RealDataContext';
 import { ThemeContext } from '../context/ThemeContext';
 import { motion } from 'framer-motion';
 import {
@@ -18,16 +18,16 @@ import {
  * inventory management tasks like bulk adjustments and quick reorders.
  */
 export default function QuickActions() {
-  const { data, updateProduct, addPurchaseOrder } = useContext(DataContext);
+  const { products, suppliers, updateProduct, addPurchaseOrder } = useContext(RealDataContext);
   const { isDarkMode } = useContext(ThemeContext);
   
   const [bulkQuantity, setBulkQuantity] = useState(10);
   const [selectedAction, setSelectedAction] = useState('');
 
   // Get low stock products
-  const lowStockProducts = data.products.filter(p => p.quantity <= 5 && p.quantity > 0);
-  const outOfStockProducts = data.products.filter(p => p.quantity === 0);
-  const nearExpiryProducts = data.products.filter(p => {
+  const lowStockProducts = products.filter(p => p.quantity <= 5 && p.quantity > 0);
+  const outOfStockProducts = products.filter(p => p.quantity === 0);
+  const nearExpiryProducts = products.filter(p => {
     if (!p.expiryDate) return false;
     const expiryDate = new Date(p.expiryDate);
     const today = new Date();
@@ -47,12 +47,12 @@ export default function QuickActions() {
   };
 
   const handleQuickReorder = () => {
-    if (data.suppliers.length === 0) {
+    if (suppliers.length === 0) {
       alert('No suppliers available. Please add suppliers first.');
       return;
     }
 
-    const supplier = data.suppliers[0]; // Use first supplier for quick reorder
+    const supplier = suppliers[0]; // Use first supplier for quick reorder
     const reorderItems = [...lowStockProducts, ...outOfStockProducts].map(product => ({
       id: Date.now().toString() + Math.random(),
       productId: product.id,
@@ -95,7 +95,7 @@ export default function QuickActions() {
   };
 
   const handleClearExpired = () => {
-    const expiredProducts = data.products.filter(p => {
+    const expiredProducts = products.filter(p => {
       if (!p.expiryDate) return false;
       const expiryDate = new Date(p.expiryDate);
       const today = new Date();
@@ -132,7 +132,7 @@ export default function QuickActions() {
       icon: RotateCcw,
       color: 'bg-green-500 hover:bg-green-600',
       onClick: handleQuickReorder,
-      disabled: (lowStockProducts.length === 0 && outOfStockProducts.length === 0) || data.suppliers.length === 0,
+      disabled: (lowStockProducts.length === 0 && outOfStockProducts.length === 0) || suppliers.length === 0,
     },
     {
       id: 'adjust-up',
@@ -241,7 +241,7 @@ export default function QuickActions() {
           </div>
           <div>
             <p className={`text-lg font-bold ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>
-              {data.products.length - lowStockProducts.length - outOfStockProducts.length}
+              {products.length - lowStockProducts.length - outOfStockProducts.length}
             </p>
             <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>In Stock</p>
           </div>
