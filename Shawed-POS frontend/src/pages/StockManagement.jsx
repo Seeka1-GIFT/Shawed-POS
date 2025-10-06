@@ -1,5 +1,5 @@
 import React, { useContext, useState, useMemo } from 'react';
-import { DataContext } from '../context/DataContextNew';
+import { RealDataContext } from '../context/RealDataContext';
 import { ThemeContext } from '../context/ThemeContext';
 import InventoryAnalytics from '../components/InventoryAnalytics';
 import { motion } from 'framer-motion';
@@ -20,8 +20,16 @@ import {
  * including stock adjustments, bulk operations, and inventory tracking.
  */
 export default function StockManagement() {
-  const { data, updateProduct } = useContext(DataContext);
+  const context = useContext(RealDataContext);
   const { isDarkMode } = useContext(ThemeContext);
+  
+  // Add null safety check
+  if (!context) {
+    console.error('RealDataContext is undefined in StockManagement page');
+    return <div className="p-4 text-red-500">Loading stock data...</div>;
+  }
+  
+  const { products = [], updateProduct } = context;
   
   const [searchQuery, setSearchQuery] = useState('');
   const [filterBy, setFilterBy] = useState('all'); // all, low-stock, out-of-stock, near-expiry
@@ -30,7 +38,7 @@ export default function StockManagement() {
 
   // Filter products based on search and filter criteria
   const filteredProducts = useMemo(() => {
-    let filtered = data.products;
+    let filtered = products;
 
     // Apply search filter
     if (searchQuery) {
@@ -64,10 +72,10 @@ export default function StockManagement() {
     }
 
     return filtered;
-  }, [data.products, searchQuery, filterBy]);
+  }, [products, searchQuery, filterBy]);
 
   const handleStockAdjustment = (productId, adjustment) => {
-    const product = data.products.find(p => p.id === productId);
+    const product = products.find(p => p.id === productId);
     if (product) {
       const newQuantity = Math.max(0, product.quantity + adjustment);
       updateProduct(productId, { ...product, quantity: newQuantity });

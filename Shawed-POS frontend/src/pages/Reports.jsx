@@ -1,5 +1,5 @@
 import React, { useContext, useMemo, useState } from 'react';
-import { DataContext } from '../context/DataContextNew';
+import { RealDataContext } from '../context/RealDataContext';
 import { ThemeContext } from '../context/ThemeContext';
 import ChartCard from '../components/ChartCard';
 import { motion } from 'framer-motion';
@@ -40,7 +40,15 @@ import {
  * sales trends, and financial insights.
  */
 export default function Reports() {
-  const { data } = useContext(DataContext);
+  const context = useContext(RealDataContext);
+  
+  // Add null safety check
+  if (!context) {
+    console.error('RealDataContext is undefined in Reports page');
+    return <div className="p-4 text-red-500">Loading reports data...</div>;
+  }
+  
+  const { products = [], customers = [], sales = [], expenses = [], suppliers = [], purchaseOrders = [] } = context;
   const { isDarkMode } = useContext(ThemeContext);
   const [selectedPeriod, setSelectedPeriod] = useState('7'); // days
   const [customRange, setCustomRange] = useState({ start: '', end: '' });
@@ -70,7 +78,7 @@ export default function Reports() {
 
   // Filter data by date range
   const filteredSales = useMemo(() => {
-    return data.sales.filter(sale => {
+    return sales.filter(sale => {
       const saleDate = new Date(sale.date);
       const inRange = saleDate >= start && saleDate <= end;
       const categoryOk = categoryFilter === 'all' || sale.items.some(it => (it.product.category || 'Uncategorized') === categoryFilter);
@@ -83,7 +91,7 @@ export default function Reports() {
       const statusOk = statusFilter === 'all' || status.toLowerCase().startsWith(String(statusFilter).toLowerCase());
       return inRange && categoryOk && customerOk && paymentOk && statusOk;
     });
-  }, [data.sales, start, end, categoryFilter, customerFilter]);
+  }, [sales, start, end, categoryFilter, customerFilter]);
 
   // Build enriched sales transactions for table
   const salesTransactions = useMemo(()=> {
@@ -92,17 +100,17 @@ export default function Reports() {
       const totalAmt = Number(s.total ?? 0);
       const status = s.paymentStatus || (paid <= 0 ? 'Credit' : (paid >= totalAmt ? 'Paid' : 'Partial / Credit'));
       const balance = Math.max(0, totalAmt - paid);
-      const customerName = s.customerId ? (data.customers.find(c=> c.id === s.customerId)?.name || 'Customer') : 'Walk-in';
+      const customerName = s.customerId ? (customers.find(c=> c.id === s.customerId)?.name || 'Customer') : 'Walk-in';
       return { ...s, paid, totalAmt, status, balance, customerName };
     }).sort((a,b)=> new Date(b.date) - new Date(a.date));
-  }, [filteredSales, data.customers]);
+  }, [filteredSales, customers]);
 
   const filteredExpenses = useMemo(() => {
-    return data.expenses.filter(expense => {
+    return expenses.filter(expense => {
       const expenseDate = new Date(expense.date);
       return expenseDate >= start && expenseDate <= end;
     });
-  }, [data.expenses, start, end]);
+  }, [expenses, start, end]);
 
   // Profit & Loss Analysis
   const profitLossData = useMemo(() => {
@@ -134,18 +142,18 @@ export default function Reports() {
 
   // Inventory Valuation
   const inventoryData = useMemo(() => {
-    const totalInventoryValue = data.products.reduce((sum, product) => {
+    const totalInventoryValue = products.reduce((sum, product) => {
       return sum + (product.purchasePrice * product.quantity);
     }, 0);
 
-    const totalSellingValue = data.products.reduce((sum, product) => {
+    const totalSellingValue = products.reduce((sum, product) => {
       return sum + (product.sellingPrice * product.quantity);
     }, 0);
 
-    const lowStockProducts = data.products.filter(p => p.quantity <= 5);
-    const outOfStockProducts = data.products.filter(p => p.quantity === 0);
+    const lowStockProducts = products.filter(p => p.quantity <= 5);
+    const outOfStockProducts = products.filter(p => p.quantity === 0);
 
-    const categoryBreakdown = data.products.reduce((acc, product) => {
+    const categoryBreakdown = products.reduce((acc, product) => {
       const category = product.category || 'Uncategorized';
       if (!acc[category]) {
         acc[category] = { value: 0, count: 0, inventoryValue: 0 };
@@ -161,7 +169,7 @@ export default function Reports() {
       totalSellingValue,
       lowStockCount: lowStockProducts.length,
       outOfStockCount: outOfStockProducts.length,
-      totalProducts: data.products.length,
+      totalProducts: products.length,
       categoryBreakdown: Object.entries(categoryBreakdown).map(([name, data]) => ({
         name,
         value: data.value,
@@ -169,14 +177,14 @@ export default function Reports() {
         inventoryValue: data.inventoryValue,
       })),
     };
-  }, [data.products]);
+  }, [products]);
 
   // Supplier Performance
   const supplierData = useMemo(() => {
     const supplierStats = {};
     
     // Analyze purchase orders and purchases data
-    [...data.purchaseOrders, ...data.purchases].forEach(order => {
+    [...purchaseOrders, ...data.purchases].forEach(order => {
       if (!supplierStats[order.supplierId]) {
         supplierStats[order.supplierId] = {
           name: order.supplierName,
@@ -221,10 +229,10 @@ export default function Reports() {
 
     let arr = Object.values(supplierStats).sort((a, b) => b.totalValue - a.totalValue);
     if (supplierFilter !== 'all') {
-      arr = arr.filter(s => (data.suppliers.find(x => x.id === supplierFilter)?.name || '') === s.name);
+      arr = arr.filter(s => (suppliers.find(x => x.id === supplierFilter)?.name || '') === s.name);
     }
     return arr;
-  }, [data.purchaseOrders, data.purchases, supplierFilter, data.suppliers]);
+  }, [purchaseOrders, data.purchases, supplierFilter, suppliers]);
 
   // Sales Trends
   const salesTrends = useMemo(() => {
@@ -327,9 +335,9 @@ export default function Reports() {
   // Customers outstanding balances helper
   const customerBalances = useMemo(() => {
     const balances = {};
-    data.customers.forEach((c) => { balances[c.id] = { name: c.name, owed: 0, purchases: 0 } });
+    customers.forEach((c) => { balances[c.id] = { name: c.name, owed: 0, purchases: 0 } });
 
-    data.sales.forEach((sale) => {
+    sales.forEach((sale) => {
       if (sale.customerId && balances[sale.customerId]) {
         balances[sale.customerId].owed += sale.total;
         balances[sale.customerId].purchases += 1;
@@ -346,7 +354,7 @@ export default function Reports() {
       }
     });
     return Object.values(balances).sort((a,b)=> b.owed - a.owed);
-  }, [data.customers, data.sales, data.payments, data.debts]);
+  }, [customers, sales, data.payments, data.debts]);
 
   const COLORS = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#84cc16', '#f97316'];
 
@@ -570,7 +578,7 @@ export default function Reports() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-2 mb-3">
           <select value={customerFilter} onChange={(e)=>setCustomerFilter(e.target.value)} className={`px-3 py-2 border ${isDarkMode ? 'border-gray-700 bg-gray-700 text-gray-100' : 'border-gray-300'} rounded-lg`}>
             <option value="all">All Customers</option>
-            {data.customers.map(c=> <option key={c.id} value={c.id}>{c.name}</option>)}
+            {customers.map(c=> <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
           <select value={paymentFilter} onChange={(e)=>setPaymentFilter(e.target.value)} className={`px-3 py-2 border ${isDarkMode ? 'border-gray-700 bg-gray-700 text-gray-100' : 'border-gray-300'} rounded-lg`}>
             <option value="all">All Methods</option>
@@ -959,7 +967,7 @@ export default function Reports() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-2 mb-3">
           <select value={customerFilter} onChange={(e)=>setCustomerFilter(e.target.value)} className={`px-3 py-2 border ${isDarkMode ? 'border-gray-700 bg-gray-700 text-gray-100' : 'border-gray-300'} rounded-lg`}>
             <option value="all">All Customers</option>
-            {data.customers.map(c=> <option key={c.id} value={c.id}>{c.name}</option>)}
+            {customers.map(c=> <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
           <select value={paymentFilter} onChange={(e)=>setPaymentFilter(e.target.value)} className={`px-3 py-2 border ${isDarkMode ? 'border-gray-700 bg-gray-700 text-gray-100' : 'border-gray-300'} rounded-lg`}>
             <option value="all">All Methods</option>
@@ -1206,19 +1214,19 @@ export default function Reports() {
           <Filter className={`h-5 w-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
           <select value={categoryFilter} onChange={(e)=>setCategoryFilter(e.target.value)} className={`px-3 py-1 border ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-100' : 'border-gray-300 bg-white text-gray-900'} rounded-lg`}>
             <option value="all">All Categories</option>
-            {[...new Set(data.products.map(p => p.category || 'Uncategorized'))].map((c,i)=> (
+            {[...new Set(products.map(p => p.category || 'Uncategorized'))].map((c,i)=> (
               <option key={i} value={c}>{c}</option>
             ))}
           </select>
           <select value={supplierFilter} onChange={(e)=>setSupplierFilter(e.target.value)} className={`px-3 py-1 border ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-100' : 'border-gray-300 bg-white text-gray-900'} rounded-lg`}>
             <option value="all">All Suppliers</option>
-            {data.suppliers.map(s=> (
+            {suppliers.map(s=> (
               <option key={s.id} value={s.id}>{s.name}</option>
             ))}
           </select>
           <select value={customerFilter} onChange={(e)=>setCustomerFilter(e.target.value)} className={`px-3 py-1 border ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-100' : 'border-gray-300 bg-white text-gray-900'} rounded-lg`}>
             <option value="all">All Customers</option>
-            {data.customers.map(c=> (
+            {customers.map(c=> (
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}
           </select>
