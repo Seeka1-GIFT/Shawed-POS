@@ -100,6 +100,22 @@ export function RealDataProvider({ children }) {
     }
     return apiCall('fetch', 'sales', apiService.getSales);
   };
+
+  const fetchExpenses = () => {
+    if (!apiService) {
+      console.error('API service is not available');
+      return Promise.resolve([]);
+    }
+    return apiCall('fetch', 'expenses', apiService.getExpenses);
+  };
+
+  const fetchSuppliers = () => {
+    if (!apiService) {
+      console.error('API service is not available');
+      return Promise.resolve([]);
+    }
+    return apiCall('fetch', 'suppliers', apiService.getSuppliers);
+  };
   const fetchDashboardStats = () => apiCall('fetch', 'dashboard', () => Promise.resolve({ data: {} }));
 
   // CRUD Operations
@@ -155,14 +171,14 @@ export function RealDataProvider({ children }) {
     return apiCall('add', 'sales', () => apiService.createSale(saleData, data.token), saleData);
   };
 
-  // Load initial data when component mounts
+  // Load initial data when component mounts (only public endpoints)
   useEffect(() => {
     const loadInitialData = async () => {
       try {
+        // Only load public endpoints initially
         await Promise.all([
           fetchProducts(),
-          fetchCustomers(),
-          fetchSales()
+          fetchCustomers()
         ]);
       } catch (error) {
         console.error('Failed to load initial data:', error);
@@ -170,6 +186,26 @@ export function RealDataProvider({ children }) {
     };
 
     loadInitialData();
+  }, []);
+
+  // Load protected data when user is authenticated
+  useEffect(() => {
+    const loadProtectedData = async () => {
+      const token = localStorage.getItem('authToken');
+      if (token) {
+        try {
+          await Promise.all([
+            fetchSales(),
+            fetchExpenses(),
+            fetchSuppliers()
+          ]);
+        } catch (error) {
+          console.error('Failed to load protected data:', error);
+        }
+      }
+    };
+
+    loadProtectedData();
   }, []);
 
   // Get computed statistics
@@ -327,6 +363,8 @@ export function RealDataProvider({ children }) {
     fetchProducts,
     fetchCustomers,
     fetchSales,
+    fetchExpenses,
+    fetchSuppliers,
     fetchDashboardStats,
     
     // CRUD Operations
