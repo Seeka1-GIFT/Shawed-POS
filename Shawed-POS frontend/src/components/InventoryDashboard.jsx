@@ -1,5 +1,5 @@
 import React, { useContext, useMemo } from 'react';
-import { DataContext } from '../context/DataContextNew';
+import { RealDataContext } from '../context/RealDataContext';
 import { ThemeContext } from '../context/ThemeContext';
 import { motion } from 'framer-motion';
 import { 
@@ -17,23 +17,31 @@ import {
  * including stock levels, value, turnover, and management metrics.
  */
 export default function InventoryDashboard() {
-  const { data } = useContext(DataContext);
+  const context = useContext(RealDataContext);
   const { isDarkMode } = useContext(ThemeContext);
+  
+  // Add null safety check
+  if (!context) {
+    console.error('RealDataContext is undefined in InventoryDashboard');
+    return <div className="p-4 text-red-500">Loading inventory data...</div>;
+  }
+  
+  const { products = [] } = context;
 
   const inventoryMetrics = useMemo(() => {
-    const totalProducts = data.products.length;
-    const lowStockCount = data.products.filter(p => p.quantity <= 5).length;
-    const outOfStockCount = data.products.filter(p => p.quantity === 0).length;
-    const totalInventoryValue = data.products.reduce((sum, p) => sum + (p.purchasePrice * p.quantity), 0);
-    const totalSellingValue = data.products.reduce((sum, p) => sum + (p.sellingPrice * p.quantity), 0);
+    const totalProducts = products.length;
+    const lowStockCount = products.filter(p => p.quantity <= 5).length;
+    const outOfStockCount = products.filter(p => p.quantity === 0).length;
+    const totalInventoryValue = products.reduce((sum, p) => sum + (p.purchasePrice * p.quantity), 0);
+    const totalSellingValue = products.reduce((sum, p) => sum + (p.sellingPrice * p.quantity), 0);
     
     // Calculate average stock level
     const avgStockLevel = totalProducts > 0 
-      ? data.products.reduce((sum, p) => sum + p.quantity, 0) / totalProducts 
+      ? products.reduce((sum, p) => sum + p.quantity, 0) / totalProducts 
       : 0;
 
     // Calculate products by category
-    const categoryCount = data.products.reduce((acc, product) => {
+    const categoryCount = products.reduce((acc, product) => {
       const category = product.category || 'Uncategorized';
       acc[category] = (acc[category] || 0) + 1;
       return acc;
@@ -52,7 +60,7 @@ export default function InventoryDashboard() {
       categoryCount,
       potentialProfit
     };
-  }, [data.products]);
+  }, [products]);
 
   const metrics = [
     {

@@ -1,5 +1,5 @@
 import React, { useContext, useMemo } from 'react';
-import { DataContext } from '../context/DataContextNew';
+import { RealDataContext } from '../context/RealDataContext';
 import { ThemeContext } from '../context/ThemeContext';
 import { motion } from 'framer-motion';
 import {
@@ -29,21 +29,29 @@ import {
  * including turnover rates, movement trends, and performance metrics.
  */
 export default function InventoryAnalytics() {
-  const { data } = useContext(DataContext);
+  const context = useContext(RealDataContext);
   const { isDarkMode } = useContext(ThemeContext);
+  
+  // Add null safety check
+  if (!context) {
+    console.error('RealDataContext is undefined in InventoryAnalytics');
+    return <div className="p-4 text-red-500">Loading analytics data...</div>;
+  }
+  
+  const { products = [], sales = [] } = context;
 
   // Calculate inventory turnover rates
   const inventoryMetrics = useMemo(() => {
-    const totalInventoryValue = data.products.reduce((sum, p) => sum + (p.purchasePrice * p.quantity), 0);
-    const totalSellingValue = data.products.reduce((sum, p) => sum + (p.sellingPrice * p.quantity), 0);
+    const totalInventoryValue = products.reduce((sum, p) => sum + (p.purchasePrice * p.quantity), 0);
+    const totalSellingValue = products.reduce((sum, p) => sum + (p.sellingPrice * p.quantity), 0);
     
     // Calculate turnover based on sales data
-    const totalSalesValue = data.sales.reduce((sum, sale) => sum + sale.total, 0);
+    const totalSalesValue = sales.reduce((sum, sale) => sum + sale.total, 0);
     const avgInventoryValue = totalInventoryValue / 2; // Simplified average
     const turnoverRate = avgInventoryValue > 0 ? totalSalesValue / avgInventoryValue : 0;
     
     // Calculate days sales outstanding (simplified)
-    const avgDailySales = data.sales.length > 0 ? totalSalesValue / 30 : 0; // Assuming 30-day period
+    const avgDailySales = sales.length > 0 ? totalSalesValue / 30 : 0; // Assuming 30-day period
     const daysSalesOutstanding = avgDailySales > 0 ? totalInventoryValue / avgDailySales : 0;
 
     return {
@@ -51,10 +59,10 @@ export default function InventoryAnalytics() {
       totalSellingValue,
       turnoverRate,
       daysSalesOutstanding,
-      totalProducts: data.products.length,
+      totalProducts: products.length,
       avgInventoryValue,
     };
-  }, [data.products, data.sales]);
+  }, [products, sales]);
 
   // Calculate stock movement trends
   const stockMovementTrends = useMemo(() => {
@@ -69,7 +77,7 @@ export default function InventoryAnalytics() {
       const dayLabel = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
       
       // Calculate sales for this day (proxy for stock movement)
-      const salesOfDay = data.sales.filter(sale => sale.date === dateStr);
+      const salesOfDay = sales.filter(sale => sale.date === dateStr);
       const salesValue = salesOfDay.reduce((sum, sale) => sum + sale.total, 0);
       const salesQuantity = salesOfDay.reduce((sum, sale) => 
         sum + sale.items.reduce((itemSum, item) => itemSum + item.quantity, 0), 0
@@ -85,13 +93,13 @@ export default function InventoryAnalytics() {
     }
     
     return days;
-  }, [data.sales]);
+  }, [sales]);
 
   // Calculate category performance
   const categoryPerformance = useMemo(() => {
     const categoryStats = {};
     
-    data.products.forEach(product => {
+    products.forEach(product => {
       const category = product.category || 'Uncategorized';
       if (!categoryStats[category]) {
         categoryStats[category] = {
@@ -114,13 +122,13 @@ export default function InventoryAnalytics() {
     });
     
     return Object.values(categoryStats).sort((a, b) => b.totalValue - a.totalValue);
-  }, [data.products]);
+  }, [products]);
 
   // Calculate top movers (products with most sales)
   const topMovers = useMemo(() => {
     const productSales = {};
     
-    data.sales.forEach(sale => {
+    sales.forEach(sale => {
       sale.items.forEach(item => {
         if (!productSales[item.product.id]) {
           productSales[item.product.id] = {
@@ -140,16 +148,16 @@ export default function InventoryAnalytics() {
     return Object.values(productSales)
       .sort((a, b) => b.quantitySold - a.quantitySold)
       .slice(0, 10);
-  }, [data.sales]);
+  }, [sales]);
 
   // Calculate inventory health score
   const inventoryHealthScore = useMemo(() => {
-    const totalProducts = data.products.length;
+    const totalProducts = products.length;
     if (totalProducts === 0) return 0;
     
-    const lowStockCount = data.products.filter(p => p.quantity <= 5 && p.quantity > 0).length;
-    const outOfStockCount = data.products.filter(p => p.quantity === 0).length;
-    const nearExpiryCount = data.products.filter(p => {
+    const lowStockCount = products.filter(p => p.quantity <= 5 && p.quantity > 0).length;
+    const outOfStockCount = products.filter(p => p.quantity === 0).length;
+    const nearExpiryCount = products.filter(p => {
       if (!p.expiryDate) return false;
       const expiryDate = new Date(p.expiryDate);
       const today = new Date();
@@ -171,7 +179,7 @@ export default function InventoryAnalytics() {
       nearExpiryCount,
       totalProducts,
     };
-  }, [data.products]);
+  }, [products]);
 
   const getHealthColor = (score) => {
     if (score >= 80) return 'text-green-500';

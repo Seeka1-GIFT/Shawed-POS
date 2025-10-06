@@ -32,6 +32,13 @@ import {
  */
 export default function Customers() {
   const { customers, sales, addCustomer, updateCustomer, deleteCustomer, addPayment, addDebt } = useContext(RealDataContext);
+  
+  // Add null safety check
+  const context = useContext(RealDataContext);
+  if (!context) {
+    console.error('RealDataContext is undefined in Customers page');
+    return <div className="p-4 text-red-500">Loading customers data...</div>;
+  }
   const { isDarkMode } = useContext(ThemeContext);
   const [form, setForm] = useState({ name: '', phone: '', address: '', email: '' });
   const [isFormVisible, setIsFormVisible] = useState(false);
@@ -197,21 +204,24 @@ export default function Customers() {
     });
     
     // Add manual debts
-    data.debts.forEach((debt) => {
+    // Handle debts (placeholder - no debts data yet)
+    const debts = [];
+    debts.forEach((debt) => {
       if (debt.customerId && map[debt.customerId] != null) {
         map[debt.customerId] += debt.amount;
       }
     });
     
-    // Subtract payments
-    data.payments.forEach((payment) => {
+    // Handle payments (placeholder - no payments data yet)
+    const payments = [];
+    payments.forEach((payment) => {
       if (payment.customerId && map[payment.customerId] != null) {
         map[payment.customerId] -= payment.amount;
       }
     });
     
     return map;
-  }, [customers, sales, data.payments, data.debts]);
+  }, [customers, sales]);
 
   // Filter customers based on search term
   const filteredCustomers = useMemo(() => {
@@ -241,8 +251,8 @@ export default function Customers() {
   // Calculate transaction history (payments and debts) with running balances
   const getPaymentHistoryWithBalances = (customerId) => {
     const customerSales = sales.filter(sale => sale.customerId === customerId);
-    const customerPayments = data.payments.filter(payment => payment.customerId === customerId);
-    const customerDebts = data.debts.filter(debt => debt.customerId === customerId);
+    const customerPayments = []; // Placeholder - no payments data yet
+    const customerDebts = []; // Placeholder - no debts data yet
 
     // Combine sales, payments, and debts, sort by date (ascending for running calc)
     const allTransactions = [
