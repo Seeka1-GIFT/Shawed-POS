@@ -78,8 +78,7 @@ export default function App() {
       <div className="flex flex-col flex-1 lg:ml-0">
         <Header onMenuClick={() => setSidebarOpen(true)} isDarkMode={isDarkMode} />
         <main className={`flex-1 overflow-y-auto p-2 sm:p-4 ${isDarkMode ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900' : 'bg-gradient-to-br from-slate-50 via-slate-100 to-slate-50'}`}>
-          <RealDataProvider>
-            <BusinessProvider>
+          <BusinessProvider>
               <AnimatePresence mode="wait">
                 <Suspense fallback={
                   <div className="flex items-center justify-center h-64">
@@ -109,8 +108,7 @@ export default function App() {
                   </Routes>
                 </Suspense>
               </AnimatePresence>
-            </BusinessProvider>
-          </RealDataProvider>
+          </BusinessProvider>
         </main>
       </div>
     </div>
