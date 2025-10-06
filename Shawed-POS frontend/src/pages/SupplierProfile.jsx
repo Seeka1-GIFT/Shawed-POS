@@ -7,12 +7,20 @@ import { ResponsiveContainer, LineChart, Line, CartesianGrid, XAxis, YAxis, Tool
 
 export default function SupplierProfile() {
   const { id } = useParams();
-  const { data, updateSupplier } = useContext(DataContext);
+  const context = useContext(RealDataContext);
   const { isDarkMode } = useContext(ThemeContext);
+  
+  // Add null safety check
+  if (!context) {
+    console.error('RealDataContext is undefined in SupplierProfile page');
+    return <div className="p-4 text-red-500">Loading supplier data...</div>;
+  }
+  
+  const { suppliers = [], purchaseOrders = [], updateSupplier } = context;
 
-  const supplier = data.suppliers.find(s => s.id === id);
+  const supplier = suppliers.find(s => s.id === id);
   const [attachments, setAttachments] = useState(supplier?.attachments || []);
-  const orders = useMemo(()=> data.purchaseOrders.filter(o => o.supplierId === id), [data.purchaseOrders, id]);
+  const orders = useMemo(()=> purchaseOrders.filter(o => o.supplierId === id), [purchaseOrders, id]);
 
   const totals = useMemo(()=> {
     const total = orders.reduce((sum,o)=> sum + (o.totalAmount||0), 0);

@@ -1,5 +1,5 @@
 import React, { useContext, useState, useMemo } from 'react';
-import { DataContext } from '../context/DataContextNew';
+import { RealDataContext } from '../context/RealDataContext';
 import { ThemeContext } from '../context/ThemeContext';
 import Receipt from '../components/Receipt';
 import { motion } from 'framer-motion';
@@ -33,11 +33,18 @@ import {
  * advanced analytics, filtering, and receipt management capabilities.
  */
 export default function ReceiptHistory() {
-  const { data } = useContext(DataContext);
+  const context = useContext(RealDataContext);
+  
+  // Add null safety check
+  if (!context) {
+    console.error('RealDataContext is undefined in ReceiptHistory page');
+    return <div className="p-4 text-red-500">Loading receipt history data...</div>;
+  }
+  
+  const { sales = [] } = context;
   const { isDarkMode } = useContext(ThemeContext);
   
-  // Ensure data exists with default values
-  const safeData = data || { sales: [] };
+  // Use sales data directly
   
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSale, setSelectedSale] = useState(null);
@@ -48,7 +55,7 @@ export default function ReceiptHistory() {
 
   // Filter and sort sales
   const filteredSales = useMemo(() => {
-    const sales = safeData.sales || [];
+    const sales = sales || [];
     const today = new Date();
     const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
     const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
@@ -92,11 +99,11 @@ export default function ReceiptHistory() {
       default:
         return filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
     }
-  }, [safeData.sales, searchQuery, filterBy, sortBy]);
+  }, [sales, searchQuery, filterBy, sortBy]);
 
   // Analytics data
   const analyticsData = useMemo(() => {
-    const sales = safeData.sales || [];
+    const sales = sales || [];
     const days = [];
     const now = new Date();
     
@@ -122,11 +129,11 @@ export default function ReceiptHistory() {
     }
     
     return days;
-  }, [safeData.sales]);
+  }, [sales]);
 
   // Payment method breakdown
   const paymentBreakdown = useMemo(() => {
-    const sales = safeData.sales || [];
+    const sales = sales || [];
     const breakdown = {};
     
     sales.forEach(sale => {
@@ -141,11 +148,11 @@ export default function ReceiptHistory() {
     
     return Object.entries(breakdown).map(([method, data]) => ({
       method,
-      count: data.count,
-      total: data.total,
-      percentage: totalSalesValue > 0 ? (data.total / totalSalesValue) * 100 : 0,
+      count: sales.length,
+      total: totalSalesValue,
+      percentage: 100,
     }));
-  }, [safeData.sales]);
+  }, [sales]);
 
   const handleViewReceipt = (sale) => {
     setSelectedSale(sale);
@@ -324,12 +331,12 @@ export default function ReceiptHistory() {
         <div className="text-center py-8">
           <ReceiptIcon className={`h-12 w-12 mx-auto mb-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
           <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} mb-2`}>
-            {safeData.sales.length === 0 
+            {sales.length === 0 
               ? "No receipts found. Complete some sales to see them here."
               : "No receipts found matching your criteria."
             }
           </p>
-          {safeData.sales.length === 0 && (
+          {sales.length === 0 && (
             <p className={`text-sm ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
               Go to the Sales page to make your first sale!
             </p>
