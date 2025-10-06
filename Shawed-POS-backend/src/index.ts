@@ -30,8 +30,15 @@ export const prisma = new PrismaClient();
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
-  credentials: true
+  origin: [
+    'http://localhost:5173',
+    'https://shawed-pos.vercel.app',
+    'https://shawed-pos-git-main-shaweds-projects.vercel.app',
+    'https://shawed-4k9swnoqs-shaweds-projects.vercel.app'
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
 }));
 app.use(morgan('combined'));
 app.use(express.json({ limit: '10mb' }));
@@ -43,7 +50,18 @@ app.get('/health', (req, res) => {
     status: 'OK',
     message: 'Shawed-POS Backend API is running',
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
+    environment: process.env.NODE_ENV || 'development',
+    cors: 'Configured for Vercel deployment'
+  });
+});
+
+// API status endpoint for frontend
+app.get('/api/status', (req, res) => {
+  res.status(200).json({
+    status: 'OK',
+    message: 'API is accessible',
+    timestamp: new Date().toISOString(),
+    version: '1.0.0'
   });
 });
 
