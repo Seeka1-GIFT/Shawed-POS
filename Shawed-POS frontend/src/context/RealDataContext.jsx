@@ -137,8 +137,8 @@ export function RealDataProvider({ children }) {
       console.error('API service is not available');
       return Promise.resolve([]);
     }
-    const token = localStorage.getItem('authToken');
-    return apiCall('fetch', 'sales', () => apiService.getSales(token));
+    // Sales route is public, no token needed
+    return apiCall('fetch', 'sales', () => apiService.request('/sales'));
   };
 
   const fetchExpenses = () => {
@@ -146,8 +146,8 @@ export function RealDataProvider({ children }) {
       console.error('API service is not available');
       return Promise.resolve([]);
     }
-    const token = localStorage.getItem('authToken');
-    return apiCall('fetch', 'expenses', () => apiService.getExpenses(token));
+    // Expenses route is public, no token needed
+    return apiCall('fetch', 'expenses', () => apiService.request('/expenses'));
   };
 
   const fetchSuppliers = () => {
@@ -155,8 +155,8 @@ export function RealDataProvider({ children }) {
       console.error('API service is not available');
       return Promise.resolve([]);
     }
-    const token = localStorage.getItem('authToken');
-    return apiCall('fetch', 'suppliers', () => apiService.getSuppliers(token));
+    // Suppliers route is public, no token needed
+    return apiCall('fetch', 'suppliers', () => apiService.request('/suppliers'));
   };
   const fetchDashboardStats = () => {
     if (!apiService) {
