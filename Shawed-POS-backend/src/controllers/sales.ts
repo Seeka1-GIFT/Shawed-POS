@@ -5,8 +5,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../index';
-import asyncHandler from 'express-async-handler';
-import { AuthenticatedRequest } from '../middleware/auth';
+import { asyncHandler } from '../middleware/errorHandler';
 
 // Get all sales
 export const getSales = asyncHandler(async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -140,7 +139,7 @@ export const getSale = asyncHandler(async (req: Request, res: Response, next: Ne
 });
 
 // Create new sale
-export const createSale = asyncHandler(async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+export const createSale = asyncHandler(async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   console.log('🛒 CREATE SALE: Starting sale creation process');
   console.log('📥 Request body:', JSON.stringify(req.body, null, 2));
   
