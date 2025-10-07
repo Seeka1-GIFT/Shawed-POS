@@ -15,6 +15,18 @@ import { Plus, Edit2, Trash2, Package, ChevronDown, ChevronUp, Camera, Download,
 export default function Products() {
   const { products, suppliers, addProduct, updateProduct, deleteProduct } = useContext(RealDataContext);
   const { isDarkMode } = useContext(ThemeContext);
+  const asNumber = (v) => {
+    if (v === null || v === undefined || v === '') return 0;
+    const n = typeof v === 'string' ? parseFloat(v) : Number(v);
+    return Number.isFinite(n) ? n : 0;
+  };
+  const getBuy = (p) => asNumber(p.buyPrice ?? p.purchasePrice ?? p.buy_price);
+  const getSell = (p) => asNumber(p.sellPrice ?? p.sellingPrice ?? p.sell_price);
+  const getMargin = (p) => {
+    const b = getBuy(p);
+    const s = getSell(p);
+    return b > 0 ? ((s - b) / b) * 100 : 0;
+  };
   const [form, setForm] = useState({
     id: '',
     name: '',
@@ -71,7 +83,7 @@ export default function Products() {
     setEditing(false);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     // Validate required fields
@@ -83,8 +95,13 @@ export default function Products() {
     const buyPrice = parseFloat(form.purchasePrice);
     const sellPrice = parseFloat(form.sellingPrice);
     
-    if (!buyPrice || !sellPrice || buyPrice <= 0 || sellPrice <= 0) {
-      alert('Valid buy and sell prices are required (must be greater than 0)');
+    if (isNaN(buyPrice) || isNaN(sellPrice) || buyPrice <= 0 || sellPrice <= 0) {
+      alert('Valid buy and sell prices are required (must be numbers greater than 0)');
+      return;
+    }
+    
+    if (sellPrice < buyPrice) {
+      alert('Selling price should not be less than purchase price');
       return;
     }
     
@@ -94,6 +111,8 @@ export default function Products() {
       quantity: parseInt(form.quantity) || 0,
       buyPrice: buyPrice,
       sellPrice: sellPrice,
+      purchasePrice: buyPrice, // Keep both for backward compatibility
+      sellingPrice: sellPrice, // Keep both for backward compatibility
       supplierName: supplierMap[form.supplierId] || 'Unknown Supplier',
       createdAt: editing ? form.createdAt : new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -101,14 +120,24 @@ export default function Products() {
 
     try {
       if (editing) {
-        updateProduct(form.id, productData);
+        const result = await updateProduct(form.id, productData);
+        if (!result.success) {
+          alert(`Failed to update product: ${result.message}`);
+          return;
+        }
       } else {
-        addProduct(productData);
+        const result = await addProduct(productData);
+        if (!result.success) {
+          alert(`Failed to add product: ${result.message}`);
+          return;
+        }
       }
+      
       resetForm();
       setIsFormExpanded(false);
       alert('Product ' + (editing ? 'updated' : 'added') + ' successfully');
     } catch (error) {
+      console.error('Error submitting product:', error);
       alert('Error: ' + error.message);
     }
   };
@@ -117,17 +146,26 @@ export default function Products() {
     setForm({
       ...product,
       quantity: product.quantity.toString(),
-      purchasePrice: product.purchasePrice.toString(),
-      sellingPrice: product.sellingPrice.toString()
+      purchasePrice: (product.buyPrice || product.purchasePrice || 0).toString(),
+      sellingPrice: (product.sellPrice || product.sellingPrice || 0).toString()
     });
     setEditing(true);
     setIsFormExpanded(true);
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
-      deleteProduct(id);
-      alert('Product deleted successfully');
+      try {
+        const result = await deleteProduct(id);
+        if (!result.success) {
+          alert(`Failed to delete product: ${result.message}`);
+        } else {
+          alert('Product deleted successfully');
+        }
+      } catch (error) {
+        console.error('Error deleting product:', error);
+        alert('Error: ' + error.message);
+      }
     }
   };
 
@@ -201,9 +239,13 @@ export default function Products() {
         p.barcode || '',
         p.supplierName || '',
         p.quantity,
-        p.purchasePrice,
-        p.sellingPrice,
-        ((p.sellingPrice - p.purchasePrice) / p.purchasePrice * 100).toFixed(1),
+        p.buyPrice || p.purchasePrice || 0,
+        p.sellPrice || p.sellingPrice || 0,
+        (() => {
+          const buyPrice = parseFloat(p.buyPrice || p.purchasePrice || 0);
+          const sellPrice = parseFloat(p.sellPrice || p.sellingPrice || 0);
+          return buyPrice > 0 ? ((sellPrice - buyPrice) / buyPrice * 100).toFixed(1) : '0.0';
+        })(),
         p.expiryDate || ''
       ].join(','))
     ].join('\n');
@@ -229,9 +271,13 @@ export default function Products() {
           p.barcode || '',
           p.supplierName || '',
           p.quantity,
-          p.purchasePrice,
-          p.sellingPrice,
-          ((p.sellingPrice - p.purchasePrice) / p.purchasePrice * 100).toFixed(1),
+          p.buyPrice || p.purchasePrice || 0,
+          p.sellPrice || p.sellingPrice || 0,
+          (() => {
+            const buyPrice = parseFloat(p.buyPrice || p.purchasePrice || 0);
+            const sellPrice = parseFloat(p.sellPrice || p.sellingPrice || 0);
+            return buyPrice > 0 ? ((sellPrice - buyPrice) / buyPrice * 100).toFixed(1) : '0.0';
+          })(),
           p.expiryDate || ''
         ])
       ];
@@ -298,9 +344,13 @@ export default function Products() {
             <td>${p.category || '-'}</td>
             <td>${p.supplierName || '-'}</td>
             <td>${p.quantity}</td>
-            <td>$${p.purchasePrice}</td>
-            <td>$${p.sellingPrice}</td>
-            <td>${((p.sellingPrice - p.purchasePrice) / p.purchasePrice * 100).toFixed(1)}%</td>
+            <td>$${(p.buyPrice || p.purchasePrice || 0).toFixed(2)}</td>
+            <td>$${(p.sellPrice || p.sellingPrice || 0).toFixed(2)}</td>
+            <td>${(() => {
+              const buyPrice = parseFloat(p.buyPrice || p.purchasePrice || 0);
+              const sellPrice = parseFloat(p.sellPrice || p.sellingPrice || 0);
+              return buyPrice > 0 ? ((sellPrice - buyPrice) / buyPrice * 100).toFixed(1) : '0.0';
+            })()}%</td>
           </tr>
         `).join('')}
       </table>
@@ -321,7 +371,7 @@ export default function Products() {
       <div style="width:180px; height:120px; border:1px solid #ccc; padding:5px; margin:5px; float:left; text-align:center; font-size:10px;">
         <b>${p.name}</b><br/>
         ${p.category || ''}<br/>
-        Price: $${p.sellingPrice}<br/>
+        Price: $${(p.sellPrice || p.sellingPrice || 0).toFixed(2)}<br/>
         ${p.barcode ? `Code: ${p.barcode}` : ''}
       </div>
     `).join('');
@@ -334,6 +384,148 @@ export default function Products() {
       </html>
     `);
     printWindow.document.close();
+  };
+
+  const addSampleData = async () => {
+    const sampleProducts = [
+      {
+        name: 'Copper Plus',
+        category: 'Electronics',
+        barcode: '037551000340',
+        quantity: 29,
+        buyPrice: 15.50,
+        sellPrice: 25.99,
+        purchasePrice: 15.50,
+        sellingPrice: 25.99,
+        expiryDate: '2026-06-29',
+        supplierName: 'Tech Supplies Co.',
+        lowStockThreshold: 5
+      },
+      {
+        name: 'Smartphone Case',
+        category: 'Electronics',
+        barcode: '123456789012',
+        quantity: 45,
+        buyPrice: 8.00,
+        sellPrice: 15.99,
+        purchasePrice: 8.00,
+        sellingPrice: 15.99,
+        expiryDate: '',
+        supplierName: 'Mobile Accessories Ltd.',
+        lowStockThreshold: 10
+      },
+      {
+        name: 'Wireless Headphones',
+        category: 'Electronics',
+        barcode: '987654321098',
+        quantity: 12,
+        buyPrice: 45.00,
+        sellPrice: 79.99,
+        purchasePrice: 45.00,
+        sellingPrice: 79.99,
+        expiryDate: '2025-12-31',
+        supplierName: 'Audio Solutions Inc.',
+        lowStockThreshold: 5
+      },
+      {
+        name: 'USB Cable',
+        category: 'Electronics',
+        barcode: '555666777888',
+        quantity: 67,
+        buyPrice: 3.50,
+        sellPrice: 7.99,
+        purchasePrice: 3.50,
+        sellingPrice: 7.99,
+        expiryDate: '',
+        supplierName: 'Cable World',
+        lowStockThreshold: 15
+      },
+      {
+        name: 'Power Bank',
+        category: 'Electronics',
+        barcode: '111222333444',
+        quantity: 8,
+        buyPrice: 20.00,
+        sellPrice: 35.99,
+        purchasePrice: 20.00,
+        sellingPrice: 35.99,
+        expiryDate: '2025-08-15',
+        supplierName: 'Power Solutions',
+        lowStockThreshold: 5
+      }
+    ];
+
+    try {
+      for (const product of sampleProducts) {
+        await addProduct({
+          ...product,
+          id: `sample-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        });
+      }
+      alert('Sample products added successfully!');
+    } catch (error) {
+      console.error('Error adding sample data:', error);
+      alert('Error adding sample data: ' + error.message);
+    }
+  };
+
+  const fixExistingData = async () => {
+    try {
+      // Find products with empty or zero prices and update them
+      const productsToFix = products.filter(product => {
+        const buyPrice = parseFloat(product.buyPrice || product.purchasePrice || 0);
+        const sellPrice = parseFloat(product.sellPrice || product.sellingPrice || 0);
+        return buyPrice === 0 || sellPrice === 0 || isNaN(buyPrice) || isNaN(sellPrice);
+      });
+
+      if (productsToFix.length === 0) {
+        alert('No products need fixing - all products have valid prices!');
+        return;
+      }
+
+      let fixedCount = 0;
+      for (const product of productsToFix) {
+        // Set default prices based on product name or category
+        let defaultBuyPrice = 10.00;
+        let defaultSellPrice = 18.99;
+
+        if (product.name.toLowerCase().includes('copper')) {
+          defaultBuyPrice = 15.50;
+          defaultSellPrice = 25.99;
+        } else if (product.name.toLowerCase().includes('phone') || product.name.toLowerCase().includes('case')) {
+          defaultBuyPrice = 8.00;
+          defaultSellPrice = 15.99;
+        } else if (product.name.toLowerCase().includes('headphone') || product.name.toLowerCase().includes('audio')) {
+          defaultBuyPrice = 45.00;
+          defaultSellPrice = 79.99;
+        } else if (product.name.toLowerCase().includes('cable') || product.name.toLowerCase().includes('usb')) {
+          defaultBuyPrice = 3.50;
+          defaultSellPrice = 7.99;
+        } else if (product.name.toLowerCase().includes('power') || product.name.toLowerCase().includes('battery')) {
+          defaultBuyPrice = 20.00;
+          defaultSellPrice = 35.99;
+        }
+
+        const updatedProduct = {
+          ...product,
+          buyPrice: defaultBuyPrice,
+          sellPrice: defaultSellPrice,
+          purchasePrice: defaultBuyPrice,
+          sellingPrice: defaultSellPrice,
+          updatedAt: new Date().toISOString()
+        };
+
+        await updateProduct(product.id, updatedProduct);
+        fixedCount++;
+      }
+
+      alert(`Fixed ${fixedCount} products with invalid prices!`);
+    } catch (error) {
+      console.error('Error fixing existing data:', error);
+      alert('Error fixing existing data: ' + error.message);
+    }
   };
 
   return (
@@ -395,6 +587,8 @@ export default function Products() {
               <button onClick={exportCSV} title="Export CSV" className={`px-3 py-2 rounded-lg flex items-center text-sm ${isDarkMode ? 'bg-blue-600 hover:bg-blue-700 text-white transition-colors' : 'bg-blue-500 hover:bg-blue-600 text-white transition-colors'}`}><Download className="h-4 w-4 mr-1"/>CSV</button>
               <button onClick={exportXLS} title="Export Excel" className={`px-3 py-2 rounded-lg flex items-center text-sm ${isDarkMode ? 'bg-green-600 hover:bg-green-700 text-white transition-colors' : 'bg-green-500 hover:bg-green-600 text-white transition-colors'}`}>XLS</button>
               <button onClick={()=> fileInputRef.current?.click()} title="Import CSV" className={`px-3 py-2 rounded-lg flex items-center text-sm ${isDarkMode ? 'bg-gray-600 hover:bg-gray-700 text-white transition-colors' : 'bg-gray-500 hover:bg-gray-600 text-white transition-colors'}`}><Upload className="h-4 w-4"/></button>
+              <button onClick={addSampleData} title="Add Sample Data" className={`px-3 py-2 rounded-lg flex items-center text-sm ${isDarkMode ? 'bg-purple-600 hover:bg-purple-700 text-white transition-colors' : 'bg-purple-500 hover:bg-purple-600 text-white transition-colors'}`}>Sample</button>
+              <button onClick={fixExistingData} title="Fix Existing Data" className={`px-3 py-2 rounded-lg flex items-center text-sm ${isDarkMode ? 'bg-orange-600 hover:bg-orange-700 text-white transition-colors' : 'bg-orange-500 hover:bg-orange-600 text-white transition-colors'}`}>Fix</button>
               <input ref={fileInputRef} type="file" accept=".csv" onChange={importCSV} className="hidden" />
             </div>
           </div>
@@ -475,10 +669,14 @@ export default function Products() {
                           <td className={`py-2 px-4 text-center ${product.quantity <= (product.lowStockThreshold || 5) ? 'text-red-500 font-semibold' : product.quantity <= 20 ? 'text-yellow-500' : 'text-green-500'}`}>
                             {product.quantity}
                           </td>
-                          <td className={`py-2 px-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>${product.purchasePrice}</td>
-                          <td className={`py-2 px-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>${product.sellingPrice}</td>
+                          <td className={`py-2 px-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                            {`$${getBuy(product).toFixed(2)}`}
+                          </td>
+                          <td className={`py-2 px-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                            {`$${getSell(product).toFixed(2)}`}
+                          </td>
                           <td className={`py-2 px-4 ${isDarkMode ? 'text-green-400' : 'text-green-600'} font-semibold`}>
-                            {((product.sellingPrice - product.purchasePrice) / product.purchasePrice * 100).toFixed(1)}%
+                            {getMargin(product).toFixed(1)}%
                           </td>
                           <td className={`py-2 px-4 truncate whitespace-nowrap ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                             {product.expiryDate ? new Date(product.expiryDate).toLocaleDateString() : '-'}
@@ -534,7 +732,7 @@ export default function Products() {
                             <div>Category: {product.category || 'No Category'}</div>
                             <div className="flex gap-4">
                               <span>Qty: <span className={`font-semibold ${product.quantity <= (product.lowStockThreshold || 5) ? 'text-red-500' : 'text-green-500'}`}>{product.quantity}</span></span>
-                              <span>Sell: <span className="font-semibold">${product.sellingPrice}</span></span>
+                              <span>Sell: <span className="font-semibold">{`$${getSell(product).toFixed(2)}`}</span></span>
                             </div>
                             <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Supplier: {product.supplierName}</div>
                           </div>
@@ -664,8 +862,15 @@ export default function Products() {
                       label="Purchase Price ($)"
                   type="number"
                   step="0.01"
+                  min="0"
                   value={form.purchasePrice}
-                      onChange={(e) => setForm({ ...form, purchasePrice: e.target.value })}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        // Allow only numbers and one decimal point
+                        if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                          setForm({ ...form, purchasePrice: value });
+                        }
+                      }}
                   required
                 />
                     
@@ -673,8 +878,15 @@ export default function Products() {
                       label="Selling Price ($)"
                   type="number"
                   step="0.01"
+                  min="0"
                   value={form.sellingPrice}
-                      onChange={(e) => setForm({ ...form, sellingPrice: e.target.value })}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        // Allow only numbers and one decimal point
+                        if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                          setForm({ ...form, sellingPrice: value });
+                        }
+                      }}
                   required
                 />
                   </div>
