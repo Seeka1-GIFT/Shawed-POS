@@ -128,7 +128,7 @@ export const getSupplier = asyncHandler(async (req: Request, res: Response, next
   });
 });
 
-export const createSupplier = asyncHandler(async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const createSupplier = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     console.log('🔍 createSupplier called with body:', req.body);
     const { name, phone, address, email } = req.body;
@@ -187,7 +187,7 @@ export const createSupplier = asyncHandler(async (req: Request, res: Response, n
       details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
-});
+};
 
 export const updateSupplier = asyncHandler(async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   const { id } = req.params;

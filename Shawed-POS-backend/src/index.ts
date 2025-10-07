@@ -81,6 +81,16 @@ app.get('/', (req, res) => {
   });
 });
 
+// Test endpoint for debugging supplier creation
+app.post('/api/test-supplier', (req, res) => {
+  console.log('🧪 Test endpoint called with body:', req.body);
+  res.status(200).json({
+    success: true,
+    message: 'Test endpoint working',
+    receivedData: req.body
+  });
+});
+
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes); // Public for now - can be made protected later
