@@ -130,6 +130,12 @@ export default function Reports() {
     expensesSample: expenses.slice(0, 2),
     productsSample: products.slice(0, 2)
   });
+
+  // Safe numeric conversion helper
+  const safeToFixed = (value, decimals = 2) => {
+    const num = Number(value);
+    return isNaN(num) ? '0.00' : num.toFixed(decimals);
+  };
   const [selectedPeriod, setSelectedPeriod] = useState('7'); // days
   const [customRange, setCustomRange] = useState({ start: '', end: '' });
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -523,7 +529,7 @@ export default function Reports() {
   // Exports for sales transactions
   const exportSalesCSV = () => {
     const headers = ['Date','Sale ID','Customer','Payment Method','Subtotal','Discount','Total','Amount Paid','Balance','Status'];
-    const rows = salesTransactions.map(s=> [s.date, s.id, s.customerName, s.paymentMethod || '', (s.subtotal||0).toFixed(2), (s.discount||0).toFixed(2), (s.totalAmt||0).toFixed(2), (s.paid||0).toFixed(2), (s.balance||0).toFixed(2), s.status]);
+    const rows = salesTransactions.map(s=> [s.date, s.id, s.customerName, s.paymentMethod || '', safeToFixed(s.subtotal), safeToFixed(s.discount), safeToFixed(s.totalAmt), safeToFixed(s.paid), safeToFixed(s.balance), s.status]);
     const csv = [headers.join(','), ...rows.map(r => r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(','))].join('\n');
     const blob = new Blob([csv], { type:'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='sales-transactions.csv'; a.click(); URL.revokeObjectURL(url);
@@ -532,7 +538,7 @@ export default function Reports() {
   const exportSalesXLS = () => {
     const esc = (v) => String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     const headers = ['Date','Sale ID','Customer','Payment Method','Subtotal','Discount','Total','Amount Paid','Balance','Status'];
-    const xmlRows = salesTransactions.map(s => [s.date, s.id, s.customerName, s.paymentMethod||'', (s.subtotal||0).toFixed(2), (s.discount||0).toFixed(2), (s.totalAmt||0).toFixed(2), (s.paid||0).toFixed(2), (s.balance||0).toFixed(2), s.status]);
+    const xmlRows = salesTransactions.map(s => [s.date, s.id, s.customerName, s.paymentMethod||'', safeToFixed(s.subtotal), safeToFixed(s.discount), safeToFixed(s.totalAmt), safeToFixed(s.paid), safeToFixed(s.balance), s.status]);
     const xml = `<?xml version="1.0"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><Worksheet ss:Name="Sales"><Table><Row>${headers.map(h=>`<Cell><Data ss:Type="String">${esc(h)}</Data></Cell>`).join('')}</Row>${xmlRows.map(r=>`<Row>${r.map(c=>`<Cell><Data ss:Type="String">${esc(c)}</Data></Cell>`).join('')}</Row>`).join('')}</Table></Worksheet></Workbook>`;
     const blob = new Blob([xml], { type:'application/vnd.ms-excel' });
     const url = URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='sales-transactions.xls'; a.click(); URL.revokeObjectURL(url);
@@ -541,7 +547,7 @@ export default function Reports() {
   const printSales = () => {
     const headers = ['Date','Sale ID','Customer','Payment Method','Subtotal','Discount','Total','Amount Paid','Balance','Status'];
     const styles = `body{font-family:ui-sans-serif,system-ui;padding:16px} h1{font-size:18px;margin-bottom:8px} table{width:100%;border-collapse:collapse;margin-top:8px} th,td{padding:8px;border-bottom:1px solid #e5e7eb;text-align:left;font-size:12px} th{background:#f5f5f5}`;
-    const body = salesTransactions.map(s=> `<tr><td>${s.date}</td><td>${s.id}</td><td>${s.customerName}</td><td>${s.paymentMethod||''}</td><td>$${(s.subtotal||0).toFixed(2)}</td><td>$${(s.discount||0).toFixed(2)}</td><td>$${(s.totalAmt||0).toFixed(2)}</td><td>$${(s.paid||0).toFixed(2)}</td><td>$${(s.balance||0).toFixed(2)}</td><td>${s.status}</td></tr>`).join('');
+    const body = salesTransactions.map(s=> `<tr><td>${s.date}</td><td>${s.id}</td><td>${s.customerName}</td><td>${s.paymentMethod||''}</td><td>$${safeToFixed(s.subtotal)}</td><td>$${safeToFixed(s.discount)}</td><td>$${safeToFixed(s.totalAmt)}</td><td>$${safeToFixed(s.paid)}</td><td>$${safeToFixed(s.balance)}</td><td>${s.status}</td></tr>`).join('');
     const html = `<html><head><title>Sales Transactions</title><style>${styles}</style></head><body><h1>Sales Transactions</h1><table><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${body}</tbody></table></body></html>`;
     const w = window.open('', '_blank'); if(!w) return; w.document.write(html); w.document.close(); w.focus(); w.print();
   };
@@ -588,7 +594,7 @@ export default function Reports() {
             <div>
               <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Revenue</p>
               <p className={`text-2xl font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-                ${profitLossData.totalRevenue.toFixed(2)}
+                ${safeToFixed(profitLossData.totalRevenue)}
               </p>
             </div>
             <DollarSign className={`h-8 w-8 ${isDarkMode ? 'text-green-400' : 'text-green-600'}`} />
@@ -600,7 +606,7 @@ export default function Reports() {
             <div>
               <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Net Profit</p>
               <p className={`text-2xl font-bold ${profitLossData.netProfit >= 0 ? (isDarkMode ? 'text-green-400' : 'text-green-600') : (isDarkMode ? 'text-red-400' : 'text-red-600')}`}>
-                ${profitLossData.netProfit.toFixed(2)}
+                ${safeToFixed(profitLossData.netProfit)}
               </p>
             </div>
             {profitLossData.netProfit >= 0 ? (
@@ -616,7 +622,7 @@ export default function Reports() {
             <div>
               <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Inventory Value</p>
               <p className={`text-2xl font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-                ${inventoryData.totalInventoryValue.toFixed(2)}
+                ${safeToFixed(inventoryData.totalInventoryValue)}
               </p>
             </div>
             <Package className={`h-8 w-8 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />
@@ -730,11 +736,11 @@ export default function Reports() {
                   <td className={`py-2 px-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>#{s.id.slice(-6)}</td>
                   <td className={`py-2 px-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{s.customerName}</td>
                   <td className={`py-2 px-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{s.paymentMethod || '-'}</td>
-                  <td className={`py-2 px-2 text-right ${isDarkMode ? 'text-gray-100' : 'text-gray-900'} hidden lg:table-cell`}>${(s.subtotal||0).toFixed(2)}</td>
-                  <td className={`py-2 px-2 text-right ${isDarkMode ? 'text-gray-100' : 'text-gray-900'} hidden lg:table-cell`}>${(s.discount||0).toFixed(2)}</td>
-                  <td className={`py-2 px-2 text-right ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>${(s.totalAmt||0).toFixed(2)}</td>
-                  <td className={`py-2 px-2 text-right ${isDarkMode ? 'text-gray-100' : 'text-gray-900'} hidden md:table-cell`}>${(s.paid||0).toFixed(2)}</td>
-                  <td className={`py-2 px-2 text-right ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>${(s.balance||0).toFixed(2)}</td>
+                  <td className={`py-2 px-2 text-right ${isDarkMode ? 'text-gray-100' : 'text-gray-900'} hidden lg:table-cell`}>${safeToFixed(s.subtotal)}</td>
+                  <td className={`py-2 px-2 text-right ${isDarkMode ? 'text-gray-100' : 'text-gray-900'} hidden lg:table-cell`}>${safeToFixed(s.discount)}</td>
+                  <td className={`py-2 px-2 text-right ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>${safeToFixed(s.totalAmt)}</td>
+                  <td className={`py-2 px-2 text-right ${isDarkMode ? 'text-gray-100' : 'text-gray-900'} hidden md:table-cell`}>${safeToFixed(s.paid)}</td>
+                  <td className={`py-2 px-2 text-right ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>${safeToFixed(s.balance)}</td>
                   <td className={`py-2 px-2 ${isDarkMode ? (s.status==='Paid' ? 'text-green-300' : s.status.includes('Partial') ? 'text-yellow-300' : 'text-red-300') : (s.status==='Paid' ? 'text-green-600' : s.status.includes('Partial') ? 'text-yellow-600' : 'text-red-600')}`}>{s.status}</td>
                 </tr>
               ))}
@@ -782,35 +788,35 @@ export default function Reports() {
           <div className="flex justify-between items-center py-2 border-b border-gray-200">
             <span className={`font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Total Revenue</span>
             <span className={`font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-              ${profitLossData.totalRevenue.toFixed(2)}
+              ${safeToFixed(profitLossData.totalRevenue)}
             </span>
           </div>
           
           <div className="flex justify-between items-center py-2 border-b border-gray-200">
             <span className={`font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Cost of Goods Sold</span>
             <span className={`font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-              ${profitLossData.cogs.toFixed(2)}
+              ${safeToFixed(profitLossData.cogs)}
             </span>
           </div>
           
           <div className="flex justify-between items-center py-2 border-b border-gray-200">
             <span className={`font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Gross Profit</span>
             <span className={`font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-              ${profitLossData.grossProfit.toFixed(2)} ({profitLossData.grossMargin.toFixed(1)}%)
+              ${safeToFixed(profitLossData.grossProfit)} ({safeToFixed(profitLossData.grossMargin, 1)}%)
             </span>
           </div>
           
           <div className="flex justify-between items-center py-2 border-b border-gray-200">
             <span className={`font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Operating Expenses</span>
             <span className={`font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-              ${profitLossData.totalExpenses.toFixed(2)}
+              ${safeToFixed(profitLossData.totalExpenses)}
             </span>
           </div>
           
           <div className="flex justify-between items-center py-2 border-b-2 border-gray-400">
             <span className={`font-bold text-lg ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>Net Profit</span>
             <span className={`font-bold text-lg ${profitLossData.netProfit >= 0 ? (isDarkMode ? 'text-green-400' : 'text-green-600') : (isDarkMode ? 'text-red-400' : 'text-red-600')}`}>
-              ${profitLossData.netProfit.toFixed(2)} ({profitLossData.netMargin.toFixed(1)}%)
+              ${safeToFixed(profitLossData.netProfit)} ({safeToFixed(profitLossData.netMargin, 1)}%)
             </span>
           </div>
         </div>
@@ -836,7 +842,7 @@ export default function Reports() {
             <div className="flex justify-between items-center">
               <span className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Total Inventory Value</span>
               <span className={`font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-                ${inventoryData.totalInventoryValue.toFixed(2)}
+                ${safeToFixed(inventoryData.totalInventoryValue)}
               </span>
             </div>
             
