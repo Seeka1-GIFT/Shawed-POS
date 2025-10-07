@@ -140,8 +140,9 @@ export const getSale = asyncHandler(async (req: Request, res: Response, next: Ne
 
 // Create new sale
 export const createSale = asyncHandler(async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  console.log('🛒 CREATE SALE: Starting sale creation process');
-  console.log('📥 Request body:', JSON.stringify(req.body, null, 2));
+  try {
+    console.log('🛒 CREATE SALE: Starting sale creation process');
+    console.log('📥 Request body:', JSON.stringify(req.body, null, 2));
   
   const {
     customerId,
@@ -282,6 +283,22 @@ export const createSale = asyncHandler(async (req: Request, res: Response, next:
     message: 'Sale created successfully',
     data: sale
   });
+  } catch (error: any) {
+    console.error('❌ CREATE SALE: Error occurred:', error);
+    console.error('❌ Error details:', {
+      name: error?.name,
+      message: error?.message,
+      code: error?.code,
+      meta: (error as any)?.meta,
+      stack: error?.stack,
+    });
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create sale',
+      error: error?.message,
+      details: process.env.NODE_ENV === 'development' ? error?.stack : undefined,
+    });
+  }
 });
 
 // Update sale
