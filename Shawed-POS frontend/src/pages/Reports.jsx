@@ -209,19 +209,19 @@ export default function Reports() {
   }, [filteredSales, customers]);
 
   const filteredExpenses = useMemo(() => {
-    return expenses.filter(expense => {
-      const expenseDate = new Date(expense.date);
+    return (expenses || []).filter(expense => {
+      const expenseDate = new Date(expense.date || expense.createdAt);
       return expenseDate >= start && expenseDate <= end;
     });
   }, [expenses, start, end]);
 
   // Profit & Loss Analysis
   const profitLossData = useMemo(() => {
-    const totalRevenue = filteredSales.reduce((sum, sale) => sum + parseFloat(sale.total || 0), 0);
-    const totalExpenses = filteredExpenses.reduce((sum, exp) => sum + parseFloat(exp.amount || 0), 0);
+    const totalRevenue = (filteredSales || []).reduce((sum, sale) => sum + parseFloat(sale.total || 0), 0);
+    const totalExpenses = (filteredExpenses || []).reduce((sum, exp) => sum + parseFloat(exp.amount || 0), 0);
     
     // Calculate cost of goods sold (COGS) using correct data structure
-    const cogs = filteredSales.reduce((sum, sale) => {
+    const cogs = (filteredSales || []).reduce((sum, sale) => {
       const saleItems = sale.saleItems || sale.items || [];
       return sum + saleItems.reduce((itemSum, item) => {
         const product = item.product || {};
@@ -249,22 +249,22 @@ export default function Reports() {
 
   // Inventory Valuation
   const inventoryData = useMemo(() => {
-    const totalInventoryValue = products.reduce((sum, product) => {
+    const totalInventoryValue = (products || []).reduce((sum, product) => {
       const buyPrice = parseFloat(product.buyPrice || product.purchasePrice || 0);
       const quantity = parseInt(product.quantity || 0);
       return sum + (buyPrice * quantity);
     }, 0);
 
-    const totalSellingValue = products.reduce((sum, product) => {
+    const totalSellingValue = (products || []).reduce((sum, product) => {
       const sellPrice = parseFloat(product.sellPrice || product.sellingPrice || 0);
       const quantity = parseInt(product.quantity || 0);
       return sum + (sellPrice * quantity);
     }, 0);
 
-    const lowStockProducts = products.filter(p => parseInt(p.quantity || 0) <= 5);
-    const outOfStockProducts = products.filter(p => parseInt(p.quantity || 0) === 0);
+    const lowStockProducts = (products || []).filter(p => parseInt(p.quantity || 0) <= 5);
+    const outOfStockProducts = (products || []).filter(p => parseInt(p.quantity || 0) === 0);
 
-    const categoryBreakdown = products.reduce((acc, product) => {
+    const categoryBreakdown = (products || []).reduce((acc, product) => {
       const category = product.category || 'Uncategorized';
       if (!acc[category]) {
         acc[category] = { value: 0, count: 0, inventoryValue: 0 };
@@ -298,7 +298,7 @@ export default function Reports() {
     const supplierStats = {};
     
     // Analyze purchase orders and purchases data
-    [...purchaseOrders, ...purchases].forEach(order => {
+    [...(purchaseOrders || []), ...(purchases || [])].forEach(order => {
       if (!supplierStats[order.supplierId]) {
         supplierStats[order.supplierId] = {
           name: order.supplierName,
@@ -316,7 +316,7 @@ export default function Reports() {
     });
 
     // Calculate delivery performance
-    Object.values(supplierStats).forEach(supplier => {
+    Object.values(supplierStats || {}).forEach(supplier => {
       const receivedOrders = supplier.orders.filter(o => o.status === 'received');
       if (receivedOrders.length > 0) {
         const avgDeliveryDays = receivedOrders.reduce((sum, order) => {
@@ -384,8 +384,8 @@ export default function Reports() {
   const topProducts = useMemo(() => {
     const productStats = {};
     
-    filteredSales.forEach(sale => {
-      sale.items.forEach(item => {
+    (filteredSales || []).forEach(sale => {
+      (sale.items || sale.saleItems || []).forEach(item => {
         if (!productStats[item.product.id]) {
           productStats[item.product.id] = {
             name: item.product.name,
@@ -408,8 +408,8 @@ export default function Reports() {
   // Sales by Category & Discounts
   const salesByCategory = useMemo(() => {
     const map = {};
-    filteredSales.forEach(sale => {
-      sale.items.forEach(item => {
+    (filteredSales || []).forEach(sale => {
+      (sale.items || sale.saleItems || []).forEach(item => {
         const cat = item.product.category || 'Uncategorized';
         if (!map[cat]) map[cat] = { name: cat, quantity: 0, revenue: 0 };
         map[cat].quantity += item.quantity;
@@ -421,9 +421,9 @@ export default function Reports() {
 
   const discountsUsed = useMemo(() => {
     let totalDiscount = 0;
-    filteredSales.forEach(s => {
+    (filteredSales || []).forEach(s => {
       if (typeof s.discount === 'number') totalDiscount += s.discount;
-      s.items.forEach(it => { if (typeof it.discount === 'number') totalDiscount += it.discount; });
+      (s.items || s.saleItems || []).forEach(it => { if (typeof it.discount === 'number') totalDiscount += it.discount; });
     });
     return totalDiscount;
   }, [filteredSales]);
@@ -449,9 +449,9 @@ export default function Reports() {
   // Customers outstanding balances helper
   const customerBalances = useMemo(() => {
     const balances = {};
-    customers.forEach((c) => { balances[c.id] = { name: c.name, owed: 0, purchases: 0 } });
+    (customers || []).forEach((c) => { balances[c.id] = { name: c.name, owed: 0, purchases: 0 } });
 
-    sales.forEach((sale) => {
+    (sales || []).forEach((sale) => {
       if (sale.customerId && balances[sale.customerId]) {
         balances[sale.customerId].owed += sale.total;
         balances[sale.customerId].purchases += 1;
@@ -488,7 +488,7 @@ export default function Reports() {
       case 'staff':
         {
           const byUser = {};
-          filteredSales.forEach(s => {
+          (filteredSales || []).forEach(s => {
             const key = s.userId || s.userName || 'Unknown';
             if (!byUser[key]) byUser[key] = { name: key, sales: 0, transactions: 0 };
             byUser[key].sales += s.total; byUser[key].transactions += 1;
@@ -1234,7 +1234,7 @@ export default function Reports() {
 
   const renderStaff = () => {
     const byUser = {};
-    filteredSales.forEach(s => {
+    (filteredSales || []).forEach(s => {
       const key = s.userId || s.userName || 'Unknown';
       if (!byUser[key]) byUser[key] = { name: key, sales: 0, transactions: 0 };
       byUser[key].sales += s.total;
