@@ -1,4 +1,4 @@
-import React, { useContext, useMemo, useState } from 'react';
+import React, { useContext, useMemo, useState, useEffect } from 'react';
 import { RealDataContext } from '../context/RealDataContext';
 import { ThemeContext } from '../context/ThemeContext';
 import ChartCard from '../components/ChartCard';
