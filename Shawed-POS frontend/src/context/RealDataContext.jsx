@@ -86,6 +86,7 @@ export function RealDataProvider({ children }) {
 
   // API Integration Functions
   const apiCall = async (action, key, apiFunction, data = null) => {
+    console.log(`🔄 API Call: ${action} ${key}`);
     setData(prev => ({
       ...prev,
       loading: { ...prev.loading, [key]: true },
@@ -94,6 +95,7 @@ export function RealDataProvider({ children }) {
 
     try {
       const result = data ? await apiFunction(data) : await apiFunction();
+      console.log(`✅ API Response for ${key}:`, result);
       
       if (result.success) {
         setData(prev => ({
@@ -102,6 +104,7 @@ export function RealDataProvider({ children }) {
                  action === 'add' ? [...prev[key], result.data] : result.data,
           loading: { ...prev.loading, [key]: false }
         }));
+        console.log(`📊 Data updated for ${key}:`, result.data);
         return result.data;
       } else {
         throw new Error(result.message || 'API request failed');
@@ -137,6 +140,7 @@ export function RealDataProvider({ children }) {
       console.error('API service is not available');
       return Promise.resolve([]);
     }
+    console.log('🔄 Fetching sales data from API...');
     // Sales route is public, no token needed
     return apiCall('fetch', 'sales', () => apiService.request('/sales'));
   };
@@ -309,24 +313,31 @@ export function RealDataProvider({ children }) {
     loadInitialData();
   }, []);
 
-  // Load protected data when user is authenticated
+  // Load data - public routes don't need authentication
   useEffect(() => {
-    const loadProtectedData = async () => {
-      const token = localStorage.getItem('authToken');
-      if (token) {
-        try {
+    const loadData = async () => {
+      try {
+        // Load public data (sales, expenses, suppliers) regardless of auth status
+        await Promise.all([
+          fetchSales(),
+          fetchExpenses(),
+          fetchSuppliers()
+        ]);
+        
+        // Load protected data only if authenticated
+        const token = localStorage.getItem('authToken');
+        if (token) {
           await Promise.all([
-            fetchSales(),
-            fetchExpenses(),
-            fetchSuppliers()
+            fetchProducts(),
+            fetchCustomers()
           ]);
-        } catch (error) {
-          console.error('Failed to load protected data:', error);
         }
+      } catch (error) {
+        console.error('Failed to load data:', error);
       }
     };
 
-    loadProtectedData();
+    loadData();
   }, []);
 
   // Get computed statistics
