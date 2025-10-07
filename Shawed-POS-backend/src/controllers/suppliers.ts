@@ -129,46 +129,64 @@ export const getSupplier = asyncHandler(async (req: Request, res: Response, next
 });
 
 export const createSupplier = asyncHandler(async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  const { name, phone, address, email } = req.body;
+  try {
+    console.log('🔍 createSupplier called with body:', req.body);
+    const { name, phone, address, email } = req.body;
 
-  if (!name) {
-    res.status(400).json({
-      success: false,
-      message: 'Please provide supplier name'
-    });
-    return;
-  }
-
-  if (email && !isValidEmail(email)) {
-    res.status(400).json({
-      success: false,
-      message: 'Please provide a valid email address'
-    });
-    return;
-  }
-
-  if (phone && !isValidPhone(phone)) {
-    res.status(400).json({
-      success: false,
-      message: 'Please provide a valid phone number'
-    });
-    return;
-  }
-
-  const supplier = await prisma.supplier.create({
-    data: {
-      name,
-      phone: phone || null,
-      address: address || null,
-      email: email ? email.toLowerCase() : null
+    if (!name) {
+      res.status(400).json({
+        success: false,
+        message: 'Please provide supplier name'
+      });
+      return;
     }
-  });
 
-  res.status(201).json({
-    success: true,
-    message: 'Supplier created successfully',
-    data: supplier
-  });
+    if (email && !isValidEmail(email)) {
+      res.status(400).json({
+        success: false,
+        message: 'Please provide a valid email address'
+      });
+      return;
+    }
+
+    if (phone && !isValidPhone(phone)) {
+      res.status(400).json({
+        success: false,
+        message: 'Please provide a valid phone number'
+      });
+      return;
+    }
+
+    const supplier = await prisma.supplier.create({
+      data: {
+        name,
+        phone: phone || null,
+        address: address || null,
+        email: email ? email.toLowerCase() : null
+      }
+    });
+
+    console.log(`✅ createSupplier successful: ${supplier.name} created with ID ${supplier.id}`);
+    res.status(201).json({
+      success: true,
+      message: 'Supplier created successfully',
+      data: supplier
+    });
+  } catch (error) {
+    console.error('❌ createSupplier error:', error);
+    console.error('❌ Error details:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+      code: error.code
+    });
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create supplier',
+      error: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
 });
 
 export const updateSupplier = asyncHandler(async (req: Request, res: Response, next: NextFunction): Promise<void> => {

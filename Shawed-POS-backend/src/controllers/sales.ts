@@ -141,6 +141,9 @@ export const getSale = asyncHandler(async (req: Request, res: Response, next: Ne
 
 // Create new sale
 export const createSale = asyncHandler(async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+  console.log('🛒 CREATE SALE: Starting sale creation process');
+  console.log('📥 Request body:', JSON.stringify(req.body, null, 2));
+  
   const {
     customerId,
     items,
@@ -151,6 +154,7 @@ export const createSale = asyncHandler(async (req: AuthenticatedRequest, res: Re
 
   // Validation
   if (!items || !Array.isArray(items) || items.length === 0) {
+    console.log('❌ CREATE SALE: No items provided');
     res.status(400).json({
       success: false,
       message: 'Sale items are required'
@@ -158,9 +162,12 @@ export const createSale = asyncHandler(async (req: AuthenticatedRequest, res: Re
     return;
   }
 
+  console.log(`📦 CREATE SALE: Processing ${items.length} items`);
+
   // Validate each item
   for (const item of items) {
     if (!item.productId || !item.quantity || !item.price) {
+      console.log('❌ CREATE SALE: Invalid item data:', item);
       res.status(400).json({
         success: false,
         message: 'All items must have productId, quantity, and price'
@@ -169,11 +176,13 @@ export const createSale = asyncHandler(async (req: AuthenticatedRequest, res: Re
     }
 
     // Check if product exists and has stock
+    console.log(`🔍 CREATE SALE: Checking product ${item.productId}`);
     const product = await prisma.product.findUnique({
       where: { id: item.productId }
     });
 
     if (!product) {
+      console.log(`❌ CREATE SALE: Product ${item.productId} not found`);
       res.status(400).json({
         success: false,
         message: `Product ${item.productId} not found`
@@ -181,7 +190,10 @@ export const createSale = asyncHandler(async (req: AuthenticatedRequest, res: Re
       return;
     }
 
+    console.log(`✅ CREATE SALE: Product found - ${product.name}, Stock: ${product.quantity}, Required: ${item.quantity}`);
+
     if (product.quantity < parseInt(item.quantity)) {
+      console.log(`❌ CREATE SALE: Insufficient stock for ${product.name}`);
       res.status(400).json({
         success: false,
         message: `Insufficient stock for product ${product.name}. Available: ${product.quantity}`
@@ -194,11 +206,16 @@ export const createSale = asyncHandler(async (req: AuthenticatedRequest, res: Re
   const itemsTotal = items.reduce((sum, item) => sum + (parseFloat(item.price) * parseInt(item.quantity)), 0);
   const total = itemsTotal + parseFloat(tax) - parseFloat(discount);
 
+  console.log(`💰 CREATE SALE: Calculated totals - Items: $${itemsTotal}, Tax: $${tax}, Discount: $${discount}, Total: $${total}`);
+
   // Generate unique ID
   const saleId = `sale-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  console.log(`🆔 CREATE SALE: Generated sale ID: ${saleId}`);
 
   // Create sale and update inventory in transaction
+  console.log('🔄 CREATE SALE: Starting database transaction');
   const sale = await prisma.$transaction(async (tx) => {
+    console.log('📝 CREATE SALE: Creating sale record');
     // Create sale
     const newSale = await tx.sale.create({
       data: {
@@ -212,14 +229,18 @@ export const createSale = asyncHandler(async (req: AuthenticatedRequest, res: Re
       }
     });
 
+    console.log('✅ CREATE SALE: Sale record created:', newSale.id);
+
     // Create sale items and update inventory
     const saleItems = [];
     for (const item of items) {
+      console.log(`🔄 CREATE SALE: Processing item ${item.productId}`);
       const product = await tx.product.findUnique({
         where: { id: item.productId }
       });
 
       if (product) {
+        console.log(`📦 CREATE SALE: Updating stock for ${product.name} from ${product.quantity} to ${product.quantity - parseInt(item.quantity)}`);
         // Update product quantity
         await tx.product.update({
           where: { id: item.productId },
@@ -232,6 +253,7 @@ export const createSale = asyncHandler(async (req: AuthenticatedRequest, res: Re
         const itemId = `item-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
         const saleItemtotal = parseFloat(item.price) * parseInt(item.quantity);
         
+        console.log(`📝 CREATE SALE: Creating sale item ${itemId} for product ${product.name}`);
         const saleItem = await tx.saleItem.create({
           data: {
             id: itemId,
@@ -243,16 +265,19 @@ export const createSale = asyncHandler(async (req: AuthenticatedRequest, res: Re
           }
         });
 
+        console.log('✅ CREATE SALE: Sale item created:', saleItem.id);
         saleItems.push(saleItem);
       }
     }
 
+    console.log(`✅ CREATE SALE: Transaction completed - ${saleItems.length} items processed`);
     return {
       ...newSale,
       saleItems: saleItems.map(item => ({ ...item, product: items.find(i => i.productId === item.productId)?.product }))
     };
   });
 
+  console.log('🎉 CREATE SALE: Sale creation successful:', sale.id);
   res.status(201).json({
     success: true,
     message: 'Sale created successfully',

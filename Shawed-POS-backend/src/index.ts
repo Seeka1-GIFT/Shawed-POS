@@ -87,7 +87,7 @@ app.use('/api/products', productRoutes); // Public for now - can be made protect
 app.use('/api/customers', customerRoutes); // Public for now - can be made protected later
 app.use('/api/sales', saleRoutes); // Temporarily made public for testing
 app.use('/api/expenses', expenseRoutes); // Temporarily made public for testing
-app.use('/api/suppliers', protect, supplierRoutes);
+app.use('/api/suppliers', supplierRoutes); // Temporarily made public for testing
 app.use('/api/reports', protect, reportRoutes);
 
 // Error handling middleware (must be last)
