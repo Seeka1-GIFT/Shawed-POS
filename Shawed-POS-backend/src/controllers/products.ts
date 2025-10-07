@@ -53,13 +53,22 @@ export const getProducts = asyncHandler(async (req: Request, res: Response, next
 
   const total = await prisma.product.count({ where });
 
+  // Convert Decimal fields to numbers for proper JSON serialization
+  const processedProducts = products.map(product => ({
+    ...product,
+    buyPrice: Number(product.buyPrice),
+    sellPrice: Number(product.sellPrice),
+    quantity: Number(product.quantity),
+    lowStockThreshold: Number(product.lowStockThreshold)
+  }));
+
   res.json({
     success: true,
     count: products.length,
     total,
     page: pageNum,
     limit: limitNum,
-    data: products
+    data: processedProducts
   });
 });
 

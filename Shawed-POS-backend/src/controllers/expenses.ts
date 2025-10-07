@@ -86,11 +86,17 @@ export const getExpenses = asyncHandler(async (req: Request, res: Response, next
 
     console.log(`✅ getExpenses successful: ${expenses.length} expenses found`);
     
+    // Convert Decimal fields to numbers for proper JSON serialization
+    const processedExpenses = expenses.map(expense => ({
+      ...expense,
+      amount: Number(expense.amount)
+    }));
+    
     res.status(200).json({
       success: true,
       count: expenses.length,
       total,
-      data: expenses,
+      data: processedExpenses,
       page: pageNum,
       pages: Math.ceil(total / limitNum)
     });

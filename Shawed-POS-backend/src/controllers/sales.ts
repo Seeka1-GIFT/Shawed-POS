@@ -75,13 +75,27 @@ export const getSales = asyncHandler(async (req: Request, res: Response, next: N
 
     console.log(`✅ getSales successful: ${sales.length} sales found`);
     
+    // Convert Decimal fields to numbers for proper JSON serialization
+    const processedSales = sales.map(sale => ({
+      ...sale,
+      total: Number(sale.total),
+      discount: Number(sale.discount),
+      tax: Number(sale.tax),
+      saleItems: sale.saleItems.map(item => ({
+        ...item,
+        quantity: Number(item.quantity),
+        price: Number(item.price),
+        total: Number(item.total)
+      }))
+    }));
+    
     res.json({
       success: true,
       count: sales.length,
       total,
       page: pageNum,
       limit: limitNum,
-      data: sales
+      data: processedSales
     });
   } catch (error) {
     console.error('❌ getSales error:', error);
