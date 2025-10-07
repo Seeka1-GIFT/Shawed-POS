@@ -63,8 +63,10 @@ export default function Reports() {
     suppliers = [], 
     purchaseOrders = [], 
     businessSettings = {},
+    reports = {},
     loading = {},
-    error = {}
+    error = {},
+    fetchReportsData
   } = context;
 
   // Check for loading states
@@ -136,6 +138,32 @@ export default function Reports() {
     const num = Number(value);
     return isNaN(num) ? '0.00' : num.toFixed(decimals);
   };
+
+  // Function to refresh reports data
+  const refreshReportsData = async () => {
+    if (fetchReportsData) {
+      console.log('🔄 Manually refreshing reports data...');
+      await fetchReportsData();
+    }
+  };
+
+  // Set up auto-refresh on data changes
+  useEffect(() => {
+    const handleDataUpdate = () => {
+      console.log('📡 Reports page received data update event');
+      refreshReportsData();
+    };
+
+    window.addEventListener('saleCreated', handleDataUpdate);
+    window.addEventListener('productUpdated', handleDataUpdate);
+    window.addEventListener('expenseCreated', handleDataUpdate);
+
+    return () => {
+      window.removeEventListener('saleCreated', handleDataUpdate);
+      window.removeEventListener('productUpdated', handleDataUpdate);
+      window.removeEventListener('expenseCreated', handleDataUpdate);
+    };
+  }, [fetchReportsData]);
   const [selectedPeriod, setSelectedPeriod] = useState('7'); // days
   const [customRange, setCustomRange] = useState({ start: '', end: '' });
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -241,6 +269,19 @@ export default function Reports() {
     const netProfit = grossProfit - totalExpenses;
     const grossMargin = totalRevenue > 0 ? (grossProfit / totalRevenue) * 100 : 0;
     const netMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
+
+    // Debug logging for profit calculation
+    console.log('💰 Profit Calculation Debug:', {
+      totalRevenue,
+      cogs,
+      grossProfit,
+      totalExpenses,
+      netProfit,
+      salesCount: filteredSales.length,
+      expensesCount: filteredExpenses.length,
+      salesSample: filteredSales.slice(0, 2),
+      expensesSample: filteredExpenses.slice(0, 2)
+    });
 
     return {
       totalRevenue,

@@ -162,6 +162,16 @@ export function RealDataProvider({ children }) {
     // Suppliers route is public, no token needed
     return apiCall('fetch', 'suppliers', () => apiService.request('/suppliers'));
   };
+
+  const fetchReportsData = () => {
+    if (!apiService) {
+      console.error('API service is not available');
+      return Promise.resolve({});
+    }
+    console.log('🔄 Fetching comprehensive reports data...');
+    // Reports route is public, no token needed
+    return apiCall('fetch', 'reports', () => apiService.request('/reports'));
+  };
   const fetchDashboardStats = () => {
     if (!apiService) {
       console.error('API service is not available');
@@ -235,6 +245,13 @@ export function RealDataProvider({ children }) {
           ...prev,
           sales: [...(prev.sales || []), result.data]
         }));
+        
+        // Emit event to trigger data refresh across components
+        window.dispatchEvent(new CustomEvent('saleCreated', { 
+          detail: { sale: result.data } 
+        }));
+        
+        console.log('✅ Sale created and event emitted for auto-refresh');
       }
       
       return result;
@@ -317,11 +334,12 @@ export function RealDataProvider({ children }) {
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Load public data (sales, expenses, suppliers) regardless of auth status
+        // Load public data (sales, expenses, suppliers, reports) regardless of auth status
         await Promise.all([
           fetchSales(),
           fetchExpenses(),
-          fetchSuppliers()
+          fetchSuppliers(),
+          fetchReportsData()
         ]);
         
         // Load protected data only if authenticated
@@ -338,6 +356,29 @@ export function RealDataProvider({ children }) {
     };
 
     loadData();
+
+    // Set up auto-refresh every 30 seconds
+    const refreshInterval = setInterval(() => {
+      console.log('🔄 Auto-refreshing data...');
+      loadData();
+    }, 30000); // 30 seconds
+
+    // Set up event listeners for real-time updates
+    const handleDataUpdate = (event) => {
+      console.log('📡 Data update event received:', event.detail);
+      loadData();
+    };
+
+    window.addEventListener('saleCreated', handleDataUpdate);
+    window.addEventListener('productUpdated', handleDataUpdate);
+    window.addEventListener('expenseCreated', handleDataUpdate);
+
+    return () => {
+      clearInterval(refreshInterval);
+      window.removeEventListener('saleCreated', handleDataUpdate);
+      window.removeEventListener('productUpdated', handleDataUpdate);
+      window.removeEventListener('expenseCreated', handleDataUpdate);
+    };
   }, []);
 
   // Get computed statistics
@@ -517,6 +558,7 @@ export function RealDataProvider({ children }) {
     fetchSales,
     fetchExpenses,
     fetchSuppliers,
+    fetchReportsData,
     fetchDashboardStats,
     
     // CRUD Operations
