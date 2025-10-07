@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { RealDataContext } from '../context/RealDataContext';
 import { ThemeContext } from '../context/ThemeContext';
+import { useToast } from '../components/ToastProvider';
 import InputField from '../components/InputField';
 import { Plus, Download, Printer } from 'lucide-react';
 import ChartCard from '../components/ChartCard';
@@ -15,14 +16,33 @@ import { UserContext, PERMISSIONS } from '../context/UserContext';
  */
 export default function Expenses() {
   const context = useContext(RealDataContext);
+  const { success, error } = useToast();
   
   // Add null safety check
   if (!context) {
     console.error('RealDataContext is undefined');
-    return <div className="p-4 text-red-500">Loading expenses data...</div>;
+    return (
+      <div className="p-4 text-red-500">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          <strong>Error:</strong> Unable to load expenses data. Please refresh the page.
+        </div>
+      </div>
+    );
   }
   
-  const { expenses = [], addExpense, updateExpense, deleteExpense, addExpenseCategory, addRecurringExpense, processRecurringExpenses, setExpenseStatus } = context;
+  const { 
+    expenses = [], 
+    addExpense, 
+    updateExpense, 
+    deleteExpense, 
+    addExpenseCategory, 
+    addRecurringExpense, 
+    processRecurringExpenses, 
+    setExpenseStatus,
+    isLoading,
+    hasError,
+    getError
+  } = context;
   
   // Helper function to safely convert to number and format
   const safeToFixed = (value, decimals = 2) => {
@@ -34,6 +54,9 @@ export default function Expenses() {
   console.log('Expenses page - context:', !!context);
   console.log('Expenses page - expenses:', expenses);
   console.log('Expenses page - expenses length:', expenses?.length);
+  console.log('Expenses page - isLoading:', isLoading('expenses'));
+  console.log('Expenses page - hasError:', hasError('expenses'));
+  console.log('Expenses page - error:', getError('expenses'));
   
   const { isDarkMode } = useContext(ThemeContext);
   const { hasPermission } = useContext(UserContext);
@@ -73,37 +96,64 @@ export default function Expenses() {
     setForm(prev => ({ ...prev, attachments: [...prev.attachments, ...mapped] }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    
     const expense = {
-      id: Date.now().toString(),
       description: form.description,
       amount: parseFloat(form.amount || 0),
       category: form.category || 'Other',
-      method: form.method,
-      status: form.status,
-      attachments: form.attachments,
       date: form.date,
     };
-    if (editingId) {
-      updateExpense({ ...expense, id: editingId });
-    } else {
-      const created = addExpense(expense);
-      if (form.isRecurring) {
-        addRecurringExpense({
-          description: created.description,
-          amount: created.amount,
-          category: created.category,
-          method: created.method,
-          frequency: form.frequency,
-          nextDate: form.date,
-          attachments: created.attachments
-        });
+    
+    try {
+      if (editingId) {
+        const result = await updateExpense(editingId, expense);
+        if (!result.success) {
+          error(`Failed to update expense: ${result.message}`);
+          return;
+        }
+        success('Expense updated successfully');
+      } else {
+        const result = await addExpense(expense);
+        if (!result.success) {
+          error(`Failed to add expense: ${result.message}`);
+          return;
+        }
+        success('Expense added successfully');
+        
+        if (form.isRecurring) {
+          await addRecurringExpense({
+            description: expense.description,
+            amount: expense.amount,
+            category: expense.category,
+            method: form.method,
+            frequency: form.frequency,
+            nextDate: form.date,
+            attachments: form.attachments
+          });
+        }
       }
+      
+      // Reset form
+      setForm({ 
+        description: '', 
+        amount: '', 
+        category: '', 
+        method: 'Cash', 
+        status: 'Pending', 
+        attachments: [], 
+        isRecurring: false, 
+        frequency: 'monthly', 
+        date: new Date().toISOString().slice(0, 10) 
+      });
+      setEditingId(null);
+      setIsFormVisible(false);
+      
+    } catch (error) {
+      console.error('Error submitting expense:', error);
+      error(`Error: ${error.message}`);
     }
-    setForm({ description: '', amount: '', category: '', method: 'Cash', status: 'Pending', attachments: [], isRecurring: false, frequency: 'monthly', date: form.date });
-    setEditingId(null);
-    setIsFormVisible(false);
   };
 
   const categories = useMemo(()=>{
@@ -163,10 +213,20 @@ export default function Expenses() {
     });
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (!hasPermission(PERMISSIONS.MANAGE_EXPENSES)) return;
     if (confirm('Delete this expense?')) {
-      deleteExpense(id);
+      try {
+        const result = await deleteExpense(id);
+        if (!result.success) {
+          error(`Failed to delete expense: ${result.message}`);
+        } else {
+          success('Expense deleted successfully');
+        }
+      } catch (error) {
+        console.error('Error deleting expense:', error);
+        error(`Error: ${error.message}`);
+      }
     }
   };
 
@@ -192,6 +252,37 @@ export default function Expenses() {
     const html = `<html><head><title>Expenses</title><style>${styles}</style></head><body><h1>Expenses</h1><table><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${headers.map(h=>`<td>${r[h] ?? ''}</td>`).join('')}</tr>`).join('')}</tbody></table></body></html>`;
     const w = window.open('', '_blank'); if (!w) return; w.document.open(); w.document.write(html); w.document.close(); w.focus(); w.print();
   };
+
+  // Show loading state
+  if (isLoading('expenses')) {
+    return (
+      <div className="p-4">
+        <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-6 rounded-2xl shadow-sm`}>
+          <div className="flex items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <span className={`ml-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              Loading expenses...
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (hasError('expenses')) {
+    return (
+      <div className="p-4">
+        <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-6 rounded-2xl shadow-sm`}>
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+            <strong>Error loading expenses:</strong> {getError('expenses')}
+            <br />
+            <small>This might be because the expenses table hasn't been initialized yet.</small>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
