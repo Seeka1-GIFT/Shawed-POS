@@ -55,7 +55,45 @@ class ApiService {
 
   // Products API
   getProducts = async () => {
-    return this.request('/products');
+    const res = await this.request(`/products?ts=${Date.now()}`);
+
+    // Normalize backend payload → frontend shape and numeric types
+    const rawProducts = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+
+    const toNumber = (val) => {
+      if (val === null || val === undefined || val === '') return 0;
+      // Prisma Decimal comes as string; ensure float
+      const n = typeof val === 'string' ? parseFloat(val) : Number(val);
+      return Number.isFinite(n) ? n : 0;
+    };
+
+    const normalized = rawProducts.map((p) => {
+      const buyPrice = toNumber(p.buy_price ?? p.buyPrice);
+      const sellPrice = toNumber(p.sell_price ?? p.sellPrice);
+      // Compute margin if missing
+      const marginPercent = (p.margin_percent ?? p.marginPercent);
+      const computedMargin = buyPrice > 0 ? ((sellPrice - buyPrice) / buyPrice) * 100 : 0;
+
+      return {
+        id: p.id,
+        name: p.name,
+        category: p.category ?? '',
+        barcode: p.barcode ?? '',
+        supplierId: p.supplier_id ?? p.supplierId ?? null,
+        supplierName: p.supplier ?? p.supplier_name ?? '',
+        quantity: toNumber(p.qty ?? p.quantity),
+        buyPrice,
+        sellPrice,
+        marginPercent: Number.isFinite(toNumber(marginPercent)) ? toNumber(marginPercent) : computedMargin,
+        expiryDate: p.expiry ?? p.expiry_date ?? p.expiryDate ?? null,
+        imageUrl: p.image_url ?? p.imageUrl ?? null,
+        lowStockThreshold: toNumber(p.low_stock_threshold ?? p.lowStockThreshold ?? 5),
+        createdAt: p.created_at ?? p.createdAt ?? null,
+        updatedAt: p.updated_at ?? p.updatedAt ?? null,
+      };
+    });
+
+    return { success: true, data: normalized };
   }
 
   getProduct = async (id) => {
@@ -173,6 +211,140 @@ class ApiService {
         'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify(expenseData),
+    });
+  }
+
+  updateExpense = async (id, expenseData, token) => {
+    return this.request(`/expenses/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(expenseData),
+    });
+  }
+
+  deleteExpense = async (id, token) => {
+    return this.request(`/expenses/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+  }
+
+  // Sales API - Missing methods
+  updateSale = async (id, saleData, token) => {
+    return this.request(`/sales/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(saleData),
+    });
+  }
+
+  deleteSale = async (id, token) => {
+    return this.request(`/sales/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+  }
+
+  getSale = async (id, token) => {
+    return this.request(`/sales/${id}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+  }
+
+  // Suppliers API - Missing methods
+  getSuppliers = async (token) => {
+    return this.request('/suppliers', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+  }
+
+  getSupplier = async (id, token) => {
+    return this.request(`/suppliers/${id}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+  }
+
+  createSupplier = async (supplierData, token) => {
+    return this.request('/suppliers', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(supplierData),
+    });
+  }
+
+  updateSupplier = async (id, supplierData, token) => {
+    return this.request(`/suppliers/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(supplierData),
+    });
+  }
+
+  deleteSupplier = async (id, token) => {
+    return this.request(`/suppliers/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+  }
+
+  // Reports API
+  getDashboardStats = async (token) => {
+    return this.request('/reports/dashboard', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+  }
+
+  getSalesReport = async (token) => {
+    return this.request('/reports/sales', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+  }
+
+  getExpenseReport = async (token) => {
+    return this.request('/reports/expenses', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+  }
+
+  getInventoryReport = async (token) => {
+    return this.request('/reports/inventory', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+  }
+
+  getProfitLossReport = async (token) => {
+    return this.request('/reports/profit-loss', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
     });
   }
 }

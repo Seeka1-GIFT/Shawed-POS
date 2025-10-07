@@ -57,22 +57,35 @@ export default function Customers() {
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.name) return;
     
-    if (editingCustomer) {
-      updateCustomer({ ...editingCustomer, ...form });
-    } else {
-      const customer = { 
-        id: Date.now().toString(), 
-        ...form,
-        createdAt: new Date().toISOString()
-      };
-      addCustomer(customer);
+    try {
+      if (editingCustomer) {
+        const result = await updateCustomer(editingCustomer.id, form);
+        if (!result.success) {
+          alert(`Failed to update customer: ${result.message}`);
+          return;
+        }
+      } else {
+        const customer = { 
+          id: Date.now().toString(), 
+          ...form,
+          createdAt: new Date().toISOString()
+        };
+        const result = await addCustomer(customer);
+        if (!result.success) {
+          alert(`Failed to add customer: ${result.message}`);
+          return;
+        }
+      }
+      
+      resetForm();
+    } catch (error) {
+      console.error('Error submitting customer:', error);
+      alert(`Error: ${error.message}`);
     }
-    
-    resetForm();
   };
 
   const resetForm = () => {

@@ -5,6 +5,7 @@ import App from './App';
 import { RealDataProvider } from './context/RealDataContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { UserProvider } from './context/UserContext';
+import { ToastProvider } from './components/ToastProvider';
 import './i18n'; // Import i18n configuration
 import './index.css';
 
@@ -15,11 +16,13 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <UserProvider>
       <ThemeProvider>
-        <RealDataProvider>
-          <BrowserRouter>
-            <App />
-          </BrowserRouter>
-        </RealDataProvider>
+        <ToastProvider>
+          <RealDataProvider>
+            <BrowserRouter>
+              <App />
+            </BrowserRouter>
+          </RealDataProvider>
+        </ToastProvider>
       </ThemeProvider>
     </UserProvider>
   </React.StrictMode>

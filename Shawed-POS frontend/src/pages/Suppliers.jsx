@@ -63,23 +63,46 @@ export default function Suppliers() {
     setIsFormVisible(true);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.name) return;
-    const supplier = {
-      id: editing ? form.id : Date.now().toString(),
-      name: form.name,
-      phone: form.phone,
-      email: form.email,
-      address: form.address,
-    };
-    if (editing) {
-      updateSupplier(supplier);
-    } else {
-      addSupplier(supplier);
+    
+    try {
+      if (editing) {
+        const result = await updateSupplier(form.id, form);
+        if (!result.success) {
+          alert(`Failed to update supplier: ${result.message}`);
+          return;
+        }
+      } else {
+        const result = await addSupplier(form);
+        if (!result.success) {
+          alert(`Failed to add supplier: ${result.message}`);
+          return;
+        }
+      }
+      
+      resetForm();
+      setIsFormVisible(false);
+      
+    } catch (error) {
+      console.error('Error submitting supplier:', error);
+      alert(`Error: ${error.message}`);
     }
-    resetForm();
-    setIsFormVisible(false);
+  };
+
+  const handleDelete = async (id) => {
+    if (confirm('Delete this supplier?')) {
+      try {
+        const result = await deleteSupplier(id);
+        if (!result.success) {
+          alert(`Failed to delete supplier: ${result.message}`);
+        }
+      } catch (error) {
+        console.error('Error deleting supplier:', error);
+        alert(`Error: ${error.message}`);
+      }
+    }
   };
 
   return (
@@ -128,7 +151,7 @@ export default function Suppliers() {
                           <Edit2 className="inline h-4 w-4 mr-1" /> Edit
                         </button>
                         <button
-                          onClick={() => deleteSupplier(s.id)}
+                          onClick={() => handleDelete(s.id)}
                           className={`${isDarkMode ? 'text-red-400 hover:text-red-300' : 'text-red-600 hover:text-red-700'} hover:underline`}
                         >
                           <Trash2 className="inline h-4 w-4 mr-1" /> Delete

@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
+import ErrorBoundary from './components/ErrorBoundary';
 import Dashboard from './pages/Dashboard';
 import Products from './pages/Products';
 import Sales from './pages/Sales';
@@ -79,6 +80,7 @@ export default function App() {
         <Header onMenuClick={() => setSidebarOpen(true)} isDarkMode={isDarkMode} />
         <main className={`flex-1 overflow-y-auto p-2 sm:p-4 ${isDarkMode ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900' : 'bg-gradient-to-br from-slate-50 via-slate-100 to-slate-50'}`}>
           <BusinessProvider>
+            <ErrorBoundary>
               <AnimatePresence mode="wait">
                 <Suspense fallback={
                   <div className="flex items-center justify-center h-64">
@@ -108,6 +110,7 @@ export default function App() {
                   </Routes>
                 </Suspense>
               </AnimatePresence>
+            </ErrorBoundary>
           </BusinessProvider>
         </main>
       </div>

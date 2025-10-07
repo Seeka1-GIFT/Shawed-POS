@@ -1,4 +1,4 @@
-import React, { useContext, useMemo } from 'react';
+import React, { useContext, useMemo, useEffect } from 'react';
 import { RealDataContext } from '../context/RealDataContext';
 import { ThemeContext } from '../context/ThemeContext';
 import StatsCard from '../components/StatsCard';
@@ -27,9 +27,18 @@ export default function Dashboard() {
     isLoading, 
     hasError,
     fetchProducts,
-    fetchSales 
+    fetchSales,
+    fetchDashboardStats
   } = useContext(RealDataContext);
   const { isDarkMode } = useContext(ThemeContext);
+
+  // Load dashboard stats when component mounts
+  useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      fetchDashboardStats();
+    }
+  }, [fetchDashboardStats]);
 
   // Determine current date string in YYYY-MM-DD format
   const todayStr = new Date().toISOString().slice(0, 10);
@@ -111,7 +120,7 @@ export default function Dashboard() {
       </motion.div>
 
           {/* Loading State */}
-          {(isLoading('products') || isLoading('sales')) && (
+          {(isLoading('products') || isLoading('sales') || isLoading('dashboard')) && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -125,7 +134,7 @@ export default function Dashboard() {
           )}
 
           {/* Error State */}
-          {(hasError('products') || hasError('sales')) && (
+          {(hasError('products') || hasError('sales') || hasError('dashboard')) && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -141,6 +150,7 @@ export default function Dashboard() {
                   onClick={() => {
                     fetchProducts();
                     fetchSales();
+                    fetchDashboardStats();
                   }}
                   className="ml-auto px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
                 >

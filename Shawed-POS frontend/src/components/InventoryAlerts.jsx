@@ -12,6 +12,15 @@ export default function InventoryAlerts() {
   const { products } = useContext(RealDataContext);
   const { isDarkMode } = useContext(ThemeContext);
 
+  // Add null safety check
+  if (!products) {
+    return (
+      <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow-sm`}>
+        <div className="text-center text-gray-500">Loading inventory data...</div>
+      </div>
+    );
+  }
+
   // Calculate low stock products (quantity <= 5)
   const lowStockProducts = products.filter(product => product.quantity <= 5);
   

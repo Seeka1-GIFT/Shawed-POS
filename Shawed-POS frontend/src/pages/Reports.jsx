@@ -133,7 +133,7 @@ export default function Reports() {
     // Calculate cost of goods sold (COGS)
     const cogs = filteredSales.reduce((sum, sale) => {
       return sum + sale.items.reduce((itemSum, item) => {
-        return itemSum + (item.product.purchasePrice * item.quantity);
+        return itemSum + ((item.product.buyPrice || item.product.purchasePrice || 0) * item.quantity);
       }, 0);
     }, 0);
 
@@ -156,11 +156,11 @@ export default function Reports() {
   // Inventory Valuation
   const inventoryData = useMemo(() => {
     const totalInventoryValue = products.reduce((sum, product) => {
-      return sum + (product.purchasePrice * product.quantity);
+      return sum + ((product.buyPrice || product.purchasePrice || 0) * product.quantity);
     }, 0);
 
     const totalSellingValue = products.reduce((sum, product) => {
-      return sum + (product.sellingPrice * product.quantity);
+      return sum + ((product.sellPrice || product.sellingPrice || 0) * product.quantity);
     }, 0);
 
     const lowStockProducts = products.filter(p => p.quantity <= 5);
@@ -173,7 +173,7 @@ export default function Reports() {
       }
       acc[category].value += product.quantity;
       acc[category].count += 1;
-      acc[category].inventoryValue += product.purchasePrice * product.quantity;
+      acc[category].inventoryValue += (product.buyPrice || product.purchasePrice || 0) * product.quantity;
       return acc;
     }, {});
 
@@ -294,8 +294,8 @@ export default function Reports() {
           };
         }
         productStats[item.product.id].quantitySold += item.quantity;
-        productStats[item.product.id].revenue += item.product.sellingPrice * item.quantity;
-        productStats[item.product.id].profit += (item.product.sellingPrice - item.product.purchasePrice) * item.quantity;
+        productStats[item.product.id].revenue += (item.product.sellPrice || item.product.sellingPrice || 0) * item.quantity;
+        productStats[item.product.id].profit += ((item.product.sellPrice || item.product.sellingPrice || 0) - (item.product.buyPrice || item.product.purchasePrice || 0)) * item.quantity;
       });
     });
     
@@ -312,7 +312,7 @@ export default function Reports() {
         const cat = item.product.category || 'Uncategorized';
         if (!map[cat]) map[cat] = { name: cat, quantity: 0, revenue: 0 };
         map[cat].quantity += item.quantity;
-        map[cat].revenue += item.product.sellingPrice * item.quantity;
+        map[cat].revenue += (item.product.sellPrice || item.product.sellingPrice || 0) * item.quantity;
       });
     });
     return Object.values(map).sort((a,b)=> b.revenue - a.revenue);

@@ -24,6 +24,15 @@ export default function QuickActions() {
   const [bulkQuantity, setBulkQuantity] = useState(10);
   const [selectedAction, setSelectedAction] = useState('');
 
+  // Add null safety checks
+  if (!products || !suppliers) {
+    return (
+      <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow-sm`}>
+        <div className="text-center text-gray-500">Loading data...</div>
+      </div>
+    );
+  }
+
   // Get low stock products
   const lowStockProducts = products.filter(p => p.quantity <= 5 && p.quantity > 0);
   const outOfStockProducts = products.filter(p => p.quantity === 0);

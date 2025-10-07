@@ -45,10 +45,43 @@ export function RealDataProvider({ children }) {
     }
   });
 
-  // Add null safety check for data
+  // Add null safety check for data - but don't return JSX from context provider
   if (!data) {
     console.error('RealDataContext: data state is null/undefined');
-    return <div>Loading data context...</div>;
+    // Initialize with empty data instead of returning JSX
+    const emptyData = {
+      products: [],
+      customers: [],
+      sales: [],
+      expenses: [],
+      suppliers: [],
+      users: [],
+      businessSettings: {
+        name: '',
+        address: '',
+        phone: '',
+        email: '',
+        taxRate: 8.5,
+        logo: null,
+      },
+      loading: {
+        products: false,
+        customers: false,
+        sales: false,
+        expenses: false,
+        suppliers: false,
+        users: false,
+      },
+      error: {
+        products: null,
+        customers: null,
+        sales: null,
+        expenses: null,
+        suppliers: null,
+        users: null,
+      }
+    };
+    setData(emptyData);
   }
 
   // API Integration Functions
@@ -104,7 +137,8 @@ export function RealDataProvider({ children }) {
       console.error('API service is not available');
       return Promise.resolve([]);
     }
-    return apiCall('fetch', 'sales', apiService.getSales);
+    const token = localStorage.getItem('authToken');
+    return apiCall('fetch', 'sales', () => apiService.getSales(token));
   };
 
   const fetchExpenses = () => {
@@ -112,7 +146,8 @@ export function RealDataProvider({ children }) {
       console.error('API service is not available');
       return Promise.resolve([]);
     }
-    return apiCall('fetch', 'expenses', apiService.getExpenses);
+    const token = localStorage.getItem('authToken');
+    return apiCall('fetch', 'expenses', () => apiService.getExpenses(token));
   };
 
   const fetchSuppliers = () => {
@@ -120,9 +155,17 @@ export function RealDataProvider({ children }) {
       console.error('API service is not available');
       return Promise.resolve([]);
     }
-    return apiCall('fetch', 'suppliers', apiService.getSuppliers);
+    const token = localStorage.getItem('authToken');
+    return apiCall('fetch', 'suppliers', () => apiService.getSuppliers(token));
   };
-  const fetchDashboardStats = () => apiCall('fetch', 'dashboard', () => Promise.resolve({ data: {} }));
+  const fetchDashboardStats = () => {
+    if (!apiService) {
+      console.error('API service is not available');
+      return Promise.resolve({ data: {} });
+    }
+    const token = localStorage.getItem('authToken');
+    return apiCall('fetch', 'dashboard', () => apiService.getDashboardStats(token));
+  };
 
   // CRUD Operations
   const addProduct = (productData) => {
@@ -169,12 +212,81 @@ export function RealDataProvider({ children }) {
     return apiCall('delete', 'customers', apiService.deleteCustomer, id);
   };
 
-  const addSale = (saleData) => {
+  const addSale = async (saleData) => {
     if (!apiService) {
       console.error('API service is not available');
-      return Promise.resolve(null);
+      return { success: false, message: 'API service not available' };
     }
-    return apiCall('add', 'sales', () => apiService.createSale(saleData, data.token), saleData);
+    
+    try {
+      const token = localStorage.getItem('authToken');
+      const result = await apiService.createSale(saleData, token);
+      
+      if (result.success) {
+        // Update local state
+        setData(prev => ({
+          ...prev,
+          sales: [...(prev.sales || []), result.data]
+        }));
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('addSale error:', error);
+      return { success: false, message: error.message };
+    }
+  };
+
+  const updateSale = async (id, saleData) => {
+    if (!apiService) {
+      console.error('API service is not available');
+      return { success: false, message: 'API service not available' };
+    }
+    
+    try {
+      const token = localStorage.getItem('authToken');
+      const result = await apiService.updateSale(id, saleData, token);
+      
+      if (result.success) {
+        // Update local state
+        setData(prev => ({
+          ...prev,
+          sales: (prev.sales || []).map(sale => 
+            sale.id === id ? result.data : sale
+          )
+        }));
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('updateSale error:', error);
+      return { success: false, message: error.message };
+    }
+  };
+
+  const deleteSale = async (id) => {
+    if (!apiService) {
+      console.error('API service is not available');
+      return { success: false, message: 'API service not available' };
+    }
+    
+    try {
+      const token = localStorage.getItem('authToken');
+      const result = await apiService.deleteSale(id, token);
+      
+      if (result.success) {
+        // Update local state
+        setData(prev => ({
+          ...prev,
+          sales: (prev.sales || []).filter(sale => sale.id !== id)
+        }));
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('deleteSale error:', error);
+      return { success: false, message: error.message };
+    }
   };
 
   // Load initial data when component mounts (only public endpoints)
@@ -246,6 +358,26 @@ export function RealDataProvider({ children }) {
 
   // Dashboard data with real database values
   const getDashboardData = () => {
+    // If we have dashboard stats from API, use them
+    if (data.dashboard && data.dashboard.sales) {
+      return {
+        salesToday: data.dashboard.sales.todayTotal || 0,
+        profitToday: data.dashboard.sales.todayProfit || 0,
+        totalProducts: data.dashboard.inventory.totalProducts || 0,
+        lowStockCount: data.dashboard.inventory.lowStockProducts || 0,
+        recentSales: (data.sales || []).slice(0, 10).map(sale => ({
+          id: sale.id,
+          date: new Date(sale.saleDate || sale.createdAt).toLocaleDateString(),
+          customer: sale.customer?.name || 'Walk-in Customer',
+          total: parseFloat(sale.total || 0),
+          items: sale.saleItems?.length || 0
+        })),
+        products: data.products || [],
+        customers: data.customers || [],
+      };
+    }
+    
+    // Fallback to calculated statistics
     const stats = getStatistics();
     const recentSales = (data.sales || []).slice(0, 10).map(sale => ({
       id: sale.id,
@@ -377,27 +509,91 @@ export function RealDataProvider({ children }) {
     addProduct,
     addCustomer,
     addSale,
+    updateSale,
+    deleteSale,
     updateProduct,
     updateCustomer,
     deleteProduct,
     deleteCustomer,
     
-    // Expense CRUD Operations (placeholder functions)
-    addExpense: async (expenseData) => {
-      console.log('addExpense called with:', expenseData);
-      // TODO: Implement actual API call
-      return { success: true, data: { ...expenseData, id: Date.now().toString() } };
-    },
-    updateExpense: async (id, expenseData) => {
-      console.log('updateExpense called with:', id, expenseData);
-      // TODO: Implement actual API call
-      return { success: true, data: { ...expenseData, id } };
-    },
-    deleteExpense: async (id) => {
-      console.log('deleteExpense called with:', id);
-      // TODO: Implement actual API call
-      return { success: true };
-    },
+  // Expense CRUD Operations (implemented with API calls)
+  addExpense: async (expenseData) => {
+    console.log('addExpense called with:', expenseData);
+    if (!apiService) {
+      console.error('API service is not available');
+      return { success: false, message: 'API service not available' };
+    }
+    
+    try {
+      const token = localStorage.getItem('authToken');
+      const result = await apiService.createExpense(expenseData, token);
+      
+      if (result.success) {
+        // Update local state
+        setData(prev => ({
+          ...prev,
+          expenses: [...(prev.expenses || []), result.data]
+        }));
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('addExpense error:', error);
+      return { success: false, message: error.message };
+    }
+  },
+  updateExpense: async (id, expenseData) => {
+    console.log('updateExpense called with:', id, expenseData);
+    if (!apiService) {
+      console.error('API service is not available');
+      return { success: false, message: 'API service not available' };
+    }
+    
+    try {
+      const token = localStorage.getItem('authToken');
+      const result = await apiService.updateExpense(id, expenseData, token);
+      
+      if (result.success) {
+        // Update local state
+        setData(prev => ({
+          ...prev,
+          expenses: (prev.expenses || []).map(exp => 
+            exp.id === id ? result.data : exp
+          )
+        }));
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('updateExpense error:', error);
+      return { success: false, message: error.message };
+    }
+  },
+  deleteExpense: async (id) => {
+    console.log('deleteExpense called with:', id);
+    if (!apiService) {
+      console.error('API service is not available');
+      return { success: false, message: 'API service not available' };
+    }
+    
+    try {
+      const token = localStorage.getItem('authToken');
+      const result = await apiService.deleteExpense(id, token);
+      
+      if (result.success) {
+        // Update local state
+        setData(prev => ({
+          ...prev,
+          expenses: (prev.expenses || []).filter(exp => exp.id !== id)
+        }));
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('deleteExpense error:', error);
+      return { success: false, message: error.message };
+    }
+  },
     addExpenseCategory: async (categoryData) => {
       console.log('addExpenseCategory called with:', categoryData);
       // TODO: Implement actual API call
@@ -419,21 +615,83 @@ export function RealDataProvider({ children }) {
       return { success: true };
     },
     
-    // Supplier CRUD Operations (placeholder functions)
+    // Supplier CRUD Operations (implemented with API calls)
     addSupplier: async (supplierData) => {
       console.log('addSupplier called with:', supplierData);
-      // TODO: Implement actual API call
-      return { success: true, data: { ...supplierData, id: Date.now().toString() } };
+      if (!apiService) {
+        console.error('API service is not available');
+        return { success: false, message: 'API service not available' };
+      }
+      
+      try {
+        const token = localStorage.getItem('authToken');
+        const result = await apiService.createSupplier(supplierData, token);
+        
+        if (result.success) {
+          // Update local state
+          setData(prev => ({
+            ...prev,
+            suppliers: [...(prev.suppliers || []), result.data]
+          }));
+        }
+        
+        return result;
+      } catch (error) {
+        console.error('addSupplier error:', error);
+        return { success: false, message: error.message };
+      }
     },
     updateSupplier: async (id, supplierData) => {
       console.log('updateSupplier called with:', id, supplierData);
-      // TODO: Implement actual API call
-      return { success: true, data: { ...supplierData, id } };
+      if (!apiService) {
+        console.error('API service is not available');
+        return { success: false, message: 'API service not available' };
+      }
+      
+      try {
+        const token = localStorage.getItem('authToken');
+        const result = await apiService.updateSupplier(id, supplierData, token);
+        
+        if (result.success) {
+          // Update local state
+          setData(prev => ({
+            ...prev,
+            suppliers: (prev.suppliers || []).map(supp => 
+              supp.id === id ? result.data : supp
+            )
+          }));
+        }
+        
+        return result;
+      } catch (error) {
+        console.error('updateSupplier error:', error);
+        return { success: false, message: error.message };
+      }
     },
     deleteSupplier: async (id) => {
       console.log('deleteSupplier called with:', id);
-      // TODO: Implement actual API call
-      return { success: true };
+      if (!apiService) {
+        console.error('API service is not available');
+        return { success: false, message: 'API service not available' };
+      }
+      
+      try {
+        const token = localStorage.getItem('authToken');
+        const result = await apiService.deleteSupplier(id, token);
+        
+        if (result.success) {
+          // Update local state
+          setData(prev => ({
+            ...prev,
+            suppliers: (prev.suppliers || []).filter(supp => supp.id !== id)
+          }));
+        }
+        
+        return result;
+      } catch (error) {
+        console.error('deleteSupplier error:', error);
+        return { success: false, message: error.message };
+      }
     },
     
     // Purchase Order CRUD Operations (placeholder functions)
