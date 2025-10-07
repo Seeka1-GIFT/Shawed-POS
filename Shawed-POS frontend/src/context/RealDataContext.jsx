@@ -219,8 +219,11 @@ export function RealDataProvider({ children }) {
     }
     
     try {
-      const token = localStorage.getItem('authToken');
-      const result = await apiService.createSale(saleData, token);
+      // Sales route is public, no token needed
+      const result = await apiService.request('/sales', {
+        method: 'POST',
+        body: JSON.stringify(saleData),
+      });
       
       if (result.success) {
         // Update local state
