@@ -2,6 +2,137 @@ import { Request, Response } from 'express';
 import { prisma } from '../index';
 import asyncHandler from 'express-async-handler';
 
+// Comprehensive reports endpoint for the Reports page
+export const getReportsData = asyncHandler(async (req: Request, res: Response) => {
+  try {
+    console.log('📊 Generating comprehensive reports data...');
+    
+    // Get date range from query params (default to last 7 days)
+    const { startDate, endDate } = req.query;
+    const end = endDate ? new Date(endDate as string) : new Date();
+    const start = startDate ? new Date(startDate as string) : new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    
+    console.log(`📅 Date range: ${start.toISOString()} to ${end.toISOString()}`);
+    
+    // Get sales with items and products
+    const sales = await prisma.sale.findMany({
+      where: {
+        saleDate: {
+          gte: start,
+          lte: end
+        }
+      },
+      include: {
+        customer: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        },
+        saleItems: {
+          include: {
+            product: {
+              select: {
+                id: true,
+                name: true,
+                buyPrice: true,
+                sellPrice: true,
+                category: true
+              }
+            }
+          }
+        }
+      },
+      orderBy: { saleDate: 'desc' }
+    });
+    
+    // Get expenses
+    const expenses = await prisma.expense.findMany({
+      where: {
+        date: {
+          gte: start,
+          lte: end
+        }
+      },
+      orderBy: { date: 'desc' }
+    });
+    
+    // Get products for inventory calculation
+    const products = await prisma.product.findMany({
+      include: {
+        supplier: {
+          select: {
+            id: true,
+            name: true
+          }
+        }
+      }
+    });
+    
+    // Calculate metrics
+    const totalRevenue = sales.reduce((sum, sale) => sum + Number(sale.total), 0);
+    
+    // Calculate actual COGS and profit
+    let totalCOGS = 0;
+    sales.forEach(sale => {
+      sale.saleItems.forEach(item => {
+        const cost = Number(item.product.buyPrice) * item.quantity;
+        totalCOGS += cost;
+      });
+    });
+    
+    const grossProfit = totalRevenue - totalCOGS;
+    const totalExpenses = expenses.reduce((sum, expense) => sum + Number(expense.amount), 0);
+    const netProfit = grossProfit - totalExpenses;
+    
+    // Calculate inventory value
+    const inventoryValue = products.reduce((sum, product) => {
+      return sum + (Number(product.buyPrice) * product.quantity);
+    }, 0);
+    
+    // Calculate margins
+    const grossMargin = totalRevenue > 0 ? (grossProfit / totalRevenue) * 100 : 0;
+    const netMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
+    
+    const reportsData = {
+      success: true,
+      data: {
+        totalRevenue: Number(totalRevenue.toFixed(2)),
+        totalCOGS: Number(totalCOGS.toFixed(2)),
+        grossProfit: Number(grossProfit.toFixed(2)),
+        totalExpenses: Number(totalExpenses.toFixed(2)),
+        netProfit: Number(netProfit.toFixed(2)),
+        grossMargin: Number(grossMargin.toFixed(2)),
+        netMargin: Number(netMargin.toFixed(2)),
+        inventoryValue: Number(inventoryValue.toFixed(2)),
+        productsCount: products.length,
+        salesCount: sales.length,
+        expensesCount: expenses.length,
+        sales,
+        expenses,
+        products
+      }
+    };
+    
+    console.log('✅ Reports data generated successfully:', {
+      totalRevenue: reportsData.data.totalRevenue,
+      netProfit: reportsData.data.netProfit,
+      inventoryValue: reportsData.data.inventoryValue,
+      salesCount: reportsData.data.salesCount
+    });
+    
+    res.json(reportsData);
+  } catch (error) {
+    console.error('❌ getReportsData error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to generate reports data',
+      error: error.message
+    });
+  }
+});
+
 export const getDashboardStats = asyncHandler(async (req: Request, res: Response) => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -34,8 +165,23 @@ export const getDashboardStats = asyncHandler(async (req: Request, res: Response
   const todayTotalTax = todaySales.reduce((sum, sale) => sum + parseFloat(sale.tax.toString()), 0);
   const todayTotalDiscount = todaySales.reduce((sum, sale) => sum + parseFloat(sale.discount.toString()), 0);
   
-  // Calculate profit (assuming profit margin of 20%)
-  const todayProfit = todayTotalSales * 0.2;
+  // Calculate actual profit from COGS
+  let todayProfit = 0;
+  for (const sale of todaySales) {
+    const saleItems = await prisma.saleItem.findMany({
+      where: { saleId: sale.id },
+      include: { product: true }
+    });
+    
+    const saleCost = saleItems.reduce((cost, item) => {
+      const buyPrice = parseFloat(item.product.buyPrice.toString());
+      const quantity = item.quantity;
+      return cost + (buyPrice * quantity);
+    }, 0);
+    
+    const saleRevenue = parseFloat(sale.total.toString());
+    todayProfit += (saleRevenue - saleCost);
+  }
 
   // Get customers with debt
   const customersWithDebt = await prisma.customer.count({

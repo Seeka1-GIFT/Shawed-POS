@@ -98,7 +98,7 @@ app.use('/api/customers', customerRoutes); // Public for now - can be made prote
 app.use('/api/sales', saleRoutes); // Temporarily made public for testing
 app.use('/api/expenses', expenseRoutes); // Temporarily made public for testing
 app.use('/api/suppliers', supplierRoutes); // Temporarily made public for testing
-app.use('/api/reports', protect, reportRoutes);
+app.use('/api/reports', reportRoutes); // Temporarily made public for testing
 
 // Error handling middleware (must be last)
 app.use(errorHandler);

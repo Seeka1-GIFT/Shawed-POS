@@ -1,5 +1,6 @@
 import express from 'express';
 import {
+  getReportsData,
   getDashboardStats,
   getSalesReport,
   getInventoryReport,
@@ -8,6 +9,9 @@ import {
 } from '../controllers/reports';
 
 const router = express.Router();
+
+// GET /api/reports - Comprehensive reports data
+router.get('/', getReportsData);
 
 // GET /api/reports/dashboard
 router.get('/dashboard', getDashboardStats);
