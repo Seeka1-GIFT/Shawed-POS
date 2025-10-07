@@ -146,7 +146,7 @@ export default function Sales() {
     }
   }, [customerId, paymentStatusSelect, total]);
 
-  const completeSale = () => {
+  const completeSale = async () => {
     if (cart.length === 0) return;
     // Check stock
     for (const item of cart) {
@@ -161,38 +161,57 @@ export default function Sales() {
       return;
     }
 
-    // Create sale record
-    const sale = {
-      id: Date.now().toString(),
-      date: new Date().toISOString().slice(0, 10),
-      items: cart,
-      subtotal,
-      discount: discountValue,
-      total,
-      paymentMethod,
-      amountPaid: paid,
-      balance,
-      paymentStatus,
-      customerId: customerId || null,
-    };
-    addSale(sale);
-    // Reduce stock
-    cart.forEach((item) => {
-      const newQty = item.product.quantity - item.quantity;
-      updateProduct({ ...item.product, quantity: newQty });
-    });
-    
-    // Store the sale for receipt and show receipt
-    setLastSale(sale);
-    setShowReceipt(true);
-    
-    // Reset POS
-    setCart([]);
-    setDiscount('');
-    setPaymentMethod('Cash');
-    setAmountPaid('');
-    setCustomerId('');
-    alert('Sale completed successfully');
+    try {
+      // Create sale record with proper structure for backend
+      const saleData = {
+        customerId: customerId || null,
+        items: cart.map(item => ({
+          productId: item.product.id,
+          quantity: item.quantity,
+          price: item.product.sellPrice || item.product.sellingPrice || 0
+        })),
+        discount: discountValue,
+        tax: 0,
+        paymentMethod: paymentMethod
+      };
+      
+      console.log('🛒 FRONTEND: Sending sale data to backend:', saleData);
+      const result = await addSale(saleData);
+      
+      if (result.success) {
+        // Create local sale record for receipt
+        const localSale = {
+          id: Date.now().toString(),
+          date: new Date().toISOString().slice(0, 10),
+          items: cart,
+          subtotal,
+          discount: discountValue,
+          total,
+          paymentMethod,
+          amountPaid: paid,
+          balance,
+          paymentStatus,
+          customerId: customerId || null,
+        };
+        
+        // Store the sale for receipt and show receipt
+        setLastSale(localSale);
+        setShowReceipt(true);
+        
+        // Reset POS
+        setCart([]);
+        setDiscount('');
+        setPaymentMethod('Cash');
+        setAmountPaid('');
+        setCustomerId('');
+        alert('Sale completed successfully');
+      } else {
+        alert(`Failed to complete sale: ${result.message}`);
+      }
+    } catch (error) {
+      console.error('Error completing sale:', error);
+      alert(`Error completing sale: ${error.message}`);
+    }
   };
 
   return (
@@ -483,10 +502,10 @@ export default function Sales() {
         name: customers.find(c => c.id === customerId)?.name || 'Walk-in Customer',
         phone: customers.find(c => c.id === customerId)?.phone || ''
       }}
-      onPaymentSuccess={(paymentResult) => {
+      onPaymentSuccess={async (paymentResult) => {
         console.log('Payment successful:', paymentResult);
         setPaymentMethod(paymentResult.method);
-        completeSale(); // Complete the sale after successful payment
+        await completeSale(); // Complete the sale after successful payment
         setShowPaymentGateway(false);
       }}
       onPaymentError={(error) => {
