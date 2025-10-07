@@ -1,116 +1,353 @@
-import React, { useState, useContext, Suspense, lazy } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import Sidebar from './components/Sidebar';
-import Header from './components/Header';
-import Dashboard from './pages/Dashboard';
-import Products from './pages/Products';
-import Sales from './pages/Sales';
-import Expenses from './pages/Expenses';
-import Customers from './pages/Customers';
-import Suppliers from './pages/Suppliers';
-import SupplierProfile from './pages/SupplierProfile';
-import PurchaseOrders from './pages/PurchaseOrders';
-import Settings from './pages/Settings';
-import StockManagement from './pages/StockManagement';
-import ReceiptHistory from './pages/ReceiptHistory';
-import UserManagement from './pages/UserManagement';
-import Login from './pages/Login';
+// API service for communicating with the backend
+const API_BASE_URL = 'https://shawed-pos.onrender.com/api';
 
-// Lazy load heavy components
-const Reports = lazy(() => import('./pages/Reports'));
-import { ThemeContext } from './context/ThemeContext';
-import { UserContext } from './context/UserContext';
-import { BusinessProvider } from './context/BusinessContext';
-import { RealDataProvider } from './context/RealDataContext';
-import { Menu, X } from 'lucide-react';
+class ApiService {
+  async request(endpoint, options = {}) {
+    const url = `${API_BASE_URL}${endpoint}`;
+    
+    // Get auth token from localStorage
+    const token = localStorage.getItem('authToken');
+    
+    const defaultOptions = {
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+    };
 
-/**
- * The top level component for the application. Manages
- * authentication state and renders either the login
- * screen or the application shell with sidebar, header and
- * page content. The shell uses nested routes to load
- * appropriate page components. When a user logs in the
- * auth flag is stored in localStorage so that session
- * persists across refreshes.
- */
-export default function App() {
-  const { isDarkMode, toggleDarkMode } = useContext(ThemeContext);
-  const { isAuthenticated, logout } = useContext(UserContext);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+    // Add authorization header if token exists
+    if (token) {
+      defaultOptions.headers['Authorization'] = `Bearer ${token}`;
+    }
 
-  const handleLogout = () => {
-    logout();
-  };
-
-  // If the user is not authenticated show the login page.
-  if (!isAuthenticated) {
-    return <Login />;
+    try {
+      const response = await fetch(url, { ...defaultOptions, ...options });
+      
+      if (!response.ok) {
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        
+        try {
+          const errorData = await response.json();
+          if (errorData.message) {
+            errorMessage = errorData.message;
+          }
+        } catch (e) {
+          // If response is not JSON, try to get text
+          try {
+            const errorText = await response.text();
+            if (errorText) {
+              errorMessage = errorText;
+            }
+          } catch (textError) {
+            // Keep the default error message
+          }
+        }
+        
+        throw new Error(errorMessage);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('API request failed:', error);
+      throw error;
+    }
   }
 
-  // Once authenticated render the application shell. The sidebar
-  // stays persistent and the header displays the current page
-  // title and logout option.
-  return (
-    <div className={`flex h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} overflow-hidden`}>
-      {/* Mobile sidebar overlay */}
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-      
-      {/* Sidebar */}
-      <div className={`
-        fixed lg:static inset-y-0 left-0 z-50 w-60 flex flex-col
-        transform transition-transform duration-300 ease-in-out
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-      `}>
-        <Sidebar 
-          onLogout={handleLogout} 
-          onMobileClose={() => setSidebarOpen(false)}
-          isDarkMode={isDarkMode}
-          toggleDarkMode={toggleDarkMode}
-        />
-      </div>
-      
-      <div className="flex flex-col flex-1 lg:ml-0">
-        <Header onMenuClick={() => setSidebarOpen(true)} isDarkMode={isDarkMode} />
-        <main className={`flex-1 overflow-y-auto p-2 sm:p-4 ${isDarkMode ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900' : 'bg-gradient-to-br from-slate-50 via-slate-100 to-slate-50'}`}>
-          <BusinessProvider>
-              <AnimatePresence mode="wait">
-                <Suspense fallback={
-                  <div className="flex items-center justify-center h-64">
-                    <div className="text-center">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-                      <p className="text-gray-600">Loading...</p>
-                    </div>
-                  </div>
-                }>
-                  <Routes>
-                    <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                    <Route path="/dashboard" element={<Dashboard />} />
-                    <Route path="/products" element={<Products />} />
-                    <Route path="/suppliers" element={<Suppliers />} />
-                    <Route path="/suppliers/:id" element={<SupplierProfile />} />
-                    <Route path="/purchase-orders" element={<PurchaseOrders />} />
-                    <Route path="/sales" element={<Sales />} />
-                    <Route path="/expenses" element={<Expenses />} />
-                    <Route path="/customers" element={<Customers />} />
-                    <Route path="/reports" element={<Reports />} />
-                    <Route path="/stock" element={<StockManagement />} />
-                    <Route path="/receipts" element={<ReceiptHistory />} />
-                    <Route path="/users" element={<UserManagement />} />
-                    <Route path="/settings" element={<Settings />} />
-                    {/* Catch-all route redirects unknown paths to dashboard */}
-                    <Route path="*" element={<Navigate to="/dashboard" replace />} />
-                  </Routes>
-                </Suspense>
-              </AnimatePresence>
-          </BusinessProvider>
-        </main>
-      </div>
-    </div>
-  );
+  // Products API
+  getProducts = async () => {
+    const res = await this.request(`/products?ts=${Date.now()}`);
+
+    // Normalize backend payload → frontend shape and numeric types
+    const rawProducts = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+
+    const toNumber = (val) => {
+      if (val === null || val === undefined || val === '') return 0;
+      // Prisma Decimal comes as string; ensure float
+      const n = typeof val === 'string' ? parseFloat(val) : Number(val);
+      return Number.isFinite(n) ? n : 0;
+    };
+
+    const normalized = rawProducts.map((p) => {
+      const buyPrice = toNumber(p.buy_price ?? p.buyPrice);
+      const sellPrice = toNumber(p.sell_price ?? p.sellPrice);
+      // Compute margin if missing
+      const marginPercent = (p.margin_percent ?? p.marginPercent);
+      const computedMargin = buyPrice > 0 ? ((sellPrice - buyPrice) / buyPrice) * 100 : 0;
+
+      return {
+        id: p.id,
+        name: p.name,
+        category: p.category ?? '',
+        barcode: p.barcode ?? '',
+        supplierId: p.supplier_id ?? p.supplierId ?? null,
+        supplierName: p.supplier ?? p.supplier_name ?? '',
+        quantity: toNumber(p.qty ?? p.quantity),
+        buyPrice,
+        sellPrice,
+        marginPercent: Number.isFinite(toNumber(marginPercent)) ? toNumber(marginPercent) : computedMargin,
+        expiryDate: p.expiry ?? p.expiry_date ?? p.expiryDate ?? null,
+        imageUrl: p.image_url ?? p.imageUrl ?? null,
+        lowStockThreshold: toNumber(p.low_stock_threshold ?? p.lowStockThreshold ?? 5),
+        createdAt: p.created_at ?? p.createdAt ?? null,
+        updatedAt: p.updated_at ?? p.updatedAt ?? null,
+      };
+    });
+
+    return { success: true, data: normalized };
+  }
+
+  getProduct = async (id) => {
+    return this.request(`/products/${id}`);
+  }
+
+  createProduct = async (productData) => {
+    return this.request('/products', {
+      method: 'POST',
+      body: JSON.stringify(productData),
+    });
+  }
+
+  updateProduct = async (id, productData) => {
+    return this.request(`/products/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(productData),
+    });
+  }
+
+  deleteProduct = async (id) => {
+    return this.request(`/products/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  getLowStockProducts = async (threshold = 5) => {
+    return this.request(`/products/low-stock?threshold=${threshold}`);
+  }
+
+  // Customers API
+  getCustomers = async () => {
+    return this.request('/customers');
+  }
+
+  getCustomer = async (id) => {
+    return this.request(`/customers/${id}`);
+  }
+
+  createCustomer = async (customerData) => {
+    return this.request('/customers', {
+      method: 'POST',
+      body: JSON.stringify(customerData),
+    });
+  }
+
+  updateCustomer = async (id, customerData) => {
+    return this.request(`/customers/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(customerData),
+    });
+  }
+
+  deleteCustomer = async (id) => {
+    return this.request(`/customers/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Auth API
+  register = async (userData) => {
+    return this.request('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(userData),
+    });
+  }
+
+  login = async (credentials) => {
+    return this.request('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify(credentials),
+    });
+  }
+
+  getMe = async (token) => {
+    return this.request('/auth/me', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+  }
+
+  // Sales API (protected routes)
+  getSales = async (token) => {
+    return this.request('/sales', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+  }
+
+  createSale = async (saleData, token) => {
+    return this.request('/sales', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(saleData),
+    });
+  }
+
+  // Expenses API (protected routes)
+  getExpenses = async (token) => {
+    return this.request('/expenses', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+  }
+
+  createExpense = async (expenseData, token) => {
+    return this.request('/expenses', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(expenseData),
+    });
+  }
+
+  updateExpense = async (id, expenseData, token) => {
+    return this.request(`/expenses/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(expenseData),
+    });
+  }
+
+  deleteExpense = async (id, token) => {
+    return this.request(`/expenses/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+  }
+
+  // Sales API - Missing methods
+  updateSale = async (id, saleData, token) => {
+    return this.request(`/sales/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(saleData),
+    });
+  }
+
+  deleteSale = async (id, token) => {
+    return this.request(`/sales/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+  }
+
+  getSale = async (id, token) => {
+    return this.request(`/sales/${id}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+  }
+
+  // Suppliers API - Missing methods
+  getSuppliers = async (token) => {
+    return this.request('/suppliers', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+  }
+
+  getSupplier = async (id, token) => {
+    return this.request(`/suppliers/${id}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+  }
+
+  createSupplier = async (supplierData, token) => {
+    return this.request('/suppliers', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(supplierData),
+    });
+  }
+
+  updateSupplier = async (id, supplierData, token) => {
+    return this.request(`/suppliers/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(supplierData),
+    });
+  }
+
+  deleteSupplier = async (id, token) => {
+    return this.request(`/suppliers/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+  }
+
+  // Reports API
+  getDashboardStats = async (token) => {
+    return this.request('/reports/dashboard', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+  }
+
+  getSalesReport = async (token) => {
+    return this.request('/reports/sales', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+  }
+
+  getExpenseReport = async (token) => {
+    return this.request('/reports/expenses', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+  }
+
+  getInventoryReport = async (token) => {
+    return this.request('/reports/inventory', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+  }
+
+  getProfitLossReport = async (token) => {
+    return this.request('/reports/profit-loss', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+  }
 }
+
+export const apiService = new ApiService();
+export default apiService;
