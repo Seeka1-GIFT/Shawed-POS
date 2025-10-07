@@ -42,10 +42,17 @@ import {
 export default function Reports() {
   const context = useContext(RealDataContext);
   
-  // Add null safety check
+  // Add null safety check and loading state
   if (!context) {
     console.error('RealDataContext is undefined in Reports page');
-    return <div className="p-4 text-red-500">Loading reports data...</div>;
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading reports data...</p>
+        </div>
+      </div>
+    );
   }
   
   const { 
@@ -55,14 +62,74 @@ export default function Reports() {
     expenses = [], 
     suppliers = [], 
     purchaseOrders = [], 
-    businessSettings = {} 
+    businessSettings = {},
+    loading = {},
+    error = {}
   } = context;
+
+  // Check for loading states
+  const isLoading = loading.sales || loading.expenses || loading.products;
+  
+  // Check for errors
+  const hasError = error.sales || error.expenses || error.products;
+  
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading reports data...</p>
+          <p className="text-sm text-gray-500 mt-2">
+            {loading.sales && 'Fetching sales...'} 
+            {loading.expenses && 'Fetching expenses...'} 
+            {loading.products && 'Fetching products...'}
+          </p>
+        </div>
+      </div>
+    );
+  }
+  
+  if (hasError) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-500 text-6xl mb-4">⚠️</div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Error Loading Reports</h2>
+          <p className="text-gray-600 mb-4">There was an issue loading the reports data.</p>
+          <div className="text-left bg-red-50 p-4 rounded-lg max-w-md">
+            <p className="text-sm text-red-700">
+              {error.sales && `Sales: ${error.sales}`}
+              {error.expenses && `Expenses: ${error.expenses}`}
+              {error.products && `Products: ${error.products}`}
+            </p>
+          </div>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
   
   // Placeholder data for properties not yet implemented in RealDataContext
   const purchases = []; // Placeholder - not yet implemented
   const debts = []; // Placeholder - not yet implemented  
   const payments = []; // Placeholder - not yet implemented
   const { isDarkMode } = useContext(ThemeContext);
+
+  // Debug logging for data structure
+  console.log('📊 Reports Page Data Debug:', {
+    sales: sales.length,
+    expenses: expenses.length,
+    products: products.length,
+    customers: customers.length,
+    salesSample: sales.slice(0, 2),
+    expensesSample: expenses.slice(0, 2),
+    productsSample: products.slice(0, 2)
+  });
   const [selectedPeriod, setSelectedPeriod] = useState('7'); // days
   const [customRange, setCustomRange] = useState({ start: '', end: '' });
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -92,29 +159,52 @@ export default function Reports() {
   // Filter data by date range
   const filteredSales = useMemo(() => {
     return sales.filter(sale => {
-      const saleDate = new Date(sale.date);
+      // Use correct date field from API response (saleDate or createdAt)
+      const saleDate = new Date(sale.saleDate || sale.createdAt || sale.date);
       const inRange = saleDate >= start && saleDate <= end;
-      const categoryOk = categoryFilter === 'all' || sale.items.some(it => (it.product.category || 'Uncategorized') === categoryFilter);
+      
+      // Check category filter using saleItems structure from API
+      const categoryOk = categoryFilter === 'all' || 
+        (sale.saleItems && sale.saleItems.some(item => 
+          (item.product?.category || 'Uncategorized') === categoryFilter
+        ));
+      
       const customerOk = customerFilter === 'all' || sale.customerId === customerFilter;
-      const paymentOk = paymentFilter === 'all' || (String(sale.paymentMethod||'').toLowerCase() === String(paymentFilter).toLowerCase());
-      // derive status if missing
-      const paid = Number(sale.amountPaid ?? 0);
-      const totalAmt = Number(sale.total ?? 0);
-      let status = sale.paymentStatus || (paid <= 0 ? 'Credit' : (paid >= totalAmt ? 'Paid' : 'Partial / Credit'));
-      const statusOk = statusFilter === 'all' || status.toLowerCase().startsWith(String(statusFilter).toLowerCase());
+      const paymentOk = paymentFilter === 'all' || 
+        (String(sale.paymentMethod || '').toLowerCase() === String(paymentFilter).toLowerCase());
+      
+      // Derive status using correct field names
+      const paid = Number(sale.amountPaid || sale.amount_paid || 0);
+      const totalAmt = Number(sale.total || 0);
+      let status = sale.paymentStatus || sale.payment_status || 
+        (paid <= 0 ? 'Credit' : (paid >= totalAmt ? 'Paid' : 'Partial / Credit'));
+      const statusOk = statusFilter === 'all' || 
+        status.toLowerCase().startsWith(String(statusFilter).toLowerCase());
+      
       return inRange && categoryOk && customerOk && paymentOk && statusOk;
     });
-  }, [sales, start, end, categoryFilter, customerFilter]);
+  }, [sales, start, end, categoryFilter, customerFilter, paymentFilter, statusFilter]);
 
   // Build enriched sales transactions for table
   const salesTransactions = useMemo(()=> {
     return filteredSales.map(s => {
-      const paid = Number(s.amountPaid ?? 0);
-      const totalAmt = Number(s.total ?? 0);
-      const status = s.paymentStatus || (paid <= 0 ? 'Credit' : (paid >= totalAmt ? 'Paid' : 'Partial / Credit'));
+      const paid = Number(s.amountPaid || s.amount_paid || 0);
+      const totalAmt = Number(s.total || 0);
+      const status = s.paymentStatus || s.payment_status || 
+        (paid <= 0 ? 'Credit' : (paid >= totalAmt ? 'Paid' : 'Partial / Credit'));
       const balance = Math.max(0, totalAmt - paid);
-      const customerName = s.customerId ? (customers.find(c=> c.id === s.customerId)?.name || 'Customer') : 'Walk-in';
-      return { ...s, paid, totalAmt, status, balance, customerName };
+      const customerName = s.customerId ? 
+        (s.customer?.name || customers.find(c=> c.id === s.customerId)?.name || 'Customer') : 'Walk-in';
+      
+      return { 
+        ...s, 
+        paid, 
+        totalAmt, 
+        status, 
+        balance, 
+        customerName,
+        date: s.saleDate || s.createdAt || s.date
+      };
     }).sort((a,b)=> new Date(b.date) - new Date(a.date));
   }, [filteredSales, customers]);
 
@@ -127,13 +217,17 @@ export default function Reports() {
 
   // Profit & Loss Analysis
   const profitLossData = useMemo(() => {
-    const totalRevenue = filteredSales.reduce((sum, sale) => sum + sale.total, 0);
-    const totalExpenses = filteredExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+    const totalRevenue = filteredSales.reduce((sum, sale) => sum + parseFloat(sale.total || 0), 0);
+    const totalExpenses = filteredExpenses.reduce((sum, exp) => sum + parseFloat(exp.amount || 0), 0);
     
-    // Calculate cost of goods sold (COGS)
+    // Calculate cost of goods sold (COGS) using correct data structure
     const cogs = filteredSales.reduce((sum, sale) => {
-      return sum + sale.items.reduce((itemSum, item) => {
-        return itemSum + ((item.product.buyPrice || item.product.purchasePrice || 0) * item.quantity);
+      const saleItems = sale.saleItems || sale.items || [];
+      return sum + saleItems.reduce((itemSum, item) => {
+        const product = item.product || {};
+        const buyPrice = parseFloat(product.buyPrice || product.purchasePrice || product.sellPrice || 0);
+        const quantity = parseInt(item.quantity || 0);
+        return itemSum + (buyPrice * quantity);
       }, 0);
     }, 0);
 
@@ -156,24 +250,31 @@ export default function Reports() {
   // Inventory Valuation
   const inventoryData = useMemo(() => {
     const totalInventoryValue = products.reduce((sum, product) => {
-      return sum + ((product.buyPrice || product.purchasePrice || 0) * product.quantity);
+      const buyPrice = parseFloat(product.buyPrice || product.purchasePrice || 0);
+      const quantity = parseInt(product.quantity || 0);
+      return sum + (buyPrice * quantity);
     }, 0);
 
     const totalSellingValue = products.reduce((sum, product) => {
-      return sum + ((product.sellPrice || product.sellingPrice || 0) * product.quantity);
+      const sellPrice = parseFloat(product.sellPrice || product.sellingPrice || 0);
+      const quantity = parseInt(product.quantity || 0);
+      return sum + (sellPrice * quantity);
     }, 0);
 
-    const lowStockProducts = products.filter(p => p.quantity <= 5);
-    const outOfStockProducts = products.filter(p => p.quantity === 0);
+    const lowStockProducts = products.filter(p => parseInt(p.quantity || 0) <= 5);
+    const outOfStockProducts = products.filter(p => parseInt(p.quantity || 0) === 0);
 
     const categoryBreakdown = products.reduce((acc, product) => {
       const category = product.category || 'Uncategorized';
       if (!acc[category]) {
         acc[category] = { value: 0, count: 0, inventoryValue: 0 };
       }
-      acc[category].value += product.quantity;
+      const quantity = parseInt(product.quantity || 0);
+      const buyPrice = parseFloat(product.buyPrice || product.purchasePrice || 0);
+      
+      acc[category].value += quantity;
       acc[category].count += 1;
-      acc[category].inventoryValue += (product.buyPrice || product.purchasePrice || 0) * product.quantity;
+      acc[category].inventoryValue += buyPrice * quantity;
       return acc;
     }, {});
 
