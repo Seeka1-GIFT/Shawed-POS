@@ -100,11 +100,11 @@ export default function ReceiptHistory() {
     // Sort
     switch (sortBy) {
       case 'total':
-        return filtered.sort((a, b) => b.total - a.total);
+        return filtered.sort((a, b) => (b?.total || 0) - (a?.total || 0));
       case 'items':
         return filtered.sort((a, b) => (b.items?.length || 0) - (a.items?.length || 0));
       default:
-        return filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+        return filtered.sort((a, b) => new Date(b?.date || 0) - new Date(a?.date || 0));
     }
   }, [sales, searchQuery, filterBy, sortBy]);
 
@@ -168,8 +168,14 @@ export default function ReceiptHistory() {
   };
 
   const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+    if (!dateString) return 'Unknown Date';
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return 'Invalid Date';
+      return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+    } catch (error) {
+      return 'Invalid Date';
+    }
   };
 
   const getTotalSales = () => {
@@ -325,7 +331,7 @@ export default function ReceiptHistory() {
       <div className="flex items-center justify-between mb-4">
         <h3 className={`text-lg font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-800'} flex items-center`}>
           <FileText className="h-5 w-5 mr-2" />
-          Receipt History ({filteredSales.length})
+          Receipt History ({(filteredSales || []).length})
         </h3>
         <button
           onClick={exportReceipts}
@@ -335,16 +341,16 @@ export default function ReceiptHistory() {
         </button>
       </div>
 
-      {filteredSales.length === 0 ? (
+      {(filteredSales || []).length === 0 ? (
         <div className="text-center py-8">
           <ReceiptIcon className={`h-12 w-12 mx-auto mb-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
           <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} mb-2`}>
-            {sales.length === 0 
+            {(sales || []).length === 0 
               ? "No receipts found. Complete some sales to see them here."
               : "No receipts found matching your criteria."
             }
           </p>
-          {sales.length === 0 && (
+          {(sales || []).length === 0 && (
             <p className={`text-sm ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
               Go to the Sales page to make your first sale!
             </p>
@@ -368,17 +374,17 @@ export default function ReceiptHistory() {
             <tbody>
               {filteredSales.map((sale, index) => (
                 <motion.tr
-                  key={sale.id}
+                  key={sale?.id || index}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
                   className={`border-b ${isDarkMode ? 'border-gray-600 hover:bg-gray-700' : 'border-gray-200 hover:bg-gray-50'}`}
                 >
                   <td className={`py-3 px-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-                    <span className="font-mono text-sm">#{sale.id}</span>
+                    <span className="font-mono text-sm">#{sale?.id || 'Unknown'}</span>
                   </td>
                   <td className={`py-3 px-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                    <div className="text-sm">{formatDate(sale.date)}</div>
+                    <div className="text-sm">{formatDate(sale?.date || '')}</div>
                   </td>
                   <td className={`py-3 px-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
                     <div className="text-sm">{(sale.items?.length || 0)} item{(sale.items?.length || 0) !== 1 ? 's' : ''}</div>
@@ -388,7 +394,7 @@ export default function ReceiptHistory() {
                     </div>
                   </td>
                   <td className={`py-3 px-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                    <span className="text-sm">{sale.paymentMethod}</span>
+                    <span className="text-sm">{sale?.paymentMethod || 'Unknown'}</span>
                   </td>
                   <td className={`py-3 px-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
                     <span className="font-semibold">${(sale.total || 0).toFixed(2)}</span>
@@ -414,14 +420,14 @@ export default function ReceiptHistory() {
         {/* Mobile cards */}
         <div className="block sm:hidden space-y-3">
           {filteredSales.map((sale, idx)=> (
-            <div key={sale.id} className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border rounded-xl p-3` }>
+            <div key={sale?.id || idx} className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border rounded-xl p-3` }>
               <div className="flex items-center justify-between">
-                <div className={`font-mono text-sm ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>📄 #{sale.id}</div>
-                <div className={`${isDarkMode ? 'text-gray-100' : 'text-gray-900'} font-semibold`}>💰 ${sale.total.toFixed(2)}</div>
+                <div className={`font-mono text-sm ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>📄 #{sale?.id || 'Unknown'}</div>
+                <div className={`${isDarkMode ? 'text-gray-100' : 'text-gray-900'} font-semibold`}>💰 ${(sale?.total || 0).toFixed(2)}</div>
               </div>
-              <div className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} text-xs mt-1`}>🕒 {formatDate(sale.date)}</div>
-              <div className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} text-xs`}>🛒 {sale.items.length} item{sale.items.length !== 1 ? 's' : ''}</div>
-              <div className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} text-xs`}>💳 {sale.paymentMethod}</div>
+              <div className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} text-xs mt-1`}>🕒 {formatDate(sale?.date || '')}</div>
+              <div className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} text-xs`}>🛒 {(sale?.items?.length || 0)} item{(sale?.items?.length || 0) !== 1 ? 's' : ''}</div>
+              <div className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} text-xs`}>💳 {sale?.paymentMethod || 'Unknown'}</div>
               <div className="flex justify-end mt-2">
                 <motion.button whileHover={{scale:1.05}} whileTap={{scale:0.95}} onClick={()=>handleViewReceipt(sale)} className={`px-3 py-1 text-xs ${isDarkMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-100 hover:bg-blue-200 text-blue-800'} rounded-lg`}>
                   <Eye className="h-3 w-3 inline mr-1"/>View
