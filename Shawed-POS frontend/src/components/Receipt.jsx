@@ -19,7 +19,7 @@ export default function Receipt({
 
   // Print functionality - moved before conditional return
   const handlePrint = useReactToPrint({
-    content: () => receiptRef.current,
+    contentRef: receiptRef,
     documentTitle: sale ? `Receipt-${(sale.id || 'unknown').slice(-8)}` : 'Receipt',
     pageStyle: `
       @media print {
@@ -47,13 +47,22 @@ export default function Receipt({
   
   // Debug logging
   console.log('Receipt component - sale:', sale);
+  console.log('Receipt component - sale.items:', sale?.items);
+  console.log('Receipt component - sale.total:', sale?.total);
+  console.log('Receipt component - sale.subtotal:', sale?.subtotal);
   console.log('Receipt component - businessSettings:', businessSettings);
   
   const businessInfo = businessSettings || {};
 
   const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+    if (!dateString) return 'Unknown Date';
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return 'Invalid Date';
+      return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+    } catch (error) {
+      return 'Invalid Date';
+    }
   };
 
   // Generate QR code data
@@ -207,22 +216,43 @@ export default function Receipt({
     }
   };
 
+  const calculateSubtotal = () => {
+    // Calculate subtotal from items if not provided
+    if (sale?.subtotal) return sale.subtotal;
+    
+    const items = sale?.items || [];
+    return items.reduce((sum, item) => {
+      const price = item?.product?.sellPrice || item?.product?.sellingPrice || item?.price || 0;
+      const quantity = item?.quantity || 0;
+      return sum + (price * quantity);
+    }, 0);
+  };
+
   const calculateTax = () => {
     // Use tax rate from business settings
     const taxRate = businessInfo.taxRate || 0;
-    const subtotal = sale.subtotal || 0;
+    const subtotal = calculateSubtotal();
     return subtotal * (taxRate / 100);
   };
 
   const calculateGrandTotal = () => {
-    const subtotal = sale.subtotal || 0;
+    // Use sale.total if available, otherwise calculate
+    if (sale?.total) return sale.total;
+    
+    const subtotal = calculateSubtotal();
     const taxAmount = calculateTax();
-    const discountAmount = sale.discount || 0;
+    const discountAmount = sale?.discount || 0;
     return subtotal + taxAmount - discountAmount;
   };
 
+  const subtotal = calculateSubtotal();
   const tax = calculateTax();
   const grandTotal = calculateGrandTotal();
+  
+  // Debug calculations
+  console.log('Receipt calculations - subtotal:', subtotal);
+  console.log('Receipt calculations - tax:', tax);
+  console.log('Receipt calculations - grandTotal:', grandTotal);
 
   return (
     <motion.div
@@ -337,7 +367,7 @@ export default function Receipt({
             <div className={`border-t-2 ${isDarkMode ? 'border-gray-600' : 'border-gray-400'} pt-4`}>
               <div className="flex justify-between text-sm mb-2">
                 <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Subtotal:</span>
-                <span className={`${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>${(sale.subtotal || 0).toFixed(2)}</span>
+                <span className={`${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>${subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-sm mb-2">
                 <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Tax ({businessInfo.taxRate || 0}%):</span>
