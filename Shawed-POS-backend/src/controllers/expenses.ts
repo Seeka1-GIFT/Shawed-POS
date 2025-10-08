@@ -155,6 +155,9 @@ export const createExpense = asyncHandler(async (req: Request, res: Response, ne
   try {
     console.log('💰 CREATE EXPENSE: Starting expense creation process');
     console.log('📥 Request body:', JSON.stringify(req.body, null, 2));
+    console.log('📥 Request headers:', JSON.stringify(req.headers, null, 2));
+    console.log('📥 Request method:', req.method);
+    console.log('📥 Request url:', req.url);
     
     const { description, category, amount, date } = req.body;
 
@@ -208,6 +211,9 @@ export const createExpense = asyncHandler(async (req: Request, res: Response, ne
       meta: (error as any)?.meta,
       stack: error?.stack,
     });
+    
+    // Log the full error object
+    console.error('❌ Full error object:', JSON.stringify(error, null, 2));
     
     // Handle database errors gracefully
     if (error.code === 'P2021' || error.message.includes('relation') || error.message.includes('does not exist')) {
