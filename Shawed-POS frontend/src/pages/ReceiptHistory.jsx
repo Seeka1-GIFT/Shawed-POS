@@ -34,15 +34,22 @@ import {
  */
 export default function ReceiptHistory() {
   const context = useContext(RealDataContext);
+  const { isDarkMode } = useContext(ThemeContext);
   
   // Add null safety check
   if (!context) {
     console.error('RealDataContext is undefined in ReceiptHistory page');
-    return <div className="p-4 text-red-500">Loading receipt history data...</div>;
+    return (
+      <div className={`p-4 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-sm`}>
+        <div className="text-center py-8">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+          <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Loading receipt history data...</p>
+        </div>
+      </div>
+    );
   }
   
-  const { sales = [] } = context;
-  const { isDarkMode } = useContext(ThemeContext);
+  const { sales = [], isLoading, hasError, getError } = context;
   
   // Use sales data directly
   
@@ -67,8 +74,8 @@ export default function ReceiptHistory() {
         const matchesId = sale.id.toLowerCase().includes(query);
         const matchesPayment = sale.paymentMethod.toLowerCase().includes(query);
         const matchesCustomer = sale.customerId ? sale.customerId.toLowerCase().includes(query) : false;
-        const matchesItems = sale.items.some(item => 
-          item.product.name.toLowerCase().includes(query)
+        const matchesItems = (sale.items || []).some(item => 
+          item?.product?.name?.toLowerCase().includes(query)
         );
         
         if (!matchesId && !matchesPayment && !matchesCustomer && !matchesItems) {
@@ -95,7 +102,7 @@ export default function ReceiptHistory() {
       case 'total':
         return filtered.sort((a, b) => b.total - a.total);
       case 'items':
-        return filtered.sort((a, b) => b.items.length - a.items.length);
+        return filtered.sort((a, b) => (b.items?.length || 0) - (a.items?.length || 0));
       default:
         return filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
     }
@@ -114,8 +121,8 @@ export default function ReceiptHistory() {
       const dateStr = d.toISOString().slice(0, 10);
       const dayLabel = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
       
-      const salesOfDay = salesData.filter(sale => sale.date === dateStr);
-      const totalRevenue = salesOfDay.reduce((sum, sale) => sum + sale.total, 0);
+      const salesOfDay = salesData.filter(sale => sale?.date === dateStr);
+      const totalRevenue = salesOfDay.reduce((sum, sale) => sum + (sale?.total || 0), 0);
       const totalTransactions = salesOfDay.length;
       const avgTransactionValue = totalTransactions > 0 ? totalRevenue / totalTransactions : 0;
       
@@ -137,14 +144,15 @@ export default function ReceiptHistory() {
     const breakdown = {};
     
     salesData.forEach(sale => {
-      if (!breakdown[sale.paymentMethod]) {
-        breakdown[sale.paymentMethod] = { count: 0, total: 0 };
+      const paymentMethod = sale?.paymentMethod || 'Unknown';
+      if (!breakdown[paymentMethod]) {
+        breakdown[paymentMethod] = { count: 0, total: 0 };
       }
-      breakdown[sale.paymentMethod].count += 1;
-      breakdown[sale.paymentMethod].total += sale.total;
+      breakdown[paymentMethod].count += 1;
+      breakdown[paymentMethod].total += (sale?.total || 0);
     });
     
-    const totalSalesValue = salesData.reduce((sum, s) => sum + s.total, 0);
+    const totalSalesValue = salesData.reduce((sum, s) => sum + (s?.total || 0), 0);
     
     return Object.entries(breakdown).map(([method, methodData]) => ({
       method,
@@ -165,7 +173,7 @@ export default function ReceiptHistory() {
   };
 
   const getTotalSales = () => {
-    return (filteredSales || []).reduce((total, sale) => total + sale.total, 0);
+    return (filteredSales || []).reduce((total, sale) => total + (sale?.total || 0), 0);
   };
 
   const getTotalTransactions = () => {
@@ -180,17 +188,17 @@ export default function ReceiptHistory() {
   const exportReceipts = () => {
     const sales = filteredSales || [];
     const receiptsData = sales.map(sale => ({
-      id: sale.id,
-      date: sale.date,
-      total: sale.total,
-      paymentMethod: sale.paymentMethod,
-      customerId: sale.customerId,
-      itemsCount: sale.items.length,
-      items: sale.items.map(item => ({
-        name: item.product.name,
-        quantity: item.quantity,
-        price: item.product.sellingPrice,
-        total: item.product.sellingPrice * item.quantity,
+      id: sale?.id || 'Unknown',
+      date: sale?.date || 'Unknown',
+      total: sale?.total || 0,
+      paymentMethod: sale?.paymentMethod || 'Unknown',
+      customerId: sale?.customerId || 'Unknown',
+      itemsCount: (sale?.items || []).length,
+      items: (sale?.items || []).map(item => ({
+        name: item?.product?.name || 'Unknown',
+        quantity: item?.quantity || 0,
+        price: item?.product?.sellingPrice || 0,
+        total: (item?.product?.sellingPrice || 0) * (item?.quantity || 0),
       })),
     }));
 
@@ -373,17 +381,17 @@ export default function ReceiptHistory() {
                     <div className="text-sm">{formatDate(sale.date)}</div>
                   </td>
                   <td className={`py-3 px-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-                    <div className="text-sm">{sale.items.length} item{sale.items.length !== 1 ? 's' : ''}</div>
+                    <div className="text-sm">{(sale.items?.length || 0)} item{(sale.items?.length || 0) !== 1 ? 's' : ''}</div>
                     <div className="text-xs text-gray-500">
-                      {sale.items.slice(0, 2).map(item => item.product.name).join(', ')}
-                      {sale.items.length > 2 && '...'}
+                      {(sale.items || []).slice(0, 2).map(item => item?.product?.name || 'Unknown').join(', ')}
+                      {(sale.items?.length || 0) > 2 && '...'}
                     </div>
                   </td>
                   <td className={`py-3 px-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                     <span className="text-sm">{sale.paymentMethod}</span>
                   </td>
                   <td className={`py-3 px-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-                    <span className="font-semibold">${sale.total.toFixed(2)}</span>
+                    <span className="font-semibold">${(sale.total || 0).toFixed(2)}</span>
                   </td>
                   <td className="py-3 px-4">
                     <div className="flex space-x-2">
@@ -426,6 +434,41 @@ export default function ReceiptHistory() {
       )}
     </div>
   );
+
+  // Show loading state
+  if (isLoading && isLoading('sales')) {
+    return (
+      <div className={`p-4 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-sm`}>
+        <div className="text-center py-8">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+          <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Loading receipt history...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (hasError && hasError('sales')) {
+    return (
+      <div className={`p-4 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-sm`}>
+        <div className="text-center py-8">
+          <div className="text-red-500 text-6xl mb-4">⚠️</div>
+          <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'} mb-2`}>
+            Something went wrong
+          </h3>
+          <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'} mb-4`}>
+            We're sorry, but something unexpected happened. Please refresh the page or contact support if the problem persists.
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className={`px-4 py-2 ${isDarkMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-primary-600 hover:bg-primary-700'} text-white rounded-lg transition-colors`}
+          >
+            Refresh Page
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <motion.div
