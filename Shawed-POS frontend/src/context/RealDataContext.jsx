@@ -593,8 +593,7 @@ export function RealDataProvider({ children }) {
     }
     
     try {
-      const token = localStorage.getItem('authToken');
-      const result = await apiService.createExpense(expenseData, token);
+      const result = await apiService.createExpense(expenseData);
       
       if (result.success) {
         // Update local state
@@ -618,8 +617,7 @@ export function RealDataProvider({ children }) {
     }
     
     try {
-      const token = localStorage.getItem('authToken');
-      const result = await apiService.updateExpense(id, expenseData, token);
+      const result = await apiService.updateExpense(id, expenseData);
       
       if (result.success) {
         // Update local state
@@ -645,8 +643,7 @@ export function RealDataProvider({ children }) {
     }
     
     try {
-      const token = localStorage.getItem('authToken');
-      const result = await apiService.deleteExpense(id, token);
+      const result = await apiService.deleteExpense(id);
       
       if (result.success) {
         // Update local state

@@ -204,32 +204,23 @@ class ApiService {
     });
   }
 
-  createExpense = async (expenseData, token) => {
+  createExpense = async (expenseData) => {
     return this.request('/expenses', {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
       body: JSON.stringify(expenseData),
     });
   }
 
-  updateExpense = async (id, expenseData, token) => {
+  updateExpense = async (id, expenseData) => {
     return this.request(`/expenses/${id}`, {
       method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
       body: JSON.stringify(expenseData),
     });
   }
 
-  deleteExpense = async (id, token) => {
+  deleteExpense = async (id) => {
     return this.request(`/expenses/${id}`, {
       method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
     });
   }
 
