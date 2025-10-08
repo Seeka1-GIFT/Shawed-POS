@@ -74,7 +74,7 @@ export default function ReceiptHistory() {
         const matchesId = sale.id.toLowerCase().includes(query);
         const matchesPayment = sale.paymentMethod.toLowerCase().includes(query);
         const matchesCustomer = sale.customerId ? sale.customerId.toLowerCase().includes(query) : false;
-        const matchesItems = (sale.items || []).some(item => 
+        const matchesItems = getSaleItems(sale).some(item => 
           item?.product?.name?.toLowerCase().includes(query)
         );
         
@@ -84,7 +84,7 @@ export default function ReceiptHistory() {
       }
 
       // Date filter
-      const saleDate = new Date(sale.date);
+      const saleDate = new Date(getSaleDate(sale));
       switch (filterBy) {
         case 'today':
           return saleDate.toDateString() === today.toDateString();
@@ -102,9 +102,9 @@ export default function ReceiptHistory() {
       case 'total':
         return filtered.sort((a, b) => (b?.total || 0) - (a?.total || 0));
       case 'items':
-        return filtered.sort((a, b) => (b.items?.length || 0) - (a.items?.length || 0));
+        return filtered.sort((a, b) => (getSaleItems(b).length || 0) - (getSaleItems(a).length || 0));
       default:
-        return filtered.sort((a, b) => new Date(b?.date || 0) - new Date(a?.date || 0));
+        return filtered.sort((a, b) => new Date(getSaleDate(b) || 0) - new Date(getSaleDate(a) || 0));
     }
   }, [sales, searchQuery, filterBy, sortBy]);
 
@@ -121,7 +121,10 @@ export default function ReceiptHistory() {
       const dateStr = d.toISOString().slice(0, 10);
       const dayLabel = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
       
-      const salesOfDay = salesData.filter(sale => sale?.date === dateStr);
+      const salesOfDay = salesData.filter(sale => {
+        const saleDate = getSaleDate(sale);
+        return saleDate && saleDate.slice(0, 10) === dateStr;
+      });
       const totalRevenue = salesOfDay.reduce((sum, sale) => sum + (sale?.total || 0), 0);
       const totalTransactions = salesOfDay.length;
       const avgTransactionValue = totalTransactions > 0 ? totalRevenue / totalTransactions : 0;
@@ -176,6 +179,16 @@ export default function ReceiptHistory() {
     } catch (error) {
       return 'Invalid Date';
     }
+  };
+
+  // Get the correct date field from sale data
+  const getSaleDate = (sale) => {
+    return sale?.saleDate || sale?.date || sale?.createdAt || null;
+  };
+
+  // Get the correct items field from sale data
+  const getSaleItems = (sale) => {
+    return sale?.saleItems || sale?.items || [];
   };
 
   const getTotalSales = () => {
@@ -384,13 +397,13 @@ export default function ReceiptHistory() {
                     <span className="font-mono text-sm">#{sale?.id || 'Unknown'}</span>
                   </td>
                   <td className={`py-3 px-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                    <div className="text-sm">{formatDate(sale?.date || '')}</div>
+                    <div className="text-sm">{formatDate(getSaleDate(sale))}</div>
                   </td>
                   <td className={`py-3 px-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-                    <div className="text-sm">{(sale.items?.length || 0)} item{(sale.items?.length || 0) !== 1 ? 's' : ''}</div>
+                    <div className="text-sm">{(getSaleItems(sale).length || 0)} item{(getSaleItems(sale).length || 0) !== 1 ? 's' : ''}</div>
                     <div className="text-xs text-gray-500">
-                      {(sale.items || []).slice(0, 2).map(item => item?.product?.name || 'Unknown').join(', ')}
-                      {(sale.items?.length || 0) > 2 && '...'}
+                      {getSaleItems(sale).slice(0, 2).map(item => item?.product?.name || 'Unknown').join(', ')}
+                      {(getSaleItems(sale).length || 0) > 2 && '...'}
                     </div>
                   </td>
                   <td className={`py-3 px-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
@@ -425,8 +438,8 @@ export default function ReceiptHistory() {
                 <div className={`font-mono text-sm ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>📄 #{sale?.id || 'Unknown'}</div>
                 <div className={`${isDarkMode ? 'text-gray-100' : 'text-gray-900'} font-semibold`}>💰 ${(sale?.total || 0).toFixed(2)}</div>
               </div>
-              <div className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} text-xs mt-1`}>🕒 {formatDate(sale?.date || '')}</div>
-              <div className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} text-xs`}>🛒 {(sale?.items?.length || 0)} item{(sale?.items?.length || 0) !== 1 ? 's' : ''}</div>
+              <div className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} text-xs mt-1`}>🕒 {formatDate(getSaleDate(sale))}</div>
+              <div className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} text-xs`}>🛒 {(getSaleItems(sale).length || 0)} item{(getSaleItems(sale).length || 0) !== 1 ? 's' : ''}</div>
               <div className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} text-xs`}>💳 {sale?.paymentMethod || 'Unknown'}</div>
               <div className="flex justify-end mt-2">
                 <motion.button whileHover={{scale:1.05}} whileTap={{scale:0.95}} onClick={()=>handleViewReceipt(sale)} className={`px-3 py-1 text-xs ${isDarkMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-100 hover:bg-blue-200 text-blue-800'} rounded-lg`}>

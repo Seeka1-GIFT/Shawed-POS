@@ -251,9 +251,7 @@ export default function Receipt({
   };
 
   const calculateGrandTotal = () => {
-    // Use sale.total if available, otherwise calculate
-    if (sale?.total) return sale.total;
-    
+    // Always calculate the total to ensure tax is included
     const subtotal = calculateSubtotal();
     const taxAmount = calculateTax();
     const discountAmount = sale?.discount || 0;
