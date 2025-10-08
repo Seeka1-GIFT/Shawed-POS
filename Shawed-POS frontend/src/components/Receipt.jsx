@@ -48,6 +48,9 @@ export default function Receipt({
   // Debug logging
   console.log('Receipt component - sale:', sale);
   console.log('Receipt component - sale.items:', sale?.items);
+  console.log('Receipt component - sale.saleItems:', sale?.saleItems);
+  console.log('Receipt component - sale.date:', sale?.date);
+  console.log('Receipt component - sale.saleDate:', sale?.saleDate);
   console.log('Receipt component - sale.total:', sale?.total);
   console.log('Receipt component - sale.subtotal:', sale?.subtotal);
   console.log('Receipt component - businessSettings:', businessSettings);
@@ -65,16 +68,21 @@ export default function Receipt({
     }
   };
 
+  // Get the correct date field from sale data
+  const getSaleDate = () => {
+    return sale?.saleDate || sale?.date || sale?.createdAt || null;
+  };
+
   // Generate QR code data
   const generateQRData = () => {
     const receiptData = {
       id: sale.id || 'N/A',
-      date: sale.date || sale.saleDate || new Date().toISOString(),
+      date: getSaleDate() || new Date().toISOString(),
       total: sale.total || 0,
-      items: (sale.items || sale.saleItems || []).map(item => ({
+      items: getSaleItems().map(item => ({
         name: item.product?.name || item.name || 'Unknown Item',
         quantity: item.quantity || 1,
-        price: item.product?.sellPrice || item.product?.sellingPrice || item.price || 0
+        price: item.price || item.product?.sellPrice || item.product?.sellingPrice || 0
       })),
       paymentMethod: sale.paymentMethod || 'Cash',
       customerId: sale.customerId || null
@@ -210,21 +218,28 @@ export default function Receipt({
       }
     } else {
       // Fallback: copy to clipboard
-      const receiptText = `Receipt #${sale?.id || 'Unknown'}\nDate: ${formatDate(sale?.date || '')}\nTotal: $${grandTotal.toFixed(2)}\nItems: ${(sale?.items || []).length}`;
+      const receiptText = `Receipt #${sale?.id || 'Unknown'}\nDate: ${formatDate(getSaleDate())}\nTotal: $${grandTotal.toFixed(2)}\nItems: ${getSaleItems().length}`;
       navigator.clipboard.writeText(receiptText);
       alert('Receipt details copied to clipboard!');
     }
+  };
+
+  // Get the correct items field from sale data
+  const getSaleItems = () => {
+    return sale?.saleItems || sale?.items || [];
   };
 
   const calculateSubtotal = () => {
     // Calculate subtotal from items if not provided
     if (sale?.subtotal) return sale.subtotal;
     
-    const items = sale?.items || [];
+    const items = getSaleItems();
     return items.reduce((sum, item) => {
-      const price = item?.product?.sellPrice || item?.product?.sellingPrice || item?.price || 0;
+      // Handle different item structures
+      const price = item?.price || item?.product?.sellPrice || item?.product?.sellingPrice || 0;
       const quantity = item?.quantity || 0;
-      return sum + (price * quantity);
+      const itemTotal = item?.total || (price * quantity);
+      return sum + itemTotal;
     }, 0);
   };
 
@@ -253,6 +268,8 @@ export default function Receipt({
   console.log('Receipt calculations - subtotal:', subtotal);
   console.log('Receipt calculations - tax:', tax);
   console.log('Receipt calculations - grandTotal:', grandTotal);
+  console.log('Receipt calculations - saleDate:', getSaleDate());
+  console.log('Receipt calculations - saleItems:', getSaleItems());
 
   return (
     <motion.div
@@ -323,7 +340,7 @@ export default function Receipt({
             <div className="mb-6">
               <div className="flex justify-between text-sm mb-2">
                 <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Date & Time:</span>
-                <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{formatDate(sale?.date || '')}</span>
+                <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{formatDate(getSaleDate())}</span>
               </div>
               <div className="flex justify-between text-sm mb-2">
                 <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Payment Method:</span>
@@ -350,13 +367,13 @@ export default function Receipt({
                 </tr>
               </thead>
               <tbody>
-                {(sale.items || []).map((item, index) => (
+                {getSaleItems().map((item, index) => (
                   <tr key={index} className={`border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
                     <td className={`py-2 text-xs ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{item?.product?.name || 'Unknown Item'}</td>
                     <td className={`py-2 text-xs text-center ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{item?.quantity || 0}</td>
-                    <td className={`py-2 text-xs text-right ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>${(item?.product?.sellPrice || item?.product?.sellingPrice || 0).toFixed(2)}</td>
+                    <td className={`py-2 text-xs text-right ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>${(item?.price || item?.product?.sellPrice || item?.product?.sellingPrice || 0).toFixed(2)}</td>
                     <td className={`py-2 text-xs text-right font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-                      ${((item?.product?.sellPrice || item?.product?.sellingPrice || 0) * (item?.quantity || 0)).toFixed(2)}
+                      ${(item?.total || (item?.price || item?.product?.sellPrice || item?.product?.sellingPrice || 0) * (item?.quantity || 0)).toFixed(2)}
                     </td>
                   </tr>
                 ))}
