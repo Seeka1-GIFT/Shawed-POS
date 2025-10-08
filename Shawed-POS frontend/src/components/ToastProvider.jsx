@@ -68,7 +68,7 @@ export function ToastProvider({ children }) {
 // Toast Container Component
 function ToastContainer({ toasts, removeToast }) {
   return (
-    <div className="fixed top-4 right-4 z-50 space-y-2">
+    <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 space-y-2 pointer-events-none w-full max-w-sm px-4 sm:px-6 sm:max-w-md">
       <AnimatePresence>
         {toasts.map((toast) => (
           <Toast key={toast.id} toast={toast} onRemove={removeToast} />
@@ -108,11 +108,11 @@ function Toast({ toast, onRemove }) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: 300, scale: 0.3 }}
-      animate={{ opacity: 1, x: 0, scale: 1 }}
-      exit={{ opacity: 0, x: 300, scale: 0.5 }}
-      transition={{ duration: 0.3 }}
-      className={`max-w-sm w-full ${getStyles()} border rounded-lg shadow-lg p-4`}
+      initial={{ opacity: 0, scale: 0.3, y: -20 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.5, y: 20 }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
+      className={`w-full pointer-events-auto ${getStyles()} border rounded-lg shadow-lg p-4`}
     >
       <div className="flex items-start">
         <div className="flex-shrink-0">
