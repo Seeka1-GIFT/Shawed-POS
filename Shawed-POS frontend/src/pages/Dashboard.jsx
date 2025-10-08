@@ -10,6 +10,7 @@ import {
   DollarSign,
   TrendingUp,
   Package,
+  AlertTriangle,
 } from 'lucide-react';
 
 /**
