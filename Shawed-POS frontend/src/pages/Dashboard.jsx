@@ -5,13 +5,11 @@ import StatsCard from '../components/StatsCard';
 import ChartCard from '../components/ChartCard';
 import InventoryAlerts from '../components/InventoryAlerts';
 import AdvancedAnalytics from '../components/AdvancedAnalytics';
-import ApiTestPanel from '../components/ApiTestPanel';
 import { motion } from 'framer-motion';
 import {
   DollarSign,
   TrendingUp,
   Package,
-  AlertTriangle,
 } from 'lucide-react';
 
 /**
@@ -133,42 +131,6 @@ export default function Dashboard() {
             </motion.div>
           )}
 
-          {/* Error State */}
-          {(hasError('products') || hasError('sales') || hasError('dashboard')) && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="mt-3 sm:mt-6 p-6 bg-red-50 dark:bg-red-900/20 rounded-xl shadow-md"
-            >
-              <div className="flex items-center gap-4">
-                <AlertTriangle className="h-8 w-8 text-red-600" />
-                <div>
-                  <p className="text-red-800 dark:text-red-200 font-semibold">Connection Error</p>
-                  <p className="text-red-600 dark:text-red-300 text-sm">Unable to fetch data from database. Check backend server connection.</p>
-                </div>
-                <button
-                  onClick={() => {
-                    fetchProducts();
-                    fetchSales();
-                    fetchDashboardStats();
-                  }}
-                  className="ml-auto px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-                >
-                  Retry
-                </button>
-              </div>
-            </motion.div>
-          )}
-
-          {/* API Integration Test Panel */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.6 }}
-            className="mt-3 sm:mt-6"
-          >
-            <ApiTestPanel />
-          </motion.div>
 
       {/* Inventory Alerts */}
       <motion.div
