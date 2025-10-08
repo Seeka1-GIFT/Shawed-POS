@@ -172,6 +172,16 @@ export function RealDataProvider({ children }) {
     // Reports route is public, no token needed
     return apiCall('fetch', 'reports', () => apiService.request('/reports'));
   };
+
+  const fetchPurchaseOrders = () => {
+    if (!apiService) {
+      console.error('API service is not available');
+      return Promise.resolve([]);
+    }
+    console.log('🔄 Fetching purchase orders data...');
+    // Purchase orders route is public, no token needed
+    return apiCall('fetch', 'purchaseOrders', () => apiService.request('/purchase-orders'));
+  };
   const fetchDashboardStats = () => {
     if (!apiService) {
       console.error('API service is not available');
@@ -334,11 +344,12 @@ export function RealDataProvider({ children }) {
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Load public data (sales, expenses, suppliers, reports) regardless of auth status
+        // Load public data (sales, expenses, suppliers, purchase orders, reports) regardless of auth status
         await Promise.all([
           fetchSales(),
           fetchExpenses(),
           fetchSuppliers(),
+          fetchPurchaseOrders(),
           fetchReportsData()
         ]);
         
@@ -558,6 +569,7 @@ export function RealDataProvider({ children }) {
     fetchSales,
     fetchExpenses,
     fetchSuppliers,
+    fetchPurchaseOrders,
     fetchReportsData,
     fetchDashboardStats,
     
@@ -750,21 +762,91 @@ export function RealDataProvider({ children }) {
       }
     },
     
-    // Purchase Order CRUD Operations (placeholder functions)
+    // Purchase Order CRUD Operations (real API calls)
     addPurchaseOrder: async (orderData) => {
-      console.log('addPurchaseOrder called with:', orderData);
-      // TODO: Implement actual API call
-      return { success: true, data: { ...orderData, id: Date.now().toString() } };
+      if (!apiService) {
+        console.error('API service is not available');
+        return { success: false, message: 'API service not available' };
+      }
+      
+      try {
+        console.log('📦 Creating purchase order:', orderData);
+        const result = await apiService.request('/purchase-orders', {
+          method: 'POST',
+          body: JSON.stringify(orderData),
+        });
+        
+        if (result.success) {
+          // Update local state
+          setData(prev => ({
+            ...prev,
+            purchaseOrders: [...(prev.purchaseOrders || []), result.data]
+          }));
+          
+          // Emit event to trigger data refresh
+          window.dispatchEvent(new CustomEvent('purchaseOrderCreated', { 
+            detail: { order: result.data } 
+          }));
+        }
+        
+        return result;
+      } catch (error) {
+        console.error('addPurchaseOrder error:', error);
+        return { success: false, message: error.message };
+      }
     },
     updatePurchaseOrder: async (id, orderData) => {
-      console.log('updatePurchaseOrder called with:', id, orderData);
-      // TODO: Implement actual API call
-      return { success: true, data: { ...orderData, id } };
+      if (!apiService) {
+        console.error('API service is not available');
+        return { success: false, message: 'API service not available' };
+      }
+      
+      try {
+        const result = await apiService.request(`/purchase-orders/${id}`, {
+          method: 'PUT',
+          body: JSON.stringify(orderData),
+        });
+        
+        if (result.success) {
+          // Update local state
+          setData(prev => ({
+            ...prev,
+            purchaseOrders: prev.purchaseOrders.map(order => 
+              order.id === id ? result.data : order
+            )
+          }));
+        }
+        
+        return result;
+      } catch (error) {
+        console.error('updatePurchaseOrder error:', error);
+        return { success: false, message: error.message };
+      }
     },
     deletePurchaseOrder: async (id) => {
-      console.log('deletePurchaseOrder called with:', id);
-      // TODO: Implement actual API call
-      return { success: true };
+      if (!apiService) {
+        console.error('API service is not available');
+        return { success: false, message: 'API service not available' };
+      }
+      
+      try {
+        const result = await apiService.request(`/purchase-orders/${id}`, {
+          method: 'DELETE',
+        });
+        
+        if (result.success) {
+          // Update local state
+          setData(prev => ({
+            ...prev,
+            purchaseOrders: prev.purchaseOrders.filter(order => order.id !== id)
+          }));
+        }
+        
+        return result;
+      } catch (error) {
+        console.error('deletePurchaseOrder error:', error);
+        return { success: false, message: error.message };
+      }
     },
     receivePurchaseOrder: async (id, receivedItems) => {
       console.log('receivePurchaseOrder called with:', id, receivedItems);
