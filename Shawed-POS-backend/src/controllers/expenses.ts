@@ -153,9 +153,13 @@ export const getExpense = asyncHandler(async (req: Request, res: Response, next:
 
 export const createExpense = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
   try {
+    console.log('💰 CREATE EXPENSE: Starting expense creation process');
+    console.log('📥 Request body:', JSON.stringify(req.body, null, 2));
+    
     const { description, category, amount, date } = req.body;
 
     if (!description || !category || !amount) {
+      console.log('❌ CREATE EXPENSE: Missing required fields');
       return res.status(400).json({
         success: false,
         message: 'Please provide description, category, and amount'
@@ -163,6 +167,7 @@ export const createExpense = asyncHandler(async (req: Request, res: Response, ne
     }
 
     if (!isValidDecimal(amount)) {
+      console.log('❌ CREATE EXPENSE: Invalid amount:', amount);
       return res.status(400).json({
         success: false,
         message: 'Amount must be a valid number'
@@ -171,13 +176,14 @@ export const createExpense = asyncHandler(async (req: Request, res: Response, ne
 
     // Check if Prisma client is available
     if (!prisma) {
-      console.error('❌ Prisma client is not initialized');
+      console.error('❌ CREATE EXPENSE: Prisma client is not initialized');
       return res.status(500).json({
         success: false,
         message: 'Database connection not available'
       });
     }
 
+    console.log('🔄 CREATE EXPENSE: Creating expense in database...');
     const expense = await prisma.expense.create({
       data: {
         description,
@@ -187,13 +193,21 @@ export const createExpense = asyncHandler(async (req: Request, res: Response, ne
       }
     });
 
+    console.log('✅ CREATE EXPENSE: Expense created successfully:', expense.id);
     res.status(201).json({
       success: true,
       message: 'Expense created successfully',
       data: expense
     });
   } catch (error) {
-    console.error('❌ createExpense error:', error);
+    console.error('❌ CREATE EXPENSE: Error occurred:', error);
+    console.error('❌ Error details:', {
+      name: error?.name,
+      message: error?.message,
+      code: error?.code,
+      meta: (error as any)?.meta,
+      stack: error?.stack,
+    });
     
     // Handle database errors gracefully
     if (error.code === 'P2021' || error.message.includes('relation') || error.message.includes('does not exist')) {
@@ -206,7 +220,8 @@ export const createExpense = asyncHandler(async (req: Request, res: Response, ne
     res.status(500).json({
       success: false,
       message: 'Failed to create expense',
-      error: error.message
+      error: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined,
     });
   }
 });
