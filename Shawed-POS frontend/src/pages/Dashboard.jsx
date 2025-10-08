@@ -118,19 +118,6 @@ export default function Dashboard() {
         <AdvancedAnalytics data={getDashboardData()} isDarkMode={isDarkMode} />
       </motion.div>
 
-          {/* Loading State */}
-          {(isLoading('products') || isLoading('sales') || isLoading('dashboard')) && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="mt-3 sm:mt-6 p-6 bg-white dark:bg-slate-800 rounded-xl shadow-md"
-            >
-              <div className="flex flex-col items-center gap-4">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-                <p className="text-gray-600 dark:text-gray-300">Loading real data from PostgreSQL...</p>
-              </div>
-            </motion.div>
-          )}
 
 
       {/* Inventory Alerts */}
