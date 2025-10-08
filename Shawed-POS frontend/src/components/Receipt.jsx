@@ -201,7 +201,7 @@ export default function Receipt({
       }
     } else {
       // Fallback: copy to clipboard
-      const receiptText = `Receipt #${sale.id}\nDate: ${formatDate(sale.date)}\nTotal: $${grandTotal.toFixed(2)}\nItems: ${sale.items.length}`;
+      const receiptText = `Receipt #${sale?.id || 'Unknown'}\nDate: ${formatDate(sale?.date || '')}\nTotal: $${grandTotal.toFixed(2)}\nItems: ${(sale?.items || []).length}`;
       navigator.clipboard.writeText(receiptText);
       alert('Receipt details copied to clipboard!');
     }
@@ -285,7 +285,7 @@ export default function Receipt({
                 {businessInfo.email && ` • Email: ${businessInfo.email.trim().replace(/\n/g, '')}`}
               </div>
               <div className={`text-sm font-bold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
-                Receipt #: {sale.id.slice(-8)}
+                Receipt #: {(sale?.id || 'Unknown').slice(-8)}
               </div>
             </div>
 
@@ -293,17 +293,17 @@ export default function Receipt({
             <div className="mb-6">
               <div className="flex justify-between text-sm mb-2">
                 <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Date & Time:</span>
-                <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{formatDate(sale.date)}</span>
+                <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{formatDate(sale?.date || '')}</span>
               </div>
               <div className="flex justify-between text-sm mb-2">
                 <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Payment Method:</span>
-                <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{sale.paymentMethod}</span>
+                <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{sale?.paymentMethod || 'Unknown'}</span>
               </div>
-              {sale.customerId && (
+              {sale?.customerId && (
                 <div className="flex justify-between text-sm">
                   <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Customer:</span>
                   <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
-                    {sale.customerId ? 'Customer ID: ' + sale.customerId : 'Walk-in'}
+                    {sale?.customerId ? 'Customer ID: ' + sale.customerId : 'Walk-in'}
                   </span>
                 </div>
               )}
@@ -320,13 +320,13 @@ export default function Receipt({
                 </tr>
               </thead>
               <tbody>
-                {sale.items.map((item, index) => (
+                {(sale.items || []).map((item, index) => (
                   <tr key={index} className={`border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-                    <td className={`py-2 text-xs ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{item.product.name}</td>
-                    <td className={`py-2 text-xs text-center ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{item.quantity}</td>
-                    <td className={`py-2 text-xs text-right ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>${(item.product.sellPrice || item.product.sellingPrice || 0).toFixed(2)}</td>
+                    <td className={`py-2 text-xs ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{item?.product?.name || 'Unknown Item'}</td>
+                    <td className={`py-2 text-xs text-center ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{item?.quantity || 0}</td>
+                    <td className={`py-2 text-xs text-right ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>${(item?.product?.sellPrice || item?.product?.sellingPrice || 0).toFixed(2)}</td>
                     <td className={`py-2 text-xs text-right font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-                      ${((item.product.sellPrice || item.product.sellingPrice || 0) * item.quantity).toFixed(2)}
+                      ${((item?.product?.sellPrice || item?.product?.sellingPrice || 0) * (item?.quantity || 0)).toFixed(2)}
                     </td>
                   </tr>
                 ))}
@@ -343,7 +343,7 @@ export default function Receipt({
                 <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Tax ({businessInfo.taxRate || 0}%):</span>
                 <span className={`${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>${tax.toFixed(2)}</span>
               </div>
-              {sale.discount > 0 && (
+              {(sale?.discount || 0) > 0 && (
                 <div className="flex justify-between text-sm mb-2 text-red-500">
                   <span>Discount:</span>
                   <span>-${(sale.discount || 0).toFixed(2)}</span>
