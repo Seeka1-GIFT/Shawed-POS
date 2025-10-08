@@ -17,6 +17,7 @@ import saleRoutes from './routes/sales';
 import expenseRoutes from './routes/expenses';
 import supplierRoutes from './routes/suppliers';
 import reportRoutes from './routes/reports';
+import purchaseOrderRoutes from './routes/purchaseOrders';
 
 // Load environment variables
 dotenv.config();
@@ -98,6 +99,7 @@ app.use('/api/customers', customerRoutes); // Public for now - can be made prote
 app.use('/api/sales', saleRoutes); // Temporarily made public for testing
 app.use('/api/expenses', expenseRoutes); // Temporarily made public for testing
 app.use('/api/suppliers', supplierRoutes); // Temporarily made public for testing
+app.use('/api/purchase-orders', purchaseOrderRoutes); // Temporarily made public for testing
 app.use('/api/reports', reportRoutes); // Temporarily made public for testing
 
 // Error handling middleware (must be last)

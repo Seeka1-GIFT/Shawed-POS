@@ -53,6 +53,7 @@ model Product {
   // Relations
   supplier  Supplier?  @relation(fields: [supplierId], references: [id], onDelete: SetNull)
   saleItems SaleItem[]
+  purchaseOrderItems PurchaseOrderItem[]
 
   @@map("products")
 }
@@ -123,15 +124,34 @@ model PurchaseOrder {
   id           String   @id @default(uuid())
   supplierId    String   @map("supplier_id")
   orderDate     DateTime @map("order_date") @default(now())
+  expectedDate  DateTime? @map("expected_date")
   totalAmount   Decimal  @map("total_amount")
-  status        String   @default("PENDING")
+  status        String   @default("pending")
+  notes         String?
   createdAt     DateTime @map("created_at") @default(now())
   updatedAt     DateTime @map("updated_at") @updatedAt
 
   // Relations
   supplier Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  items     PurchaseOrderItem[]
 
   @@map("purchase_orders")
+}
+
+model PurchaseOrderItem {
+  id              String   @id @default(uuid())
+  purchaseOrderId String   @map("purchase_order_id")
+  productId       String   @map("product_id")
+  quantity        Int
+  unitPrice       Decimal  @map("unit_price")
+  totalPrice      Decimal  @map("total_price")
+  createdAt       DateTime @map("created_at") @default(now())
+
+  // Relations
+  purchaseOrder PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  product       Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("purchase_order_items")
 }
 
 // Enums
