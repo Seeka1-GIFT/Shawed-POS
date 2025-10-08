@@ -92,6 +92,46 @@ app.post('/api/test-supplier', (req, res) => {
   });
 });
 
+// Test endpoint for debugging expense creation
+app.post('/api/test-expense', async (req, res) => {
+  try {
+    console.log('🧪 Test expense endpoint called with body:', req.body);
+    
+    const { description, category, amount, date } = req.body;
+    
+    if (!description || !category || !amount) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required fields'
+      });
+    }
+    
+    // Test Prisma connection - use the existing prisma instance
+    
+    const expense = await prisma.expense.create({
+      data: {
+        description,
+        category,
+        amount: parseFloat(amount),
+        date: date ? new Date(date) : new Date()
+      }
+    });
+    
+    res.status(200).json({
+      success: true,
+      message: 'Test expense created successfully',
+      data: expense
+    });
+  } catch (error) {
+    console.error('❌ Test expense error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Test expense failed',
+      error: error.message
+    });
+  }
+});
+
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes); // Public for now - can be made protected later
