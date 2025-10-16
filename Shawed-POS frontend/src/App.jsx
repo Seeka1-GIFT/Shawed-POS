@@ -67,6 +67,7 @@ export default function App() {
         fixed lg:static inset-y-0 left-0 z-50 w-60 flex flex-col
         transform transition-transform duration-300 ease-in-out
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        h-screen lg:h-auto overflow-y-auto bg-white dark:bg-gray-900
       `}>
         <Sidebar 
           onLogout={handleLogout} 
@@ -76,7 +77,8 @@ export default function App() {
         />
       </div>
       
-      <div className="flex flex-col flex-1 lg:ml-0">
+      {/* Content area: add left margin on large screens to account for fixed sidebar width */}
+      <div className="flex flex-col flex-1 lg:ml-60">
         <Header onMenuClick={() => setSidebarOpen(true)} isDarkMode={isDarkMode} />
         <main className={`flex-1 overflow-y-auto p-2 sm:p-4 ${isDarkMode ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900' : 'bg-gradient-to-br from-slate-50 via-slate-100 to-slate-50'}`}>
           <BusinessProvider>
