@@ -70,10 +70,10 @@ export default function ReceiptHistory() {
     let filtered = salesData.filter(sale => {
       // Search filter
       if (searchQuery) {
-        const query = searchQuery.toLowerCase();
-        const matchesId = sale.id.toLowerCase().includes(query);
-        const matchesPayment = sale.paymentMethod.toLowerCase().includes(query);
-        const matchesCustomer = sale.customerId ? sale.customerId.toLowerCase().includes(query) : false;
+        const query = String(searchQuery).toLowerCase();
+        const matchesId = sale?.id ? String(sale.id).toLowerCase().includes(query) : false;
+        const matchesPayment = sale?.paymentMethod ? String(sale.paymentMethod).toLowerCase().includes(query) : false;
+        const matchesCustomer = sale?.customerId ? String(sale.customerId).toLowerCase().includes(query) : false;
         const matchesItems = getSaleItems(sale).some(item => 
           item?.product?.name?.toLowerCase().includes(query)
         );
@@ -410,7 +410,7 @@ export default function ReceiptHistory() {
                     <span className="text-sm">{sale?.paymentMethod || 'Unknown'}</span>
                   </td>
                   <td className={`py-3 px-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-                    <span className="font-semibold">${(sale.total || 0).toFixed(2)}</span>
+                    <span className="font-semibold">${Number(sale?.total || 0).toFixed(2)}</span>
                   </td>
                   <td className="py-3 px-4">
                     <div className="flex space-x-2">
@@ -436,7 +436,7 @@ export default function ReceiptHistory() {
             <div key={sale?.id || idx} className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border rounded-xl p-3` }>
               <div className="flex items-center justify-between">
                 <div className={`font-mono text-sm ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>📄 #{sale?.id || 'Unknown'}</div>
-                <div className={`${isDarkMode ? 'text-gray-100' : 'text-gray-900'} font-semibold`}>💰 ${(sale?.total || 0).toFixed(2)}</div>
+                <div className={`${isDarkMode ? 'text-gray-100' : 'text-gray-900'} font-semibold`}>💰 ${Number(sale?.total || 0).toFixed(2)}</div>
               </div>
               <div className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} text-xs mt-1`}>🕒 {formatDate(getSaleDate(sale))}</div>
               <div className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} text-xs`}>🛒 {(getSaleItems(sale).length || 0)} item{(getSaleItems(sale).length || 0) !== 1 ? 's' : ''}</div>
