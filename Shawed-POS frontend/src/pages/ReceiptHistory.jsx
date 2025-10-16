@@ -60,6 +60,15 @@ export default function ReceiptHistory() {
   const [sortBy, setSortBy] = useState('date'); // date, total, items
   const [viewMode, setViewMode] = useState('list'); // list, analytics
 
+  // Helper functions - define before useMemo to avoid hoisting issues
+  const getSaleDate = (sale) => {
+    return sale?.saleDate || sale?.date || sale?.createdAt || null;
+  };
+
+  const getSaleItems = (sale) => {
+    return sale?.saleItems || sale?.items || [];
+  };
+
   // Filter and sort sales
   const filteredSales = useMemo(() => {
     const salesData = sales || [];
@@ -179,16 +188,6 @@ export default function ReceiptHistory() {
     } catch (error) {
       return 'Invalid Date';
     }
-  };
-
-  // Get the correct date field from sale data
-  const getSaleDate = (sale) => {
-    return sale?.saleDate || sale?.date || sale?.createdAt || null;
-  };
-
-  // Get the correct items field from sale data
-  const getSaleItems = (sale) => {
-    return sale?.saleItems || sale?.items || [];
   };
 
   const getTotalSales = () => {
