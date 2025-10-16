@@ -862,12 +862,126 @@ export function RealDataProvider({ children }) {
     },
     
     // Helper Functions
-    getStatistics,
-    getDashboardData,
-    searchProducts,
-    searchCustomers,
-    searchSales,
-    updateBusinessSettings,
+    getStatistics: () => {
+      const sales = data.sales || [];
+      const products = data.products || [];
+      const customers = data.customers || [];
+      const expenses = data.expenses || [];
+      
+      const totalSales = sales.reduce((sum, sale) => sum + (sale.total || 0), 0);
+      const totalExpenses = expenses.reduce((sum, expense) => sum + (expense.amount || 0), 0);
+      const totalProfit = totalSales - totalExpenses;
+      
+      return {
+        totalSales,
+        totalExpenses,
+        totalProfit,
+        totalProducts: products.length,
+        totalCustomers: customers.length,
+        totalTransactions: sales.length,
+        averageTransactionValue: sales.length > 0 ? totalSales / sales.length : 0,
+      };
+    },
+    
+    getDashboardData: () => {
+      const sales = data.sales || [];
+      const products = data.products || [];
+      const expenses = data.expenses || [];
+      
+      // Calculate today's sales
+      const today = new Date().toISOString().slice(0, 10);
+      const salesToday = sales
+        .filter(sale => {
+          const saleDate = sale.saleDate || sale.date || sale.createdAt;
+          return saleDate && saleDate.slice(0, 10) === today;
+        })
+        .reduce((sum, sale) => sum + (sale.total || 0), 0);
+      
+      // Calculate today's expenses
+      const expensesToday = expenses
+        .filter(expense => {
+          const expenseDate = expense.date || expense.createdAt;
+          return expenseDate && expenseDate.slice(0, 10) === today;
+        })
+        .reduce((sum, expense) => sum + (expense.amount || 0), 0);
+      
+      const profitToday = salesToday - expensesToday;
+      
+      // Calculate low stock count
+      const lowStockCount = products.filter(p => p.quantity <= 5).length;
+      
+      // Get recent sales for chart
+      const recentSales = sales
+        .sort((a, b) => new Date(b.saleDate || b.date || b.createdAt) - new Date(a.saleDate || a.date || a.createdAt))
+        .slice(0, 7)
+        .map(sale => ({
+          date: sale.saleDate || sale.date || sale.createdAt,
+          total: sale.total || 0
+        }));
+      
+      return {
+        salesToday,
+        profitToday,
+        totalProducts: products.length,
+        lowStockCount,
+        recentSales,
+        totalSales: sales.reduce((sum, sale) => sum + (sale.total || 0), 0),
+        totalExpenses: expenses.reduce((sum, expense) => sum + (expense.amount || 0), 0),
+      };
+    },
+    
+    fetchDashboardStats: async () => {
+      console.log('fetchDashboardStats called');
+      // This function is called by Dashboard component but doesn't need to do anything
+      // since getDashboardData already provides the computed values
+      return { success: true };
+    },
+    
+    searchProducts: (query) => {
+      const products = data.products || [];
+      if (!query) return products;
+      
+      const searchTerm = query.toLowerCase();
+      return products.filter(product => 
+        product.name?.toLowerCase().includes(searchTerm) ||
+        product.category?.toLowerCase().includes(searchTerm) ||
+        product.barcode?.includes(searchTerm)
+      );
+    },
+    
+    searchCustomers: (query) => {
+      const customers = data.customers || [];
+      if (!query) return customers;
+      
+      const searchTerm = query.toLowerCase();
+      return customers.filter(customer => 
+        customer.name?.toLowerCase().includes(searchTerm) ||
+        customer.email?.toLowerCase().includes(searchTerm) ||
+        customer.phone?.includes(searchTerm)
+      );
+    },
+    
+    searchSales: (query) => {
+      const sales = data.sales || [];
+      if (!query) return sales;
+      
+      const searchTerm = query.toLowerCase();
+      return sales.filter(sale => 
+        sale.id?.toLowerCase().includes(searchTerm) ||
+        sale.paymentMethod?.toLowerCase().includes(searchTerm) ||
+        sale.customerId?.toLowerCase().includes(searchTerm)
+      );
+    },
+    
+    updateBusinessSettings: async (settings) => {
+      console.log('updateBusinessSettings called with:', settings);
+      // TODO: Implement actual API call
+      setData(prev => ({
+        ...prev,
+        businessSettings: { ...prev.businessSettings, ...settings }
+      }));
+      return { success: true };
+    },
     
     // Status Functions
     isLoading: (key) => data.loading[key] || false,
