@@ -293,7 +293,9 @@ export default function StockManagement() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center">
-                        <stockStatus.icon className={`h-4 w-4 mr-2 ${stockStatus.color}`} />
+                        {React.createElement(stockStatus.icon, { 
+                          className: `h-4 w-4 mr-2 ${stockStatus.color}` 
+                        })}
                         <span className={`text-sm font-medium ${stockStatus.color}`}>
                           {stockStatus.status.replace('-', ' ').toUpperCase()}
                         </span>
