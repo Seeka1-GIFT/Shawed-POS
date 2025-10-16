@@ -201,7 +201,8 @@ export default function ReceiptHistory() {
 
   const getAverageTransactionValue = () => {
     const sales = filteredSales || [];
-    return sales.length > 0 ? getTotalSales() / sales.length : 0;
+    const totalSales = (sales || []).reduce((total, sale) => total + (sale?.total || 0), 0);
+    return sales.length > 0 ? totalSales / sales.length : 0;
   };
 
   const exportReceipts = () => {
