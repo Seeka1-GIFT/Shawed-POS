@@ -544,46 +544,46 @@ export default function Products() {
         </h1>
         
         {/* Top Controls Row */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
-          {/* Left Side - Filters */}
-          <div className="flex flex-col md:flex-row gap-3 flex-1">
-            {/* Mobile Search */}
-            <input 
-              placeholder="Search products..." 
-              value={filters.q} 
-              onChange={(e)=>setFilters(f=>({...f,q:e.target.value}))} 
-              className={`px-4 py-2 border rounded-lg ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-100 focus:border-indigo-400' : 'border-gray-300 focus:border-indigo-500'} focus:outline-none transition-colors block md:hidden w-full`} 
-            />
+        <div className="space-y-4 mb-6">
+          {/* Search and Filters Row */}
+          <div className="flex flex-col xl:flex-row gap-4">
+            {/* Search Bar */}
+            <div className="flex-1">
+              <input 
+                placeholder="Search products..." 
+                value={filters.q} 
+                onChange={(e)=>setFilters(f=>({...f,q:e.target.value}))} 
+                className={`w-full px-4 py-2 border rounded-lg ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-100 focus:border-indigo-400' : 'border-gray-300 focus:border-indigo-500'} focus:outline-none transition-colors`} 
+              />
+            </div>
             
-            {/* Desktop Search */}
-            <input 
-              placeholder="Search products..." 
-              value={filters.q} 
-              onChange={(e)=>setFilters(f=>({...f,q:e.target.value}))} 
-              className={`px-4 py-2 border rounded-lg ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-100 focus:border-indigo-400' : 'border-gray-300 focus:border-indigo-500'} focus:outline-none transition-colors hidden md:block flex-1 min-w-48`} 
-            />
-            
-            <select value={filters.category} onChange={(e)=>setFilters(f=>({...f,category:e.target.value}))} className={`px-4 py-2 border rounded-lg ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-100 focus:border-indigo-400' : 'border-gray-300 focus:border-indigo-500'} focus:outline-none transition-colors`}>
-              <option value="all">All Categories</option>
-              {[...new Set(products.map(p=> p.category || 'General'))].map((c,i)=> (<option key={i} value={c}>{c}</option>))}
-            </select>
-            <select value={filters.supplier} onChange={(e)=>setFilters(f=>({...f,supplier:e.target.value}))} className={`px-4 py-2 border rounded-lg ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-100 focus:border-indigo-400' : 'border-gray-300 focus:border-indigo-500'} focus:outline-none transition-colors`}>
-              <option value="all">All Suppliers</option>
-              {suppliers.map(s=> (<option key={s.id} value={s.id}>{s.name}</option>))}
-            </select>
-            <select value={filters.stock} onChange={(e)=>setFilters(f=>({...f,stock:e.target.value}))} className={`px-4 py-2 border rounded-lg ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-100 focus:border-indigo-400' : 'border-gray-300 focus:border-indigo-500'} focus:outline-none transition-colors`}>
-              <option value="all">All Stock</option>
-              <option value="low">Low Stock</option>
-              <option value="ok">In Stock</option>
-            </select>
-            <select value={filters.expiry} onChange={(e)=>setFilters(f=>({...f,expiry:e.target.value}))} className={`px-4 py-2 border rounded-lg ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-100 focus:border-indigo-400' : 'border-gray-300 focus:border-indigo-500'} focus:outline-none transition-colors`}>
-              <option value="all">Any Expiry</option>
-              <option value="soon">Expiring Soon</option>
-              <option value="expired">Expired</option>
-            </select>
-            
+            {/* Filter Dropdowns */}
+            <div className="flex flex-wrap gap-3">
+              <select value={filters.category} onChange={(e)=>setFilters(f=>({...f,category:e.target.value}))} className={`px-3 py-2 border rounded-lg text-sm ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-100 focus:border-indigo-400' : 'border-gray-300 focus:border-indigo-500'} focus:outline-none transition-colors min-w-32`}>
+                <option value="all">All Categories</option>
+                {[...new Set(products.map(p=> p.category || 'General'))].map((c,i)=> (<option key={i} value={c}>{c}</option>))}
+              </select>
+              <select value={filters.supplier} onChange={(e)=>setFilters(f=>({...f,supplier:e.target.value}))} className={`px-3 py-2 border rounded-lg text-sm ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-100 focus:border-indigo-400' : 'border-gray-300 focus:border-indigo-500'} focus:outline-none transition-colors min-w-32`}>
+                <option value="all">All Suppliers</option>
+                {suppliers.map(s=> (<option key={s.id} value={s.id}>{s.name}</option>))}
+              </select>
+              <select value={filters.stock} onChange={(e)=>setFilters(f=>({...f,stock:e.target.value}))} className={`px-3 py-2 border rounded-lg text-sm ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-100 focus:border-indigo-400' : 'border-gray-300 focus:border-indigo-500'} focus:outline-none transition-colors min-w-24`}>
+                <option value="all">All Stock</option>
+                <option value="low">Low Stock</option>
+                <option value="ok">In Stock</option>
+              </select>
+              <select value={filters.expiry} onChange={(e)=>setFilters(f=>({...f,expiry:e.target.value}))} className={`px-3 py-2 border rounded-lg text-sm ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-100 focus:border-indigo-400' : 'border-gray-300 focus:border-indigo-500'} focus:outline-none transition-colors min-w-28`}>
+                <option value="all">Any Expiry</option>
+                <option value="soon">Expiring Soon</option>
+                <option value="expired">Expired</option>
+              </select>
+            </div>
+          </div>
+          
+          {/* Action Buttons Row */}
+          <div className="flex flex-wrap items-center justify-between gap-3">
             {/* Export Buttons */}
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <button onClick={exportCSV} title="Export CSV" className={`px-3 py-2 rounded-lg flex items-center text-sm ${isDarkMode ? 'bg-blue-600 hover:bg-blue-700 text-white transition-colors' : 'bg-blue-500 hover:bg-blue-600 text-white transition-colors'}`}><Download className="h-4 w-4 mr-1"/>CSV</button>
               <button onClick={exportXLS} title="Export Excel" className={`px-3 py-2 rounded-lg flex items-center text-sm ${isDarkMode ? 'bg-green-600 hover:bg-green-700 text-white transition-colors' : 'bg-green-500 hover:bg-green-600 text-white transition-colors'}`}>XLS</button>
               <button onClick={()=> fileInputRef.current?.click()} title="Import CSV" className={`px-3 py-2 rounded-lg flex items-center text-sm ${isDarkMode ? 'bg-gray-600 hover:bg-gray-700 text-white transition-colors' : 'bg-gray-500 hover:bg-gray-600 text-white transition-colors'}`}><Upload className="h-4 w-4"/></button>
@@ -591,10 +591,8 @@ export default function Products() {
               <button onClick={fixExistingData} title="Fix Existing Data" className={`px-3 py-2 rounded-lg flex items-center text-sm ${isDarkMode ? 'bg-orange-600 hover:bg-orange-700 text-white transition-colors' : 'bg-orange-500 hover:bg-orange-600 text-white transition-colors'}`}>Fix</button>
               <input ref={fileInputRef} type="file" accept=".csv" onChange={importCSV} className="hidden" />
             </div>
-          </div>
-          
-          {/* Right Side - Add Product Button (Desktop) */}
-          <div className="hidden lg:block">
+            
+            {/* Add Product Button */}
             <motion.button
               onClick={toggleForm}
               whileHover={{ scale: 1.05 }}
@@ -606,17 +604,6 @@ export default function Products() {
           </div>
         </div>
         
-        {/* Mobile Add Product Button */}
-        <div className="block lg:hidden">
-          <motion.button
-            onClick={toggleForm}
-            whileHover={{ scale: 1.02 }}
-            className={`w-full px-6 py-4 rounded-xl flex items-center gap-2 justify-center ${isDarkMode ? 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white' : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white'} shadow-lg transition-all duration-300 font-semibold`}
-          >
-            <Plus className="h-5 w-5" />
-            Add Product
-          </motion.button>
-        </div>
       </div>
       
       {/* Content Area */}
@@ -634,26 +621,26 @@ export default function Products() {
               <>
                 {/* Desktop table */}
                 <div className="hidden sm:block overflow-x-auto">
-                  <table className="table-fixed w-full text-left text-sm">
+                  <table className="w-full text-left text-sm">
               <thead>
                 <tr className={`border-b ${isDarkMode ? 'border-gray-600' : 'border-gray-200'}`}>
-                        <th className={`py-3 px-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} w-12`}>Image</th>
-                        <th className={`py-3 px-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} w-32`}>Name</th>
-                        <th className={`py-3 px-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} w-24`}>Category</th>
-                        <th className={`py-3 px-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} w-32 `}>Barcode</th>
-                        <th className={`py-3 px-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} w-28`}>Supplier</th>
-                        <th className={`py-3 px-4 ${isDarkMode ? 'text-gray-800' : 'text-gray-700'} w-16 text-center`}>Qty</th>
-                        <th className={`py-3 px-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} w-16`}>Buy</th>
-                        <th className={`py-3 px-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} w-16`}>Sell</th>
-                        <th className={`py-3 px-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} w-20`}>Margin %</th>
-                        <th className={`py-3 px-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} w-28`}>Expiry</th>
-                        <th className={`py-3 px-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} w-24`}>Actions</th>
+                        <th className={`py-3 px-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} w-12`}>Image</th>
+                        <th className={`py-3 px-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} min-w-32`}>Name</th>
+                        <th className={`py-3 px-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} min-w-20`}>Category</th>
+                        <th className={`py-3 px-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} min-w-24`}>Barcode</th>
+                        <th className={`py-3 px-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} min-w-20`}>Supplier</th>
+                        <th className={`py-3 px-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} w-16 text-center`}>Qty</th>
+                        <th className={`py-3 px-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} w-16`}>Buy</th>
+                        <th className={`py-3 px-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} w-16`}>Sell</th>
+                        <th className={`py-3 px-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} w-20`}>Margin %</th>
+                        <th className={`py-3 px-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} min-w-24`}>Expiry</th>
+                        <th className={`py-3 px-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} w-20`}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                       {filteredProducts.map((product) => (
                         <tr key={product.id} className={`border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'} hover:bg-gray-50 transition-colors`}>
-                          <td className="py-2 px-4">
+                          <td className="py-2 px-3">
                             {product.imageUrl ? (
                               <img src={product.imageUrl} alt={product.name} className="h-6 w-6 object-cover rounded" />
                             ) : (
@@ -662,27 +649,27 @@ export default function Products() {
                               </div>
                             )}
                           </td>
-                          <td className={`py-2 px-4 truncate whitespace-nowrap ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>{product.name}</td>
-                          <td className={`py-2 px-4 truncate whitespace-nowrap ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>{product.category}</td>
-                          <td className={`py-2 px-4 truncate whitespace-nowrap ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>{product.barcode}</td>
-                          <td className={`py-2 px-4 truncate whitespace-nowrap ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>{product.supplierName}</td>
-                          <td className={`py-2 px-4 text-center ${product.quantity <= (product.lowStockThreshold || 5) ? 'text-red-500 font-semibold' : product.quantity <= 20 ? 'text-yellow-500' : 'text-green-500'}`}>
+                          <td className={`py-2 px-3 truncate whitespace-nowrap ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`} title={product.name}>{product.name}</td>
+                          <td className={`py-2 px-3 truncate whitespace-nowrap ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`} title={product.category}>{product.category}</td>
+                          <td className={`py-2 px-3 truncate whitespace-nowrap ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`} title={product.barcode}>{product.barcode}</td>
+                          <td className={`py-2 px-3 truncate whitespace-nowrap ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`} title={product.supplierName}>{product.supplierName}</td>
+                          <td className={`py-2 px-3 text-center ${product.quantity <= (product.lowStockThreshold || 5) ? 'text-red-500 font-semibold' : product.quantity <= 20 ? 'text-yellow-500' : 'text-green-500'}`}>
                             {product.quantity}
                           </td>
-                          <td className={`py-2 px-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                          <td className={`py-2 px-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                             {`$${getBuy(product).toFixed(2)}`}
                           </td>
-                          <td className={`py-2 px-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                          <td className={`py-2 px-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                             {`$${getSell(product).toFixed(2)}`}
                           </td>
-                          <td className={`py-2 px-4 ${isDarkMode ? 'text-green-400' : 'text-green-600'} font-semibold`}>
+                          <td className={`py-2 px-3 ${isDarkMode ? 'text-green-400' : 'text-green-600'} font-semibold`}>
                             {getMargin(product).toFixed(1)}%
                           </td>
-                          <td className={`py-2 px-4 truncate whitespace-nowrap ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                          <td className={`py-2 px-3 truncate whitespace-nowrap ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                             {product.expiryDate ? new Date(product.expiryDate).toLocaleDateString() : '-'}
                           </td>
-                          <td className="py-2 px-4">
-                            <div className="flex gap-2 justify-center">
+                          <td className="py-2 px-3">
+                            <div className="flex gap-1 justify-center">
                               <button onClick={()=>handleEdit(product)} className={`p-1 rounded ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} transition-colors`} title="Edit product">
                                 <Edit2 className={`h-4 w-4 ${isDarkMode ? 'text-indigo-400' : 'text-indigo-600'}`} />
                               </button>
