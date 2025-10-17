@@ -159,8 +159,10 @@ export function RealDataProvider({ children }) {
       console.error('API service is not available');
       return Promise.resolve([]);
     }
-    // Suppliers route is public, no token needed
-    return apiCall('fetch', 'suppliers', () => apiService.request('/suppliers'));
+    // Suppliers may require auth on some deployments; include token if present
+    const token = localStorage.getItem('authToken');
+    const fetchFn = () => token ? apiService.getSuppliers(token) : apiService.request('/suppliers');
+    return apiCall('fetch', 'suppliers', fetchFn);
   };
 
   const fetchReportsData = () => {
