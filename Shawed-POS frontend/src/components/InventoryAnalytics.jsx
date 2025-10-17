@@ -77,11 +77,15 @@ export default function InventoryAnalytics() {
       const dayLabel = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
       
       // Calculate sales for this day (proxy for stock movement)
-      const salesOfDay = sales.filter(sale => sale.date === dateStr);
-      const salesValue = salesOfDay.reduce((sum, sale) => sum + sale.total, 0);
-      const salesQuantity = salesOfDay.reduce((sum, sale) => 
-        sum + sale.items.reduce((itemSum, item) => itemSum + item.quantity, 0), 0
-      );
+      const salesOfDay = (sales || []).filter(sale => {
+        const sDate = sale?.saleDate || sale?.date || sale?.createdAt;
+        return sDate ? String(sDate).slice(0, 10) === dateStr : false;
+      });
+      const salesValue = salesOfDay.reduce((sum, sale) => sum + (sale?.total || 0), 0);
+      const salesQuantity = salesOfDay.reduce((sum, sale) => {
+        const items = sale?.items || sale?.saleItems || [];
+        return sum + items.reduce((itemSum, item) => itemSum + (item?.quantity || 0), 0);
+      }, 0);
       
       days.push({
         name: dayLabel,
@@ -128,8 +132,12 @@ export default function InventoryAnalytics() {
   const topMovers = useMemo(() => {
     const productSales = {};
     
-    sales.forEach(sale => {
-      sale.items.forEach(item => {
+    (sales || []).forEach(sale => {
+      const items = sale?.items || sale?.saleItems || [];
+      items.forEach(item => {
+        if (!item?.product?.id) {
+          return;
+        }
         if (!productSales[item.product.id]) {
           productSales[item.product.id] = {
             name: item.product.name,
@@ -139,9 +147,12 @@ export default function InventoryAnalytics() {
             profit: 0,
           };
         }
-        productSales[item.product.id].quantitySold += item.quantity;
-        productSales[item.product.id].revenue += item.product.sellingPrice * item.quantity;
-        productSales[item.product.id].profit += (item.product.sellingPrice - item.product.purchasePrice) * item.quantity;
+        const quantity = item?.quantity || 0;
+        const sellPrice = item?.product?.sellingPrice || 0;
+        const buyPrice = item?.product?.purchasePrice || 0;
+        productSales[item.product.id].quantitySold += quantity;
+        productSales[item.product.id].revenue += sellPrice * quantity;
+        productSales[item.product.id].profit += (sellPrice - buyPrice) * quantity;
       });
     });
     
