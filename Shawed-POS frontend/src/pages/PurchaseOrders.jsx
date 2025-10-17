@@ -167,7 +167,12 @@ export default function PurchaseOrders() {
   };
 
   const selectProduct = (product) => {
-    setNewItem(prev => ({ ...prev, productId: product.id }));
+    // When selecting a product, set productId and prefill unitPrice if empty
+    setNewItem(prev => ({ 
+      ...prev, 
+      productId: product.id,
+      unitPrice: prev.unitPrice || product.buyPrice || product.sellPrice || ''
+    }));
     setProductSearch(product.name);
     setShowProductDropdown(false);
     setShowAddNewProduct(false);
@@ -195,14 +200,26 @@ export default function PurchaseOrders() {
   };
 
   const addItem = () => {
-    if (!newItem.productId || !newItem.quantity || !newItem.unitPrice) {
+    // If user typed but did not click dropdown, try to resolve the product by name
+    let resolvedProductId = newItem.productId;
+    if (!resolvedProductId && productSearch) {
+      const match = products.find(p => p.name.toLowerCase() === productSearch.toLowerCase()) 
+        || products.find(p => p.name.toLowerCase().includes(productSearch.toLowerCase()));
+      if (match) {
+        resolvedProductId = match.id;
+      }
+    }
+
+    const qty = parseInt(newItem.quantity || '0', 10);
+    const priceNum = parseFloat(newItem.unitPrice || '0');
+    if (!resolvedProductId || qty <= 0 || !Number.isFinite(priceNum) || priceNum < 0) {
       alert('Please fill in all item fields');
       return;
     }
 
     // Handle new products created from search
     let product;
-    if (newItem.productId.startsWith('new-')) {
+    if (resolvedProductId.startsWith && resolvedProductId.startsWith('new-')) {
       // This is a new product - create it first
       const productName = productSearch;
       product = createProductFromPurchase(productName, 'temp');
@@ -210,7 +227,7 @@ export default function PurchaseOrders() {
       setNewItem(prev => ({ ...prev, productId: product.id }));
     } else {
       // Existing product
-      product = products.find(p => p.id === newItem.productId);
+      product = products.find(p => p.id === resolvedProductId);
     }
     
     if (!product) return;
@@ -219,8 +236,8 @@ export default function PurchaseOrders() {
       id: Date.now().toString(),
       productId: product.id,
       productName: product.name,
-      quantity: parseInt(newItem.quantity),
-      unitPrice: parseFloat(newItem.unitPrice)
+      quantity: qty,
+      unitPrice: priceNum
     };
 
     setForm(prev => ({
