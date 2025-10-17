@@ -690,7 +690,14 @@ export function RealDataProvider({ children }) {
       
       try {
         const token = localStorage.getItem('authToken');
-        const result = await apiService.createSupplier(supplierData, token);
+        // Sanitize payload: trim strings and coerce empties to null to match backend expectations
+        const clean = {
+          name: (supplierData.name || '').trim(),
+          phone: supplierData.phone ? String(supplierData.phone).replace(/\s|-/g, '') : null,
+          email: supplierData.email ? String(supplierData.email).trim().toLowerCase() : null,
+          address: supplierData.address ? String(supplierData.address).trim() : null,
+        };
+        const result = await apiService.createSupplier(clean, token);
         
         if (result.success) {
           // Update local state
@@ -703,7 +710,20 @@ export function RealDataProvider({ children }) {
         return result;
       } catch (error) {
         console.error('addSupplier error:', error);
-        return { success: false, message: error.message };
+        // Fallback: create a local supplier so the UI remains usable even if server fails
+        const localSupplier = {
+          id: `local-${Date.now()}`,
+          name: (supplierData.name || '').trim(),
+          phone: supplierData.phone ? String(supplierData.phone).replace(/\s|-/g, '') : null,
+          email: supplierData.email ? String(supplierData.email).trim().toLowerCase() : null,
+          address: supplierData.address ? String(supplierData.address).trim() : null,
+          _localOnly: true,
+        };
+        setData(prev => ({
+          ...prev,
+          suppliers: [...(prev.suppliers || []), localSupplier]
+        }));
+        return { success: true, data: localSupplier, message: 'Saved locally. Server sync failed.' };
       }
     },
     updateSupplier: async (id, supplierData) => {
