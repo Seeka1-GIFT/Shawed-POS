@@ -790,10 +790,37 @@ export function RealDataProvider({ children }) {
       
       try {
         console.log('📦 Creating purchase order:', orderData);
-        const result = await apiService.request('/purchase-orders', {
+        // Ensure numeric fields are numbers and items are normalized
+        const normalized = {
+          ...orderData,
+          totalAmount: Number(orderData.totalAmount || 0),
+          items: (orderData.items || []).map(it => ({
+            productId: it.productId,
+            quantity: Number(it.quantity || 0),
+            unitPrice: Number(it.unitPrice || 0)
+          }))
+        };
+        let result = await apiService.request('/purchase-orders', {
           method: 'POST',
-          body: JSON.stringify(orderData),
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(normalized),
         });
+        // Fallback if server dropped JSON body
+        if (!result?.success) {
+          const form = new URLSearchParams();
+          form.append('supplierId', normalized.supplierId);
+          form.append('totalAmount', String(normalized.totalAmount));
+          form.append('orderDate', normalized.orderDate || '');
+          form.append('expectedDate', normalized.expectedDate || '');
+          form.append('status', normalized.status || 'pending');
+          form.append('notes', normalized.notes || '');
+          form.append('items', JSON.stringify(normalized.items));
+          result = await apiService.request('/purchase-orders', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: form.toString(),
+          });
+        }
         
         if (result.success) {
           // Update local state
