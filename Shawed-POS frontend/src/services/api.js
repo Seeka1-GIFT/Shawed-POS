@@ -270,13 +270,31 @@ class ApiService {
   }
 
   createSupplier = async (supplierData, token) => {
-    return this.request('/suppliers', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify(supplierData),
-    });
+    // Prefer JSON; some hosts occasionally drop JSON bodies after cold start.
+    // Fallback to x-www-form-urlencoded if JSON fails to reach the server.
+    try {
+      return await this.request('/suppliers', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(supplierData),
+      });
+    } catch (err) {
+      console.warn('createSupplier JSON failed, retrying as form-urlencoded:', err?.message);
+      const formBody = new URLSearchParams();
+      Object.entries(supplierData || {}).forEach(([k, v]) => {
+        if (v !== undefined && v !== null) formBody.append(k, String(v));
+      });
+      return await this.request('/suppliers', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: formBody.toString(),
+      });
+    }
   }
 
   updateSupplier = async (id, supplierData, token) => {
