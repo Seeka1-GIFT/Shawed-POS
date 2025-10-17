@@ -50,7 +50,8 @@ export default function PurchaseOrders() {
   });
   
   const [editing, setEditing] = useState(false);
-  const [isFormExpanded, setIsFormExpanded] = useState(false);
+  // Keep the Create Order form visible by default
+  const [isFormExpanded, setIsFormExpanded] = useState(true);
   const [newItem, setNewItem] = useState({
     productId: '',
     quantity: '',
@@ -518,7 +519,7 @@ export default function PurchaseOrders() {
       {/* Add/Edit Order Form */}
       <PermissionGuard permission={PERMISSIONS.MANAGE_PURCHASE_ORDERS} showFallback={true} fallback={null}>
       <div className="order-1 lg:order-2">
-        <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-2xl shadow-sm border overflow-hidden`}>
+        <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-2xl shadow-sm border overflow-auto`}>
           <button
             onClick={toggleForm}
             className={`w-full px-4 py-4 flex items-center justify-between ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'} transition-colors duration-200`}
@@ -537,8 +538,8 @@ export default function PurchaseOrders() {
           </button>
 
           <div className={`
-            transition-all duration-300 ease-in-out overflow-hidden
-            ${isFormExpanded ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'}
+            transition-all duration-300 ease-in-out
+            ${isFormExpanded ? 'max-h-[80vh] opacity-100 overflow-y-auto' : 'max-h-0 opacity-0 overflow-hidden'}
           `}>
             <div className="px-4 pb-4">
               <form onSubmit={handleSubmit}>
