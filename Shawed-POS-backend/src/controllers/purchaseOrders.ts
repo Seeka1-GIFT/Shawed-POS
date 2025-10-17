@@ -163,7 +163,7 @@ export const createPurchaseOrder = asyncHandler(async (req: Request, res: Respon
     console.log('📦 Creating purchase order...');
     console.log('📥 Request body:', JSON.stringify(req.body, null, 2));
     
-    const {
+    let {
       supplierId,
       items,
       totalAmount,
@@ -172,6 +172,19 @@ export const createPurchaseOrder = asyncHandler(async (req: Request, res: Respon
       status = 'pending',
       notes
     } = req.body;
+
+    // Handle cases where body was sent as x-www-form-urlencoded
+    if (typeof items === 'string') {
+      try {
+        items = JSON.parse(items);
+      } catch (e) {
+        console.error('❌ Failed to parse items JSON string:', items);
+        return res.status(400).json({ success: false, message: 'Invalid items payload' });
+      }
+    }
+    if (typeof totalAmount === 'string') {
+      totalAmount = parseFloat(totalAmount);
+    }
 
     // Validate required fields
     if (!supplierId || !items || !Array.isArray(items) || items.length === 0) {
@@ -202,7 +215,7 @@ export const createPurchaseOrder = asyncHandler(async (req: Request, res: Respon
 
       // Create purchase order items
       const orderItems = await Promise.all(
-        items.map(item => 
+        items.map((item: any) => 
           tx.purchaseOrderItem.create({
             data: {
               purchaseOrderId: orderId,
