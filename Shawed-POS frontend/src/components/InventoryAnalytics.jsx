@@ -258,40 +258,6 @@ export default function InventoryAnalytics() {
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Turnover Rate</p>
-              <p className={`text-xl font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-                {inventoryMetrics.turnoverRate.toFixed(2)}x
-              </p>
-            </div>
-            <TrendingUp className={`h-8 w-8 ${isDarkMode ? 'text-green-400' : 'text-green-600'}`} />
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.3 }}
-          className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-4 rounded-2xl shadow-sm`}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Days Outstanding</p>
-              <p className={`text-xl font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-                {Math.round(inventoryMetrics.daysSalesOutstanding)} days
-              </p>
-            </div>
-            <Clock className={`h-8 w-8 ${isDarkMode ? 'text-orange-400' : 'text-orange-600'}`} />
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.4 }}
-          className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-4 rounded-2xl shadow-sm`}
-        >
-          <div className="flex items-center justify-between">
-            <div>
               <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Health Score</p>
               <p className={`text-xl font-bold ${getHealthColor(inventoryHealthScore.score)}`}>
                 {inventoryHealthScore.score}%
