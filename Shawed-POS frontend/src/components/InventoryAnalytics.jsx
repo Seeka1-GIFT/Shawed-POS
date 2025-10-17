@@ -42,25 +42,43 @@ export default function InventoryAnalytics() {
 
   // Calculate inventory turnover rates
   const inventoryMetrics = useMemo(() => {
-    const totalInventoryValue = products.reduce((sum, p) => sum + (p.purchasePrice * p.quantity), 0);
-    const totalSellingValue = products.reduce((sum, p) => sum + (p.sellingPrice * p.quantity), 0);
+    const numeric = (v) => {
+      const n = Number(v);
+      return Number.isFinite(n) ? n : 0;
+    };
+    const safeQty = (q) => {
+      const n = Number(q);
+      return Number.isFinite(n) && n >= 0 ? n : 0;
+    };
+
+    const totalInventoryValue = (products || []).reduce((sum, p) => {
+      const purchasePrice = numeric(p?.purchasePrice);
+      const quantity = safeQty(p?.quantity);
+      return sum + purchasePrice * quantity;
+    }, 0);
+
+    const totalSellingValue = (products || []).reduce((sum, p) => {
+      const sellingPrice = numeric(p?.sellingPrice);
+      const quantity = safeQty(p?.quantity);
+      return sum + sellingPrice * quantity;
+    }, 0);
     
     // Calculate turnover based on sales data
-    const totalSalesValue = sales.reduce((sum, sale) => sum + sale.total, 0);
+    const totalSalesValue = (sales || []).reduce((sum, sale) => sum + numeric(sale?.total), 0);
     const avgInventoryValue = totalInventoryValue / 2; // Simplified average
     const turnoverRate = avgInventoryValue > 0 ? totalSalesValue / avgInventoryValue : 0;
     
     // Calculate days sales outstanding (simplified)
-    const avgDailySales = sales.length > 0 ? totalSalesValue / 30 : 0; // Assuming 30-day period
+    const avgDailySales = (sales && sales.length > 0) ? totalSalesValue / 30 : 0; // Assuming 30-day period
     const daysSalesOutstanding = avgDailySales > 0 ? totalInventoryValue / avgDailySales : 0;
 
     return {
-      totalInventoryValue,
-      totalSellingValue,
-      turnoverRate,
-      daysSalesOutstanding,
-      totalProducts: products.length,
-      avgInventoryValue,
+      totalInventoryValue: Number(totalInventoryValue.toFixed(2)),
+      totalSellingValue: Number(totalSellingValue.toFixed(2)),
+      turnoverRate: Number(turnoverRate.toFixed(2)),
+      daysSalesOutstanding: Number(daysSalesOutstanding.toFixed(0)),
+      totalProducts: (products || []).length,
+      avgInventoryValue: Number(avgInventoryValue.toFixed(2)),
     };
   }, [products, sales]);
 
@@ -103,7 +121,7 @@ export default function InventoryAnalytics() {
   const categoryPerformance = useMemo(() => {
     const categoryStats = {};
     
-    products.forEach(product => {
+    (products || []).forEach(product => {
       const category = product.category || 'Uncategorized';
       if (!categoryStats[category]) {
         categoryStats[category] = {
@@ -115,8 +133,10 @@ export default function InventoryAnalytics() {
         };
       }
       
-      categoryStats[category].totalValue += product.purchasePrice * product.quantity;
-      categoryStats[category].totalQuantity += product.quantity;
+      const purchasePrice = Number.isFinite(Number(product?.purchasePrice)) ? Number(product.purchasePrice) : 0;
+      const quantity = Number.isFinite(Number(product?.quantity)) ? Number(product.quantity) : 0;
+      categoryStats[category].totalValue += purchasePrice * quantity;
+      categoryStats[category].totalQuantity += quantity;
       categoryStats[category].productCount += 1;
     });
     
