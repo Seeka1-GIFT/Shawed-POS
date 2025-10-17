@@ -152,14 +152,17 @@ export default function InventoryAnalytics() {
   const topMovers = useMemo(() => {
     const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
     const productSales = {};
+    // Build quick lookup for product prices/costs
+    const productById = Object.fromEntries((products || []).map(p => [p.id, p]));
     
     (sales || []).forEach(sale => {
       const items = sale?.items || sale?.saleItems || [];
       items.forEach(item => {
         const productId = item?.productId || item?.product?.id;
         if (!productId) return;
-        const name = item?.product?.name || item?.name || 'Unknown';
-        const category = item?.product?.category || item?.category || 'Uncategorized';
+        const backingProduct = productById[productId] || item?.product || {};
+        const name = backingProduct?.name || item?.name || 'Unknown';
+        const category = backingProduct?.category || item?.category || 'Uncategorized';
         if (!productSales[productId]) {
           productSales[productId] = {
             name,
@@ -170,8 +173,12 @@ export default function InventoryAnalytics() {
           };
         }
         const quantity = num(item?.quantity);
-        const sellPrice = num(item?.price ?? item?.unitPrice ?? item?.product?.sellPrice ?? item?.product?.sellingPrice);
-        const buyPrice = num(item?.cost ?? item?.unitCost ?? item?.product?.buyPrice ?? item?.product?.purchasePrice);
+        const sellPrice = num(
+          item?.price ?? item?.unitPrice ?? item?.product?.sellPrice ?? item?.product?.sellingPrice ?? backingProduct?.sellPrice ?? backingProduct?.sellingPrice
+        );
+        const buyPrice = num(
+          item?.cost ?? item?.unitCost ?? item?.product?.buyPrice ?? item?.product?.purchasePrice ?? backingProduct?.buyPrice ?? backingProduct?.purchasePrice
+        );
         productSales[productId].quantitySold += quantity;
         productSales[productId].revenue += sellPrice * quantity;
         productSales[productId].profit += (sellPrice - buyPrice) * quantity;
