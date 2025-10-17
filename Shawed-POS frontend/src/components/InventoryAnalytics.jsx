@@ -150,29 +150,31 @@ export default function InventoryAnalytics() {
 
   // Calculate top movers (products with most sales)
   const topMovers = useMemo(() => {
+    const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
     const productSales = {};
     
     (sales || []).forEach(sale => {
       const items = sale?.items || sale?.saleItems || [];
       items.forEach(item => {
-        if (!item?.product?.id) {
-          return;
-        }
-        if (!productSales[item.product.id]) {
-          productSales[item.product.id] = {
-            name: item.product.name,
-            category: item.product.category,
+        const productId = item?.productId || item?.product?.id;
+        if (!productId) return;
+        const name = item?.product?.name || item?.name || 'Unknown';
+        const category = item?.product?.category || item?.category || 'Uncategorized';
+        if (!productSales[productId]) {
+          productSales[productId] = {
+            name,
+            category,
             quantitySold: 0,
             revenue: 0,
             profit: 0,
           };
         }
-        const quantity = item?.quantity || 0;
-        const sellPrice = item?.product?.sellingPrice || 0;
-        const buyPrice = item?.product?.purchasePrice || 0;
-        productSales[item.product.id].quantitySold += quantity;
-        productSales[item.product.id].revenue += sellPrice * quantity;
-        productSales[item.product.id].profit += (sellPrice - buyPrice) * quantity;
+        const quantity = num(item?.quantity);
+        const sellPrice = num(item?.price ?? item?.unitPrice ?? item?.product?.sellPrice ?? item?.product?.sellingPrice);
+        const buyPrice = num(item?.cost ?? item?.unitCost ?? item?.product?.buyPrice ?? item?.product?.purchasePrice);
+        productSales[productId].quantitySold += quantity;
+        productSales[productId].revenue += sellPrice * quantity;
+        productSales[productId].profit += (sellPrice - buyPrice) * quantity;
       });
     });
     
