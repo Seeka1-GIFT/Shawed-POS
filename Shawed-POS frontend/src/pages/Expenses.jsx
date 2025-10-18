@@ -285,11 +285,42 @@ export default function Expenses() {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className="space-y-6">
+      {/* Mobile/Tablet Add Expense Button - Always visible */}
+      <div className="xl:hidden">
+        <PermissionGuard permission={PERMISSIONS.MANAGE_EXPENSES} showFallback={true} fallback={
+          <button disabled className={`w-full flex items-center justify-center py-3 px-4 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-300'} text-gray-100 rounded-lg`}>
+            <Plus className="h-5 w-5 mr-2" /> Add Expense (view-only)
+          </button>
+        }>
+          <button
+            onClick={toggleForm}
+            className={`w-full flex items-center justify-center py-3 px-4 ${isDarkMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-primary-600 hover:bg-primary-700'} text-white rounded-lg transition-colors`}
+          >
+            <Plus className="h-5 w-5 mr-2" /> {isFormVisible ? 'Hide Add Expense Form' : 'Add New Expense'}
+          </button>
+        </PermissionGuard>
+      </div>
+      
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
       {/* Expense list */}
-      <div className="lg:col-span-2 order-2 lg:order-1">
+      <div className="xl:col-span-2 order-2 xl:order-1">
         <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-4 rounded-2xl shadow-sm overflow-auto`}>
-          <h3 className={`text-lg font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-800'} mb-4`}>Expenses</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className={`text-lg font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>Expenses</h3>
+            <PermissionGuard permission={PERMISSIONS.MANAGE_EXPENSES} showFallback={true} fallback={
+              <button disabled className={`flex items-center justify-center py-2 px-4 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-300'} text-gray-100 rounded-lg`}>
+                <Plus className="h-4 w-4 mr-2" /> Add Expense (view-only)
+              </button>
+            }>
+              <button
+                onClick={toggleForm}
+                className={`flex items-center justify-center py-2 px-4 ${isDarkMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-primary-600 hover:bg-primary-700'} text-white rounded-lg transition-colors`}
+              >
+                <Plus className="h-4 w-4 mr-2" /> Add Expense
+              </button>
+            </PermissionGuard>
+          </div>
           {/* Filters */}
           <div className="grid grid-cols-1 md:grid-cols-6 gap-2 mb-3">
             <input placeholder="Search description..." value={filters.q} onChange={(e)=>setFilters(f=>({...f,q:e.target.value}))} className={`${isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : 'bg-white border-gray-300 text-gray-900'} border rounded-lg px-3 py-2 md:col-span-2`} />
@@ -372,21 +403,50 @@ export default function Expenses() {
         </div>
       </div>
       {/* Add expense form */}
-      <div className="order-1 lg:order-2">
+      <div className="order-1 xl:order-2">
         <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-4 rounded-2xl shadow-sm`}>
+          <h3 className={`text-lg font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-800'} mb-4`}>Quick Actions</h3>
+          
           <PermissionGuard permission={PERMISSIONS.MANAGE_EXPENSES} showFallback={true} fallback={
-            <button disabled className={`w-full flex items-center justify-center py-3 px-4 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-300'} text-gray-100 rounded-lg mb-4`}>Add Expense (view-only)</button>
+            <div className="space-y-4">
+              <button disabled className={`w-full flex items-center justify-center py-3 px-4 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-300'} text-gray-100 rounded-lg`}>
+                <Plus className="h-5 w-5 mr-2" /> Add Expense (view-only)
+              </button>
+              <div className={`p-4 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'} rounded-lg`}>
+                <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                  You don't have permission to add expenses. Contact your administrator.
+                </p>
+              </div>
+            </div>
           }>
-            <button
-              onClick={toggleForm}
-              className={`w-full flex items-center justify-center py-3 px-4 ${isDarkMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-primary-600 hover:bg-primary-700'} text-white rounded-lg transition-colors mb-4`}
-            >
-              <Plus className="h-5 w-5 mr-2" /> Add Expense
-            </button>
+            <div className="space-y-4">
+              <button
+                onClick={toggleForm}
+                className={`w-full flex items-center justify-center py-3 px-4 ${isDarkMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-primary-600 hover:bg-primary-700'} text-white rounded-lg transition-colors`}
+              >
+                <Plus className="h-5 w-5 mr-2" /> {isFormVisible ? 'Hide Form' : 'Add Expense'}
+              </button>
+              
+              {/* Quick Stats */}
+              <div className={`p-4 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'} rounded-lg`}>
+                <h4 className={`text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'} mb-2`}>Today's Summary</h4>
+                <div className="space-y-1">
+                  <div className="flex justify-between text-sm">
+                    <span className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>Total Expenses:</span>
+                    <span className={`font-medium ${isDarkMode ? 'text-red-400' : 'text-red-600'}`}>${safeToFixed(totalFiltered)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>Count:</span>
+                    <span className={isDarkMode ? 'text-gray-200' : 'text-gray-700'}>{filteredExpenses.length}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </PermissionGuard>
           
-          {isFormVisible && (
-            <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Form Section */}
+          <div className={`${isFormVisible ? 'block' : 'hidden'} xl:block`}>
+            <form onSubmit={handleSubmit} className="space-y-4 mt-4">
               <InputField
                 label="Description"
                 name="description"
@@ -476,8 +536,9 @@ export default function Expenses() {
                 </button>
               </div>
             </form>
-          )}
+          </div>
         </div>
+      </div>
       </div>
     </div>
   );
