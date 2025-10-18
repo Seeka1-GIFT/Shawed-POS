@@ -599,7 +599,7 @@ export default function Products() {
               className={`px-6 py-3 rounded-xl flex items-center gap-2 ${isDarkMode ? 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white' : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white'} shadow-lg transition-all duration-300 font-semibold`}
             >
               <Plus className="h-5 w-5" />
-              {isFormExpanded ? 'Hide Form' : 'Add Product'}
+              Add Product
             </motion.button>
           </div>
         </div>
@@ -736,19 +736,34 @@ export default function Products() {
       {/* Add / Edit form */}
         <div className="lg:col-span-1">
           <div className={`${isDarkMode ? 'bg-gradient-to-br from-slate-800 to-slate-900' : 'bg-gradient-to-br from-white to-slate-50'} rounded-2xl shadow-lg border ${isDarkMode ? 'border-slate-700' : 'border-slate-200'} overflow-hidden`}>
-          {/* Form Header */}
-          <div className={`px-4 py-4 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+          {/* Accordion Header */}
+          <button
+            onClick={toggleForm}
+              className={`w-full px-4 py-4 flex items-center justify-between ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'} transition-colors duration-200 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}
+          >
             <div className="flex items-center">
-              <span className={`text-lg font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
-                {editing ? 'Edit Product' : 'Product Form'}
+                <Plus className={`h-5 w-5 mr-2 ${isDarkMode ? 'text-indigo-400' : 'text-indigo-600'}`} />
+                <span className={`text-lg font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+                {editing ? 'Edit Product' : 'Add Product'}
               </span>
             </div>
-          </div>
+            {isFormExpanded ? (
+                <ChevronUp className={`h-5 w-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} transition-transform duration-200`} />
+            ) : (
+                <ChevronDown className={`h-5 w-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} transition-transform duration-200`} />
+            )}
+          </button>
 
-          {/* Form Content */}
-          {isFormExpanded && (
-            <div className="overflow-hidden">
-              <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {/* Accordion Content */}
+            {isFormExpanded && (
+              <motion.div
+                initial={{ height: 0 }}
+                animate={{ height: 'auto' }}
+                exit={{ height: 0 }}
+                transition={{ duration: 0.3 }}
+                className="overflow-hidden"
+              >
+                <form onSubmit={handleSubmit} className="p-6 space-y-4">
                 <InputField
                     label="Product Name"
                   value={form.name}
@@ -917,8 +932,9 @@ export default function Products() {
                     </button>
                 </div>
               </form>
-            </div>
-          )}
+              </motion.div>
+            )}
+          </div>
         </div>
       </div>
       
