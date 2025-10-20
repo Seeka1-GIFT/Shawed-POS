@@ -122,7 +122,7 @@ model Expense {
 
 model PurchaseOrder {
   id           String   @id @default(uuid())
-  supplierId    String   @map("supplier_id")
+  supplierId    String?  @map("supplier_id")
   orderDate     DateTime @map("order_date") @default(now())
   expectedDate  DateTime? @map("expected_date")
   totalAmount   Decimal  @map("total_amount")
