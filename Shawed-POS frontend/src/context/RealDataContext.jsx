@@ -182,7 +182,7 @@ export function RealDataProvider({ children }) {
     }
     console.log('🔄 Fetching purchase orders data...');
     // Purchase orders route is public, no token needed
-    return apiCall('fetch', 'purchaseOrders', () => apiService.request('/purchase-orders'));
+    return apiCall('fetch', 'purchaseOrders', () => apiService.getPurchaseOrders());
   };
   const fetchDashboardStats = () => {
     if (!apiService) {
@@ -385,12 +385,14 @@ export function RealDataProvider({ children }) {
     window.addEventListener('saleCreated', handleDataUpdate);
     window.addEventListener('productUpdated', handleDataUpdate);
     window.addEventListener('expenseCreated', handleDataUpdate);
+    window.addEventListener('purchaseOrderCreated', handleDataUpdate);
 
     return () => {
       clearInterval(refreshInterval);
       window.removeEventListener('saleCreated', handleDataUpdate);
       window.removeEventListener('productUpdated', handleDataUpdate);
       window.removeEventListener('expenseCreated', handleDataUpdate);
+      window.removeEventListener('purchaseOrderCreated', handleDataUpdate);
     };
   }, []);
 
@@ -800,11 +802,7 @@ export function RealDataProvider({ children }) {
             unitPrice: Number(it.unitPrice || 0)
           }))
         };
-        let result = await apiService.request('/purchase-orders', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(normalized),
-        });
+        let result = await apiService.createPurchaseOrder(normalized);
         // Fallback if server dropped JSON body
         if (!result?.success) {
           const form = new URLSearchParams();
@@ -848,10 +846,7 @@ export function RealDataProvider({ children }) {
       }
       
       try {
-        const result = await apiService.request(`/purchase-orders/${id}`, {
-          method: 'PUT',
-          body: JSON.stringify(orderData),
-        });
+        const result = await apiService.updatePurchaseOrder(id, orderData);
         
         if (result.success) {
           // Update local state
