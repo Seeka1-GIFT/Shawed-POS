@@ -974,13 +974,6 @@ export function RealDataProvider({ children }) {
       };
     },
     
-    fetchDashboardStats: async () => {
-      console.log('fetchDashboardStats called');
-      // This function is called by Dashboard component but doesn't need to do anything
-      // since getDashboardData already provides the computed values
-      return { success: true };
-    },
-    
     searchProducts: (query) => {
       const products = data.products || [];
       if (!query) return products;
