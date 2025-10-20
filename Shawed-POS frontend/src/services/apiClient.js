@@ -1,6 +1,6 @@
 // Unified API Client for centralized request handling
 class ApiClient {
-  constructor(baseURL = 'https://shawed-pos.onrender.com/api') {
+  constructor(baseURL = 'http://localhost:5000/api') {
     this.baseURL = baseURL;
     this.defaultHeaders = {
       'Content-Type': 'application/json',
