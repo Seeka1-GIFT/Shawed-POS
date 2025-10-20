@@ -356,6 +356,35 @@ class ApiService {
       },
     });
   }
+
+  // Purchase Orders API
+  getPurchaseOrders = async () => {
+    return this.request('/purchase-orders');
+  }
+
+  getPurchaseOrder = async (id) => {
+    return this.request(`/purchase-orders/${id}`);
+  }
+
+  createPurchaseOrder = async (orderData) => {
+    return this.request('/purchase-orders', {
+      method: 'POST',
+      body: JSON.stringify(orderData),
+    });
+  }
+
+  updatePurchaseOrder = async (id, orderData) => {
+    return this.request(`/purchase-orders/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(orderData),
+    });
+  }
+
+  deletePurchaseOrder = async (id) => {
+    return this.request(`/purchase-orders/${id}`, {
+      method: 'DELETE',
+    });
+  }
 }
 
 export const apiService = new ApiService();
