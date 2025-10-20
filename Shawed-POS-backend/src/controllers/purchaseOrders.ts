@@ -179,7 +179,8 @@ export const createPurchaseOrder = asyncHandler(async (req: Request, res: Respon
         items = JSON.parse(items);
       } catch (e) {
         console.error('❌ Failed to parse items JSON string:', items);
-        return res.status(400).json({ success: false, message: 'Invalid items payload' });
+        res.status(400).json({ success: false, message: 'Invalid items payload' });
+        return;
       }
     }
     if (typeof totalAmount === 'string') {
