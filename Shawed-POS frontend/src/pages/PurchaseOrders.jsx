@@ -266,7 +266,7 @@ export default function PurchaseOrders() {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!form.supplierId || form.items.length === 0) {
@@ -293,15 +293,28 @@ export default function PurchaseOrders() {
       createdAt: editing ? form.createdAt : new Date().toISOString(),
     };
 
-    if (editing) {
-      updatePurchaseOrder(order);
-      alert('Purchase order updated successfully!');
-    } else {
-      addPurchaseOrder(order);
-      alert(`Purchase order created successfully!\n\nOrder #${order.id.slice(-6)}\nTotal: $${order.totalAmount.toFixed(2)}\n\nStock quantities have been updated automatically.`);
+    try {
+      if (editing) {
+        const result = await updatePurchaseOrder(order);
+        if (result.success) {
+          alert('Purchase order updated successfully!');
+          resetForm();
+        } else {
+          alert(`Failed to update purchase order: ${result.message}`);
+        }
+      } else {
+        const result = await addPurchaseOrder(order);
+        if (result.success) {
+          alert(`Purchase order created successfully!\n\nOrder #${order.id.slice(-6)}\nTotal: $${order.totalAmount.toFixed(2)}\n\nStock quantities have been updated automatically.`);
+          resetForm();
+        } else {
+          alert(`Failed to create purchase order: ${result.message}`);
+        }
+      }
+    } catch (error) {
+      console.error('Purchase order operation failed:', error);
+      alert(`Error: ${error.message}`);
     }
-
-    resetForm();
   };
 
   const startEdit = (order) => {
