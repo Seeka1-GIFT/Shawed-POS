@@ -5,6 +5,7 @@
 
 import React, { createContext, useState, useEffect } from 'react';
 import api from './api';
+import { API_BASE_URL } from './config';
 
 export const ApiContext = createContext();
 
@@ -18,7 +19,7 @@ export function ApiProvider({ children }) {
   const checkApiConnection = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'https://shawed-pos.onrender.com/api'}/status`);
+      const response = await fetch(`${API_BASE_URL}/status`);
       if (response.ok) {
         setApiConnected(true);
         setApiError(null);
@@ -258,7 +259,8 @@ export function ApiProvider({ children }) {
     apiConnected,
     apiError,
     loading,
-    checkApiRepository,
+    // export available functions
+    checkApiConnection,
 
     // API Services
     productsAPI,
