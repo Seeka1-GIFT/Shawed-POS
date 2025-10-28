@@ -45,6 +45,7 @@ export default function Products() {
   });
   const [editing, setEditing] = useState(false);
   const [isFormExpanded, setIsFormExpanded] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
   const [showGenerator, setShowGenerator] = useState(false);
   const [filters, setFilters] = useState({ q: '', category: 'all', supplier: 'all', stock: 'all', expiry: 'all' });
@@ -81,6 +82,7 @@ export default function Products() {
       serialNumbers: []
     });
     setEditing(false);
+    setIsFormExpanded(false);
   };
 
   const handleSubmit = async (e) => {
@@ -594,7 +596,17 @@ export default function Products() {
             </div>
           </div>
           
-          {/* Add Product button removed */}
+          {/* Top-right Add Product button */}
+          <div className="flex justify-end">
+            <motion.button
+              onClick={() => { resetForm(); setEditing(false); setShowAddModal(true); }}
+              whileHover={{ scale: 1.03 }}
+              className={`px-5 py-3 rounded-xl flex items-center gap-2 ${isDarkMode ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-indigo-600 hover:bg-indigo-700 text-white'} shadow`}
+            >
+              <Plus className="h-5 w-5" />
+              Add Product
+            </motion.button>
+          </div>
         </div>
         
         {/* Mobile Add Product button removed */}
@@ -802,6 +814,62 @@ export default function Products() {
                 </motion.button>
               </div>
             </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Add/Edit Product Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={()=> setShowAddModal(false)}>
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} w-full max-w-2xl rounded-2xl shadow-xl mx-4 overflow-hidden`}
+            onClick={(e)=> e.stopPropagation()}
+          >
+            <div className={`flex items-center justify-between px-6 py-4 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+              <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>{editing ? 'Edit Product' : 'Add Product'}</h3>
+              <button onClick={()=> setShowAddModal(false)} className={`${isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-600 hover:text-gray-800'}`}>✕</button>
+            </div>
+            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+              <InputField label="Product Name" value={form.name} onChange={(e)=> setForm({ ...form, name: e.target.value })} required />
+              <InputField label="Category" value={form.category} onChange={(e)=> setForm({ ...form, category: e.target.value })} />
+              <div className="space-y-2">
+                <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Barcode</label>
+                <input name="barcode" type="text" value={form.barcode} onChange={handleChange} placeholder="Enter barcode"
+                  className={`w-full px-3 py-2 border rounded-lg ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-100' : 'border-gray-300'}`} />
+              </div>
+              <div>
+                <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>Supplier</label>
+                <select value={form.supplierId} onChange={(e)=> setForm({ ...form, supplierId: e.target.value })}
+                  className={`w-full px-3 py-2 border rounded-lg ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-100' : 'border-gray-300'}`}>
+                  <option value="">Select Supplier</option>
+                  {suppliers.map(s => (<option key={s.id} value={s.id}>{s.name}</option>))}
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <InputField label="Quantity" type="number" value={form.quantity} onChange={(e)=> setForm({ ...form, quantity: e.target.value })} required />
+                <InputField label="Low Stock Threshold" type="number" value={form.lowStockThreshold} onChange={(e)=> setForm({ ...form, lowStockThreshold: parseInt(e.target.value) })} />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <InputField label="Purchase Price ($)" type="number" step="0.01" min="0" value={form.purchasePrice}
+                  onChange={(e)=> { const v = e.target.value; if (v === '' || /^\d*\.?\d*$/.test(v)) setForm({ ...form, purchasePrice: v }); }} required />
+                <InputField label="Selling Price ($)" type="number" step="0.01" min="0" value={form.sellingPrice}
+                  onChange={(e)=> { const v = e.target.value; if (v === '' || /^\d*\.?\d*$/.test(v)) setForm({ ...form, sellingPrice: v }); }} required />
+              </div>
+              {form.purchasePrice && form.sellingPrice && (
+                <div className={`${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'} p-3 rounded-lg`}>
+                  <div className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'} text-sm`}>
+                    Profit Margin: <span className="font-semibold text-green-600">{calculateMargin()}%</span>
+                  </div>
+                </div>
+              )}
+              <InputField label="Expiry Date" type="date" value={form.expiryDate} onChange={(e)=> setForm({ ...form, expiryDate: e.target.value })} />
+              <div className="flex gap-3 pt-2">
+                <button type="submit" className={`${isDarkMode ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-indigo-600 hover:bg-indigo-700'} text-white rounded-lg px-4 py-2`}>{editing ? 'Update Product' : 'Add Product'}</button>
+                <button type="button" onClick={()=> { resetForm(); setShowAddModal(false); }} className={`border rounded-lg px-4 py-2 ${isDarkMode ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}>Cancel</button>
+              </div>
+            </form>
           </motion.div>
         </div>
       )}
