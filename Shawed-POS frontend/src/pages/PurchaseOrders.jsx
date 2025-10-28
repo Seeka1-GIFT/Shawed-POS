@@ -194,7 +194,7 @@ export default function PurchaseOrders() {
     setShowAddNewProduct(false);
   };
 
-  const addItem = () => {
+  const addItem = async () => {
     if (!newItem.productId || !newItem.quantity || !newItem.unitPrice) {
       alert('Please fill in all item fields');
       return;
@@ -203,15 +203,14 @@ export default function PurchaseOrders() {
     // Handle new products created from search
     let product;
     if (newItem.productId.startsWith('new-')) {
-      // This is a new product - create it first via API (sync)
+      // Create the product on the fly, then add to order
       const productName = productSearch;
-      // create using unit price as both buy/sell for now
-      // Note: createProductFromPurchase returns the created product or null
-      // Since this function isn't async, we fallback to a stub if needed
-      // Better UX is to prevent adding until product is created
-      alert('Creating new product from item...');
-      // We cannot await here (non-async); just block add if not yet supported
-      return;
+      const created = await createProductFromPurchase(productName, 'General', newItem.unitPrice);
+      if (!created) {
+        alert('Failed to create product from item. Please select an existing product.');
+        return;
+      }
+      product = created;
     } else {
       // Existing product
       product = products.find(p => p.id === newItem.productId);
