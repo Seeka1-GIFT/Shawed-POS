@@ -205,7 +205,7 @@ export default function PurchaseOrders() {
     if (newItem.productId.startsWith('new-')) {
       // Create the product on the fly, then add to order
       const productName = productSearch;
-      const created = await createProductFromPurchase(productName, 'General', newItem.unitPrice);
+      const created = await createProductFromPurchase(productName, 'General', newItem.unitPrice, newItem.quantity);
       if (!created) {
         alert('Failed to create product from item. Please select an existing product.');
         return;
