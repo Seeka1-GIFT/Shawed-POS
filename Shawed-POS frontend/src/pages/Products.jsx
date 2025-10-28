@@ -162,7 +162,8 @@ export default function Products() {
       sellingPrice: (product.sellPrice || product.sellingPrice || 0).toString()
     });
     setEditing(true);
-    setIsFormExpanded(true);
+    // Open the modal editor
+    setShowAddModal(true);
   };
 
   const handleDelete = async (id) => {
