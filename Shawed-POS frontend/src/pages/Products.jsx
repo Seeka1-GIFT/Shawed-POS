@@ -686,19 +686,22 @@ export default function Products() {
                           </td>
                           <td className="py-2 px-4">
                             <div className="flex gap-2 justify-center">
-                              <button onClick={()=>handleEdit(product)} className={`p-1 rounded ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} transition-colors`} title="Edit product">
-                                <Edit2 className={`h-4 w-4 ${isDarkMode ? 'text-indigo-400' : 'text-indigo-600'}`} />
+                              <button onClick={()=>handleEdit(product)} className="px-2 py-1 rounded-md bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 transition-colors text-xs flex items-center gap-1" title="Edit product">
+                                <Edit2 className="h-4 w-4" />
+                                Edit
                               </button>
-                              <button onClick={()=>handleDelete(product.id)} className={`p-1 rounded ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} transition-colors`} title="Delete product">
-                                <Trash2 className={`h-4 w-4 ${isDarkMode ? 'text-red-400' : 'text-red-600'}`} />
-                      </button>
+                              <button onClick={()=>handleDelete(product.id)} className="px-2 py-1 rounded-md bg-red-50 text-red-700 hover:bg-red-100 border border-red-200 transition-colors text-xs flex items-center gap-1" title="Delete product">
+                                <Trash2 className="h-4 w-4" />
+                                Delete
+                              </button>
                               {product.variants && product.variants.length > 0 && (
-                                <button onClick={()=>setShowHistoryFor(product.id)} className={`p-1 rounded ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} transition-colors`} title="View product details">
-                                  <Info className={`h-4 w-4 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />
-                      </button>
+                                <button onClick={()=>setShowHistoryFor(product.id)} className="px-2 py-1 rounded-md bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 transition-colors text-xs flex items-center gap-1" title="View product details">
+                                  <Info className="h-4 w-4" />
+                                  Info
+                                </button>
                               )}
                             </div>
-                    </td>
+                          </td>
                   </tr>
                 ))}
               </tbody>
