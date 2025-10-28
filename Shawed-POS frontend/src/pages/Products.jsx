@@ -386,7 +386,8 @@ export default function Products() {
     printWindow.document.close();
   };
 
-  const addSampleData = async () => {
+  // Removed addSampleData
+  /* const addSampleData = async () => {
     const sampleProducts = [
       {
         name: 'Copper Plus',
@@ -469,9 +470,10 @@ export default function Products() {
       console.error('Error adding sample data:', error);
       alert('Error adding sample data: ' + error.message);
     }
-  };
+  }; */
 
-  const fixExistingData = async () => {
+  // Removed fixExistingData
+  /* const fixExistingData = async () => {
     try {
       // Find products with empty or zero prices and update them
       const productsToFix = products.filter(product => {
@@ -526,7 +528,7 @@ export default function Products() {
       console.error('Error fixing existing data:', error);
       alert('Error fixing existing data: ' + error.message);
     }
-  };
+  }; */
 
   return (
     <motion.div 
@@ -587,8 +589,7 @@ export default function Products() {
               <button onClick={exportCSV} title="Export CSV" className={`px-3 py-2 rounded-lg flex items-center text-sm ${isDarkMode ? 'bg-blue-600 hover:bg-blue-700 text-white transition-colors' : 'bg-blue-500 hover:bg-blue-600 text-white transition-colors'}`}><Download className="h-4 w-4 mr-1"/>CSV</button>
               <button onClick={exportXLS} title="Export Excel" className={`px-3 py-2 rounded-lg flex items-center text-sm ${isDarkMode ? 'bg-green-600 hover:bg-green-700 text-white transition-colors' : 'bg-green-500 hover:bg-green-600 text-white transition-colors'}`}>XLS</button>
               <button onClick={()=> fileInputRef.current?.click()} title="Import CSV" className={`px-3 py-2 rounded-lg flex items-center text-sm ${isDarkMode ? 'bg-gray-600 hover:bg-gray-700 text-white transition-colors' : 'bg-gray-500 hover:bg-gray-600 text-white transition-colors'}`}><Upload className="h-4 w-4"/></button>
-              <button onClick={addSampleData} title="Add Sample Data" className={`px-3 py-2 rounded-lg flex items-center text-sm ${isDarkMode ? 'bg-purple-600 hover:bg-purple-700 text-white transition-colors' : 'bg-purple-500 hover:bg-purple-600 text-white transition-colors'}`}>Sample</button>
-              <button onClick={fixExistingData} title="Fix Existing Data" className={`px-3 py-2 rounded-lg flex items-center text-sm ${isDarkMode ? 'bg-orange-600 hover:bg-orange-700 text-white transition-colors' : 'bg-orange-500 hover:bg-orange-600 text-white transition-colors'}`}>Fix</button>
+              {/* Sample and Fix buttons removed */}
               <input ref={fileInputRef} type="file" accept=".csv" onChange={importCSV} className="hidden" />
             </div>
           </div>
