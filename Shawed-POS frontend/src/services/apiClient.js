@@ -1,6 +1,8 @@
 // Unified API Client for centralized request handling
+import { API_BASE_URL } from './config';
+
 class ApiClient {
-  constructor(baseURL = import.meta.env.VITE_API_URL || 'https://shawed-pos.onrender.com/api') {
+  constructor(baseURL = API_BASE_URL) {
     this.baseURL = baseURL;
     this.defaultHeaders = {
       'Content-Type': 'application/json',
