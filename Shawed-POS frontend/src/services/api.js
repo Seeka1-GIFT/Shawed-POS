@@ -1,5 +1,5 @@
 // API service for communicating with the backend
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://shawed-pos.onrender.com/api';
+import { API_BASE_URL } from './config';
 
 class ApiService {
   async request(endpoint, options = {}) {
@@ -270,31 +270,13 @@ class ApiService {
   }
 
   createSupplier = async (supplierData, token) => {
-    // Prefer JSON; some hosts occasionally drop JSON bodies after cold start.
-    // Fallback to x-www-form-urlencoded if JSON fails to reach the server.
-    try {
-      return await this.request('/suppliers', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(supplierData),
-      });
-    } catch (err) {
-      console.warn('createSupplier JSON failed, retrying as form-urlencoded:', err?.message);
-      const formBody = new URLSearchParams();
-      Object.entries(supplierData || {}).forEach(([k, v]) => {
-        if (v !== undefined && v !== null) formBody.append(k, String(v));
-      });
-      return await this.request('/suppliers', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: formBody.toString(),
-      });
-    }
+    return this.request('/suppliers', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(supplierData),
+    });
   }
 
   updateSupplier = async (id, supplierData, token) => {
@@ -354,35 +336,6 @@ class ApiService {
       headers: {
         'Authorization': `Bearer ${token}`,
       },
-    });
-  }
-
-  // Purchase Orders API
-  getPurchaseOrders = async () => {
-    return this.request('/purchase-orders');
-  }
-
-  getPurchaseOrder = async (id) => {
-    return this.request(`/purchase-orders/${id}`);
-  }
-
-  createPurchaseOrder = async (orderData) => {
-    return this.request('/purchase-orders', {
-      method: 'POST',
-      body: JSON.stringify(orderData),
-    });
-  }
-
-  updatePurchaseOrder = async (id, orderData) => {
-    return this.request(`/purchase-orders/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(orderData),
-    });
-  }
-
-  deletePurchaseOrder = async (id) => {
-    return this.request(`/purchase-orders/${id}`, {
-      method: 'DELETE',
     });
   }
 }
