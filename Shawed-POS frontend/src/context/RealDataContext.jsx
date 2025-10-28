@@ -889,8 +889,8 @@ export function RealDataProvider({ children }) {
       // TODO: Implement actual API call
       return { success: true };
     },
-    createProductFromPurchase: async (productName, category, unitPrice) => {
-      console.log('createProductFromPurchase called with:', productName, category, unitPrice);
+    createProductFromPurchase: async (productName, category, unitPrice, quantity) => {
+      console.log('createProductFromPurchase called with:', productName, category, unitPrice, quantity);
       if (!apiService) {
         console.error('API service is not available');
         return null;
@@ -901,7 +901,7 @@ export function RealDataProvider({ children }) {
           name: productName,
           category: category || 'General',
           barcode: '',
-          quantity: 0,
+          quantity: Number(quantity || 0),
           buyPrice: Number(unitPrice || 1),
           sellPrice: Number(unitPrice || 1),
           supplierId: null,
