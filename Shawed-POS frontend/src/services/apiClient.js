@@ -245,6 +245,28 @@ class ApiClient {
     const queryString = new URLSearchParams(params).toString();
     return this.get(`/reports/profit-loss${queryString ? `?${queryString}` : ''}`);
   }
+
+  // Purchase Orders endpoints
+  async getPurchaseOrders(params = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    return this.get(`/purchase-orders${queryString ? `?${queryString}` : ''}`);
+  }
+
+  async getPurchaseOrder(id) {
+    return this.get(`/purchase-orders/${id}`);
+  }
+
+  async createPurchaseOrder(orderData) {
+    return this.post('/purchase-orders', orderData);
+  }
+
+  async updatePurchaseOrder(id, orderData) {
+    return this.put(`/purchase-orders/${id}`, orderData);
+  }
+
+  async deletePurchaseOrder(id) {
+    return this.delete(`/purchase-orders/${id}`);
+  }
 }
 
 // Create singleton instance
