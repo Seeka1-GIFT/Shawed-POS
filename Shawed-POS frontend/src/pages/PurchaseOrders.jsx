@@ -71,7 +71,6 @@ export default function PurchaseOrders() {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [paymentForm, setPaymentForm] = useState({ amount: '', method: 'cash', notes: '' });
   const [filters, setFilters] = useState({ q: '', supplierId: 'all', status: 'all', from: '', to: '' });
-  const [view, setView] = useState('cards'); // cards | table
 
   const filteredOrders = purchaseOrders.filter(o => {
     const q = filters.q.trim().toLowerCase();
@@ -384,11 +383,7 @@ export default function PurchaseOrders() {
           <h3 className={`text-lg font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-800'} mb-4 flex items-center`}>
             <ShoppingCart className="h-5 w-5 mr-2" /> Purchase Orders
           </h3>
-          {/* View switch */}
-          <div className="flex items-center gap-2 mb-3">
-            <button onClick={()=>setView('cards')} className={`${view==='cards' ? (isDarkMode ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-900') : (isDarkMode ? 'bg-gray-800 text-gray-300' : 'bg-white text-gray-600 border')} px-3 py-1 rounded-lg border`}>Cards</button>
-            <button onClick={()=>setView('table')} className={`${view==='table' ? (isDarkMode ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-900') : (isDarkMode ? 'bg-gray-800 text-gray-300' : 'bg-white text-gray-600 border')} px-3 py-1 rounded-lg border`}>Table</button>
-          </div>
+          {/* View switch removed */}
           
           {/* Filters */}
           <div className="grid grid-cols-1 md:grid-cols-5 gap-2 mb-4">
@@ -414,7 +409,7 @@ export default function PurchaseOrders() {
             <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>No purchase orders yet.</p>
           ) : (
             <>
-              {view === 'table' ? (
+              {true ? (
                 <div className="overflow-x-auto">
                   <table className="min-w-full text-sm">
                     <thead>
@@ -453,44 +448,7 @@ export default function PurchaseOrders() {
                     </tbody>
                   </table>
                 </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                  {filteredOrders.map(order => (
-                    <motion.div key={order.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'} border rounded-xl p-3`}>
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <div className={`text-sm font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>#{order.id.slice(-6)} • {order.supplierName}</div>
-                          <div className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'} text-xs`}>{order.orderDate}</div>
-                        </div>
-                        <div className={`text-xs ${getStatusColor(order.status)} flex items-center gap-1`}>{getStatusIcon(order.status)} {order.status}</div>
-                      </div>
-                      <div className="flex justify-between items-center mt-2">
-                        <div className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'} text-sm`}>Total</div>
-                        <div className={`${isDarkMode ? 'text-gray-100' : 'text-gray-900'} font-semibold`}>${order.totalAmount.toFixed(2)}</div>
-                      </div>
-                      {/* Collapsible items */}
-                      <details className="mt-2">
-                        <summary className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'} text-xs cursor-pointer`}>Items ({order.items.length})</summary>
-                        <ul className="mt-1 space-y-1">
-                          {order.items.map(it => (
-                            <li key={it.id} className={`${isDarkMode ? 'text-gray-200' : 'text-gray-800'} text-xs flex justify-between`}>
-                              <span>{it.productName}</span>
-                              <span>{it.quantity} × ${it.unitPrice.toFixed(2)}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </details>
-                      <div className="flex gap-2 mt-3">
-                        {order.status === 'pending' && (
-                          <button onClick={()=>receivePurchaseOrder(order.id)} className={`px-2 py-1 text-xs ${isDarkMode ? 'bg-green-600 text-white' : 'bg-green-100 text-green-800'} rounded`}>Receive</button>
-                        )}
-                        <button onClick={()=>startEdit(order)} className={`px-2 py-1 text-xs ${isDarkMode ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-800'} rounded`}>Edit</button>
-                        <button onClick={()=>deletePurchaseOrder(order.id)} className={`px-2 py-1 text-xs ${isDarkMode ? 'bg-red-600 text-white' : 'bg-red-100 text-red-800'} rounded`}>Delete</button>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              )}
+              ) : null}
             </>
           )}
         </div>
