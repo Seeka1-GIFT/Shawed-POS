@@ -107,17 +107,26 @@ export default function Products() {
       return;
     }
     
-    const productData = {
+    // Prepare backend-safe payload
+    const productData = editing ? {
       ...form,
-      id: editing ? form.id : Date.now().toString(),
+      id: form.id,
       quantity: parseInt(form.quantity) || 0,
       buyPrice: buyPrice,
       sellPrice: sellPrice,
-      purchasePrice: buyPrice, // Keep both for backward compatibility
-      sellingPrice: sellPrice, // Keep both for backward compatibility
-      supplierName: supplierMap[form.supplierId] || 'Unknown Supplier',
-      createdAt: editing ? form.createdAt : new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      expiryDate: form.expiryDate ? new Date(form.expiryDate).toISOString().split('T')[0] : null,
+      supplierId: form.supplierId || null,
+      lowStockThreshold: parseInt(form.lowStockThreshold) || 5,
+    } : {
+      name: String(form.name || '').trim(),
+      category: String(form.category || '').trim(),
+      barcode: form.barcode || '',
+      quantity: parseInt(form.quantity) || 0,
+      buyPrice: buyPrice,
+      sellPrice: sellPrice,
+      expiryDate: form.expiryDate ? new Date(form.expiryDate).toISOString().split('T')[0] : null,
+      supplierId: form.supplierId || null,
+      lowStockThreshold: parseInt(form.lowStockThreshold) || 5,
     };
 
     try {
@@ -138,6 +147,7 @@ export default function Products() {
       resetForm();
       setIsFormExpanded(false);
       alert('Product ' + (editing ? 'updated' : 'added') + ' successfully');
+      setShowAddModal(false);
     } catch (error) {
       console.error('Error submitting product:', error);
       alert('Error: ' + error.message);
