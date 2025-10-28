@@ -159,10 +159,8 @@ export function RealDataProvider({ children }) {
       console.error('API service is not available');
       return Promise.resolve([]);
     }
-    // Suppliers may require auth on some deployments; include token if present
-    const token = localStorage.getItem('authToken');
-    const fetchFn = () => token ? apiService.getSuppliers(token) : apiService.request('/suppliers');
-    return apiCall('fetch', 'suppliers', fetchFn);
+    // Suppliers route is public, no token needed
+    return apiCall('fetch', 'suppliers', () => apiService.request('/suppliers'));
   };
 
   const fetchReportsData = () => {
@@ -182,7 +180,7 @@ export function RealDataProvider({ children }) {
     }
     console.log('🔄 Fetching purchase orders data...');
     // Purchase orders route is public, no token needed
-    return apiCall('fetch', 'purchaseOrders', () => apiService.getPurchaseOrders());
+    return apiCall('fetch', 'purchaseOrders', () => apiService.request('/purchase-orders'));
   };
   const fetchDashboardStats = () => {
     if (!apiService) {
@@ -201,19 +199,44 @@ export function RealDataProvider({ children }) {
     }
     return apiCall('add', 'products', apiService.createProduct, productData);
   };
-  const updateProduct = (id, productData) => {
+  const updateProduct = async (id, productData) => {
     if (!apiService) {
       console.error('API service is not available');
-      return Promise.resolve(null);
+      return { success: false, message: 'API service not available' };
     }
-    return apiCall('update', 'products', () => apiService.updateProduct(id, productData));
+    try {
+      const result = await apiService.updateProduct(id, productData);
+      if (result?.success) {
+        setData(prev => ({
+          ...prev,
+          products: (prev.products || []).map(p => p.id === id ? { ...p, ...result.data } : p),
+        }));
+        window.dispatchEvent(new CustomEvent('productUpdated', { detail: { product: result.data }}));
+      }
+      return result;
+    } catch (err) {
+      console.error('updateProduct error:', err);
+      return { success: false, message: err.message };
+    }
   };
-  const deleteProduct = (id) => {
+  const deleteProduct = async (id) => {
     if (!apiService) {
       console.error('API service is not available');
-      return Promise.resolve(false);
+      return { success: false, message: 'API service not available' };
     }
-    return apiCall('delete', 'products', apiService.deleteProduct, id);
+    try {
+      const result = await apiService.deleteProduct(id);
+      if (result?.success) {
+        setData(prev => ({
+          ...prev,
+          products: (prev.products || []).filter(p => p.id !== id),
+        }));
+      }
+      return result;
+    } catch (err) {
+      console.error('deleteProduct error:', err);
+      return { success: false, message: err.message };
+    }
   };
 
   const addCustomer = (customerData) => {
@@ -385,14 +408,12 @@ export function RealDataProvider({ children }) {
     window.addEventListener('saleCreated', handleDataUpdate);
     window.addEventListener('productUpdated', handleDataUpdate);
     window.addEventListener('expenseCreated', handleDataUpdate);
-    window.addEventListener('purchaseOrderCreated', handleDataUpdate);
 
     return () => {
       clearInterval(refreshInterval);
       window.removeEventListener('saleCreated', handleDataUpdate);
       window.removeEventListener('productUpdated', handleDataUpdate);
       window.removeEventListener('expenseCreated', handleDataUpdate);
-      window.removeEventListener('purchaseOrderCreated', handleDataUpdate);
     };
   }, []);
 
@@ -694,14 +715,7 @@ export function RealDataProvider({ children }) {
       
       try {
         const token = localStorage.getItem('authToken');
-        // Sanitize payload: trim strings and coerce empties to null to match backend expectations
-        const clean = {
-          name: (supplierData.name || '').trim(),
-          phone: supplierData.phone ? String(supplierData.phone).replace(/\s|-/g, '') : null,
-          email: supplierData.email ? String(supplierData.email).trim().toLowerCase() : null,
-          address: supplierData.address ? String(supplierData.address).trim() : null,
-        };
-        const result = await apiService.createSupplier(clean, token);
+        const result = await apiService.createSupplier(supplierData, token);
         
         if (result.success) {
           // Update local state
@@ -714,20 +728,7 @@ export function RealDataProvider({ children }) {
         return result;
       } catch (error) {
         console.error('addSupplier error:', error);
-        // Fallback: create a local supplier so the UI remains usable even if server fails
-        const localSupplier = {
-          id: `local-${Date.now()}`,
-          name: (supplierData.name || '').trim(),
-          phone: supplierData.phone ? String(supplierData.phone).replace(/\s|-/g, '') : null,
-          email: supplierData.email ? String(supplierData.email).trim().toLowerCase() : null,
-          address: supplierData.address ? String(supplierData.address).trim() : null,
-          _localOnly: true,
-        };
-        setData(prev => ({
-          ...prev,
-          suppliers: [...(prev.suppliers || []), localSupplier]
-        }));
-        return { success: true, data: localSupplier, message: 'Saved locally. Server sync failed.' };
+        return { success: false, message: error.message };
       }
     },
     updateSupplier: async (id, supplierData) => {
@@ -792,33 +793,10 @@ export function RealDataProvider({ children }) {
       
       try {
         console.log('📦 Creating purchase order:', orderData);
-        // Ensure numeric fields are numbers and items are normalized
-        const normalized = {
-          ...orderData,
-          totalAmount: Number(orderData.totalAmount || 0),
-          items: (orderData.items || []).map(it => ({
-            productId: it.productId,
-            quantity: Number(it.quantity || 0),
-            unitPrice: Number(it.unitPrice || 0)
-          }))
-        };
-        let result = await apiService.createPurchaseOrder(normalized);
-        // Fallback if server dropped JSON body
-        if (!result?.success) {
-          const form = new URLSearchParams();
-          form.append('supplierId', normalized.supplierId);
-          form.append('totalAmount', String(normalized.totalAmount));
-          form.append('orderDate', normalized.orderDate || '');
-          form.append('expectedDate', normalized.expectedDate || '');
-          form.append('status', normalized.status || 'pending');
-          form.append('notes', normalized.notes || '');
-          form.append('items', JSON.stringify(normalized.items));
-          result = await apiService.request('/purchase-orders', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: form.toString(),
-          });
-        }
+        const result = await apiService.request('/purchase-orders', {
+          method: 'POST',
+          body: JSON.stringify(orderData),
+        });
         
         if (result.success) {
           // Update local state
@@ -846,7 +824,10 @@ export function RealDataProvider({ children }) {
       }
       
       try {
-        const result = await apiService.updatePurchaseOrder(id, orderData);
+        const result = await apiService.request(`/purchase-orders/${id}`, {
+          method: 'PUT',
+          body: JSON.stringify(orderData),
+        });
         
         if (result.success) {
           // Update local state
@@ -906,119 +887,12 @@ export function RealDataProvider({ children }) {
     },
     
     // Helper Functions
-    getStatistics: () => {
-      const sales = data.sales || [];
-      const products = data.products || [];
-      const customers = data.customers || [];
-      const expenses = data.expenses || [];
-      
-      const totalSales = sales.reduce((sum, sale) => sum + (sale.total || 0), 0);
-      const totalExpenses = expenses.reduce((sum, expense) => sum + (expense.amount || 0), 0);
-      const totalProfit = totalSales - totalExpenses;
-      
-      return {
-        totalSales,
-        totalExpenses,
-        totalProfit,
-        totalProducts: products.length,
-        totalCustomers: customers.length,
-        totalTransactions: sales.length,
-        averageTransactionValue: sales.length > 0 ? totalSales / sales.length : 0,
-      };
-    },
-    
-    getDashboardData: () => {
-      const sales = data.sales || [];
-      const products = data.products || [];
-      const expenses = data.expenses || [];
-      
-      // Calculate today's sales
-      const today = new Date().toISOString().slice(0, 10);
-      const salesToday = sales
-        .filter(sale => {
-          const saleDate = sale.saleDate || sale.date || sale.createdAt;
-          return saleDate && saleDate.slice(0, 10) === today;
-        })
-        .reduce((sum, sale) => sum + (sale.total || 0), 0);
-      
-      // Calculate today's expenses
-      const expensesToday = expenses
-        .filter(expense => {
-          const expenseDate = expense.date || expense.createdAt;
-          return expenseDate && expenseDate.slice(0, 10) === today;
-        })
-        .reduce((sum, expense) => sum + (expense.amount || 0), 0);
-      
-      const profitToday = salesToday - expensesToday;
-      
-      // Calculate low stock count
-      const lowStockCount = products.filter(p => p.quantity <= 5).length;
-      
-      // Get recent sales for chart
-      const recentSales = sales
-        .sort((a, b) => new Date(b.saleDate || b.date || b.createdAt) - new Date(a.saleDate || a.date || a.createdAt))
-        .slice(0, 7)
-        .map(sale => ({
-          date: sale.saleDate || sale.date || sale.createdAt,
-          total: sale.total || 0
-        }));
-      
-      return {
-        salesToday,
-        profitToday,
-        totalProducts: products.length,
-        lowStockCount,
-        recentSales,
-        totalSales: sales.reduce((sum, sale) => sum + (sale.total || 0), 0),
-        totalExpenses: expenses.reduce((sum, expense) => sum + (expense.amount || 0), 0),
-      };
-    },
-    
-    searchProducts: (query) => {
-      const products = data.products || [];
-      if (!query) return products;
-      
-      const searchTerm = query.toLowerCase();
-      return products.filter(product => 
-        product.name?.toLowerCase().includes(searchTerm) ||
-        product.category?.toLowerCase().includes(searchTerm) ||
-        product.barcode?.includes(searchTerm)
-      );
-    },
-    
-    searchCustomers: (query) => {
-      const customers = data.customers || [];
-      if (!query) return customers;
-      
-      const searchTerm = query.toLowerCase();
-      return customers.filter(customer => 
-        customer.name?.toLowerCase().includes(searchTerm) ||
-        customer.email?.toLowerCase().includes(searchTerm) ||
-        customer.phone?.includes(searchTerm)
-      );
-    },
-    
-    searchSales: (query) => {
-      const sales = data.sales || [];
-      if (!query) return sales;
-      
-      const searchTerm = query.toLowerCase();
-      return sales.filter(sale => 
-        sale.id?.toLowerCase().includes(searchTerm) ||
-        sale.paymentMethod?.toLowerCase().includes(searchTerm) ||
-        sale.customerId?.toLowerCase().includes(searchTerm)
-      );
-    },
-    
-    updateBusinessSettings: async (settings) => {
-      console.log('updateBusinessSettings called with:', settings);
-      // TODO: Implement actual API call
-      setData(prev => ({
-        ...prev,
-        businessSettings: { ...prev.businessSettings, ...settings }
-      }));
-      return { success: true };
-    },
+    getStatistics,
+    getDashboardData,
+    searchProducts,
+    searchCustomers,
+    searchSales,
+    updateBusinessSettings,
     
     // Status Functions
     isLoading: (key) => data.loading[key] || false,
