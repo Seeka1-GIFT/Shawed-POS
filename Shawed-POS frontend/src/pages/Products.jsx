@@ -544,46 +544,46 @@ export default function Products() {
         </h1>
         
         {/* Top Controls Row */}
-        <div className="space-y-4 mb-6">
-          {/* Search and Filters Row */}
-          <div className="flex flex-col xl:flex-row gap-4">
-            {/* Search Bar */}
-            <div className="flex-1">
-              <input 
-                placeholder="Search products..." 
-                value={filters.q} 
-                onChange={(e)=>setFilters(f=>({...f,q:e.target.value}))} 
-                className={`w-full px-4 py-2 border rounded-lg ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-100 focus:border-indigo-400' : 'border-gray-300 focus:border-indigo-500'} focus:outline-none transition-colors`} 
-              />
-            </div>
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+          {/* Left Side - Filters */}
+          <div className="flex flex-col md:flex-row gap-3 flex-1">
+            {/* Mobile Search */}
+            <input 
+              placeholder="Search products..." 
+              value={filters.q} 
+              onChange={(e)=>setFilters(f=>({...f,q:e.target.value}))} 
+              className={`px-4 py-2 border rounded-lg ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-100 focus:border-indigo-400' : 'border-gray-300 focus:border-indigo-500'} focus:outline-none transition-colors block md:hidden w-full`} 
+            />
             
-            {/* Filter Dropdowns */}
-            <div className="flex flex-wrap gap-3">
-              <select value={filters.category} onChange={(e)=>setFilters(f=>({...f,category:e.target.value}))} className={`px-3 py-2 border rounded-lg text-sm ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-100 focus:border-indigo-400' : 'border-gray-300 focus:border-indigo-500'} focus:outline-none transition-colors min-w-32`}>
-                <option value="all">All Categories</option>
-                {[...new Set(products.map(p=> p.category || 'General'))].map((c,i)=> (<option key={i} value={c}>{c}</option>))}
-              </select>
-              <select value={filters.supplier} onChange={(e)=>setFilters(f=>({...f,supplier:e.target.value}))} className={`px-3 py-2 border rounded-lg text-sm ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-100 focus:border-indigo-400' : 'border-gray-300 focus:border-indigo-500'} focus:outline-none transition-colors min-w-32`}>
-                <option value="all">All Suppliers</option>
-                {suppliers.map(s=> (<option key={s.id} value={s.id}>{s.name}</option>))}
-              </select>
-              <select value={filters.stock} onChange={(e)=>setFilters(f=>({...f,stock:e.target.value}))} className={`px-3 py-2 border rounded-lg text-sm ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-100 focus:border-indigo-400' : 'border-gray-300 focus:border-indigo-500'} focus:outline-none transition-colors min-w-24`}>
-                <option value="all">All Stock</option>
-                <option value="low">Low Stock</option>
-                <option value="ok">In Stock</option>
-              </select>
-              <select value={filters.expiry} onChange={(e)=>setFilters(f=>({...f,expiry:e.target.value}))} className={`px-3 py-2 border rounded-lg text-sm ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-100 focus:border-indigo-400' : 'border-gray-300 focus:border-indigo-500'} focus:outline-none transition-colors min-w-28`}>
-                <option value="all">Any Expiry</option>
-                <option value="soon">Expiring Soon</option>
-                <option value="expired">Expired</option>
-              </select>
-            </div>
-          </div>
-          
-          {/* Action Buttons Row */}
-          <div className="flex flex-wrap items-center justify-between gap-3">
+            {/* Desktop Search */}
+            <input 
+              placeholder="Search products..." 
+              value={filters.q} 
+              onChange={(e)=>setFilters(f=>({...f,q:e.target.value}))} 
+              className={`px-4 py-2 border rounded-lg ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-100 focus:border-indigo-400' : 'border-gray-300 focus:border-indigo-500'} focus:outline-none transition-colors hidden md:block flex-1 min-w-48`} 
+            />
+            
+            <select value={filters.category} onChange={(e)=>setFilters(f=>({...f,category:e.target.value}))} className={`px-4 py-2 border rounded-lg ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-100 focus:border-indigo-400' : 'border-gray-300 focus:border-indigo-500'} focus:outline-none transition-colors`}>
+              <option value="all">All Categories</option>
+              {[...new Set(products.map(p=> p.category || 'General'))].map((c,i)=> (<option key={i} value={c}>{c}</option>))}
+            </select>
+            <select value={filters.supplier} onChange={(e)=>setFilters(f=>({...f,supplier:e.target.value}))} className={`px-4 py-2 border rounded-lg ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-100 focus:border-indigo-400' : 'border-gray-300 focus:border-indigo-500'} focus:outline-none transition-colors`}>
+              <option value="all">All Suppliers</option>
+              {suppliers.map(s=> (<option key={s.id} value={s.id}>{s.name}</option>))}
+            </select>
+            <select value={filters.stock} onChange={(e)=>setFilters(f=>({...f,stock:e.target.value}))} className={`px-4 py-2 border rounded-lg ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-100 focus:border-indigo-400' : 'border-gray-300 focus:border-indigo-500'} focus:outline-none transition-colors`}>
+              <option value="all">All Stock</option>
+              <option value="low">Low Stock</option>
+              <option value="ok">In Stock</option>
+            </select>
+            <select value={filters.expiry} onChange={(e)=>setFilters(f=>({...f,expiry:e.target.value}))} className={`px-4 py-2 border rounded-lg ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-100 focus:border-indigo-400' : 'border-gray-300 focus:border-indigo-500'} focus:outline-none transition-colors`}>
+              <option value="all">Any Expiry</option>
+              <option value="soon">Expiring Soon</option>
+              <option value="expired">Expired</option>
+            </select>
+            
             {/* Export Buttons */}
-            <div className="flex flex-wrap gap-2">
+            <div className="flex gap-2">
               <button onClick={exportCSV} title="Export CSV" className={`px-3 py-2 rounded-lg flex items-center text-sm ${isDarkMode ? 'bg-blue-600 hover:bg-blue-700 text-white transition-colors' : 'bg-blue-500 hover:bg-blue-600 text-white transition-colors'}`}><Download className="h-4 w-4 mr-1"/>CSV</button>
               <button onClick={exportXLS} title="Export Excel" className={`px-3 py-2 rounded-lg flex items-center text-sm ${isDarkMode ? 'bg-green-600 hover:bg-green-700 text-white transition-colors' : 'bg-green-500 hover:bg-green-600 text-white transition-colors'}`}>XLS</button>
               <button onClick={()=> fileInputRef.current?.click()} title="Import CSV" className={`px-3 py-2 rounded-lg flex items-center text-sm ${isDarkMode ? 'bg-gray-600 hover:bg-gray-700 text-white transition-colors' : 'bg-gray-500 hover:bg-gray-600 text-white transition-colors'}`}><Upload className="h-4 w-4"/></button>
@@ -591,25 +591,18 @@ export default function Products() {
               <button onClick={fixExistingData} title="Fix Existing Data" className={`px-3 py-2 rounded-lg flex items-center text-sm ${isDarkMode ? 'bg-orange-600 hover:bg-orange-700 text-white transition-colors' : 'bg-orange-500 hover:bg-orange-600 text-white transition-colors'}`}>Fix</button>
               <input ref={fileInputRef} type="file" accept=".csv" onChange={importCSV} className="hidden" />
             </div>
-            
-            {/* Add Product Button */}
-            <motion.button
-              onClick={toggleForm}
-              whileHover={{ scale: 1.05 }}
-              className={`px-6 py-3 rounded-xl flex items-center gap-2 ${isDarkMode ? 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white' : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white'} shadow-lg transition-all duration-300 font-semibold`}
-            >
-              <Plus className="h-5 w-5" />
-              Add Product
-            </motion.button>
           </div>
+          
+          {/* Add Product button removed */}
         </div>
         
+        {/* Mobile Add Product button removed */}
       </div>
       
       {/* Content Area */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Product List */}
-      <div className="lg:col-span-2">
+      <div className="grid grid-cols-1 gap-6">
+        {/* Product List (full width) */}
+      <div className="lg:col-span-1">
           <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-lg border ${isDarkMode ? 'border-slate-700' : 'border-slate-200'} overflow-hidden`}>
           {products.length === 0 ? (
               <div className="p-8 text-center">
@@ -621,26 +614,26 @@ export default function Products() {
               <>
                 {/* Desktop table */}
                 <div className="hidden sm:block overflow-x-auto">
-                  <table className="w-full text-left text-sm">
+                  <table className="table-fixed w-full text-left text-sm">
               <thead>
                 <tr className={`border-b ${isDarkMode ? 'border-gray-600' : 'border-gray-200'}`}>
-                        <th className={`py-3 px-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} w-12`}>Image</th>
-                        <th className={`py-3 px-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} min-w-32`}>Name</th>
-                        <th className={`py-3 px-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} min-w-20`}>Category</th>
-                        <th className={`py-3 px-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} min-w-24`}>Barcode</th>
-                        <th className={`py-3 px-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} min-w-20`}>Supplier</th>
-                        <th className={`py-3 px-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} w-16 text-center`}>Qty</th>
-                        <th className={`py-3 px-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} w-16`}>Buy</th>
-                        <th className={`py-3 px-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} w-16`}>Sell</th>
-                        <th className={`py-3 px-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} w-20`}>Margin %</th>
-                        <th className={`py-3 px-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} min-w-24`}>Expiry</th>
-                        <th className={`py-3 px-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} w-20`}>Actions</th>
+                        <th className={`py-3 px-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} w-12`}>Image</th>
+                        <th className={`py-3 px-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} w-32`}>Name</th>
+                        <th className={`py-3 px-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} w-24`}>Category</th>
+                        <th className={`py-3 px-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} w-32 `}>Barcode</th>
+                        <th className={`py-3 px-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} w-28`}>Supplier</th>
+                        <th className={`py-3 px-4 ${isDarkMode ? 'text-gray-800' : 'text-gray-700'} w-16 text-center`}>Qty</th>
+                        <th className={`py-3 px-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} w-16`}>Buy</th>
+                        <th className={`py-3 px-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} w-16`}>Sell</th>
+                        <th className={`py-3 px-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} w-20`}>Margin %</th>
+                        <th className={`py-3 px-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} w-28`}>Expiry</th>
+                        <th className={`py-3 px-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} w-24`}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                       {filteredProducts.map((product) => (
                         <tr key={product.id} className={`border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'} hover:bg-gray-50 transition-colors`}>
-                          <td className="py-2 px-3">
+                          <td className="py-2 px-4">
                             {product.imageUrl ? (
                               <img src={product.imageUrl} alt={product.name} className="h-6 w-6 object-cover rounded" />
                             ) : (
@@ -649,27 +642,27 @@ export default function Products() {
                               </div>
                             )}
                           </td>
-                          <td className={`py-2 px-3 truncate whitespace-nowrap ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`} title={product.name}>{product.name}</td>
-                          <td className={`py-2 px-3 truncate whitespace-nowrap ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`} title={product.category}>{product.category}</td>
-                          <td className={`py-2 px-3 truncate whitespace-nowrap ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`} title={product.barcode}>{product.barcode}</td>
-                          <td className={`py-2 px-3 truncate whitespace-nowrap ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`} title={product.supplierName}>{product.supplierName}</td>
-                          <td className={`py-2 px-3 text-center ${product.quantity <= (product.lowStockThreshold || 5) ? 'text-red-500 font-semibold' : product.quantity <= 20 ? 'text-yellow-500' : 'text-green-500'}`}>
+                          <td className={`py-2 px-4 truncate whitespace-nowrap ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>{product.name}</td>
+                          <td className={`py-2 px-4 truncate whitespace-nowrap ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>{product.category}</td>
+                          <td className={`py-2 px-4 truncate whitespace-nowrap ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>{product.barcode}</td>
+                          <td className={`py-2 px-4 truncate whitespace-nowrap ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>{product.supplierName}</td>
+                          <td className={`py-2 px-4 text-center ${product.quantity <= (product.lowStockThreshold || 5) ? 'text-red-500 font-semibold' : product.quantity <= 20 ? 'text-yellow-500' : 'text-green-500'}`}>
                             {product.quantity}
                           </td>
-                          <td className={`py-2 px-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                          <td className={`py-2 px-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                             {`$${getBuy(product).toFixed(2)}`}
                           </td>
-                          <td className={`py-2 px-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                          <td className={`py-2 px-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                             {`$${getSell(product).toFixed(2)}`}
                           </td>
-                          <td className={`py-2 px-3 ${isDarkMode ? 'text-green-400' : 'text-green-600'} font-semibold`}>
+                          <td className={`py-2 px-4 ${isDarkMode ? 'text-green-400' : 'text-green-600'} font-semibold`}>
                             {getMargin(product).toFixed(1)}%
                           </td>
-                          <td className={`py-2 px-3 truncate whitespace-nowrap ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                          <td className={`py-2 px-4 truncate whitespace-nowrap ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                             {product.expiryDate ? new Date(product.expiryDate).toLocaleDateString() : '-'}
                           </td>
-                          <td className="py-2 px-3">
-                            <div className="flex gap-1 justify-center">
+                          <td className="py-2 px-4">
+                            <div className="flex gap-2 justify-center">
                               <button onClick={()=>handleEdit(product)} className={`p-1 rounded ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} transition-colors`} title="Edit product">
                                 <Edit2 className={`h-4 w-4 ${isDarkMode ? 'text-indigo-400' : 'text-indigo-600'}`} />
                               </button>
@@ -733,209 +726,7 @@ export default function Products() {
         </div>
       </div>
         
-      {/* Add / Edit form */}
-        <div className="lg:col-span-1">
-          <div className={`${isDarkMode ? 'bg-gradient-to-br from-slate-800 to-slate-900' : 'bg-gradient-to-br from-white to-slate-50'} rounded-2xl shadow-lg border ${isDarkMode ? 'border-slate-700' : 'border-slate-200'} overflow-hidden`}>
-          {/* Accordion Header */}
-          <button
-            onClick={toggleForm}
-              className={`w-full px-4 py-4 flex items-center justify-between ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'} transition-colors duration-200 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}
-          >
-            <div className="flex items-center">
-                <Plus className={`h-5 w-5 mr-2 ${isDarkMode ? 'text-indigo-400' : 'text-indigo-600'}`} />
-                <span className={`text-lg font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
-                {editing ? 'Edit Product' : 'Add Product'}
-              </span>
-            </div>
-            {isFormExpanded ? (
-                <ChevronUp className={`h-5 w-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} transition-transform duration-200`} />
-            ) : (
-                <ChevronDown className={`h-5 w-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} transition-transform duration-200`} />
-            )}
-          </button>
-
-          {/* Accordion Content */}
-            {isFormExpanded && (
-              <motion.div
-                initial={{ height: 0 }}
-                animate={{ height: 'auto' }}
-                exit={{ height: 0 }}
-                transition={{ duration: 0.3 }}
-                className="overflow-hidden"
-              >
-                <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                <InputField
-                    label="Product Name"
-                  value={form.name}
-                    onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  required
-                />
-                  
-                <InputField
-                  label="Category"
-                  value={form.category}
-                    onChange={(e) => setForm({ ...form, category: e.target.value })}
-                  />
-                  
-                  <div className="space-y-2">
-                    <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                    Barcode
-                  </label>
-                    <div className="flex gap-2">
-                    <input
-                        name="barcode"
-                      type="text"
-                      value={form.barcode}
-                      onChange={handleChange}
-                        placeholder="Enter barcode (e.g., 037551000340)"
-                        className={`flex-1 px-3 py-2 border rounded-lg ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-100' : 'border-gray-300'} focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500`}
-                    />
-                    <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => setShowScanner(true)}
-                        type="button"
-                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isDarkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white'}`}
-                        title="Scan barcode"
-                      >
-                        <Camera className="h-4 w-4" />
-                      </motion.button>
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => setShowGenerator(true)}
-                      type="button"
-                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isDarkMode ? 'bg-purple-600 hover:bg-purple-700 text-white' : 'bg-purple-500 hover:bg-purple-600 text-white'}`}
-                        title="Generate barcode"
-                      >
-                        <QrCode className="h-4 w-4" />
-                      </motion.button>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>Supplier</label>
-                  <select
-                    value={form.supplierId}
-                      onChange={(e) => setForm({ ...form, supplierId: e.target.value })}
-                      className={`w-full px-3 py-2 border rounded-lg ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-100' : 'border-gray-300'} focus:ring-indigo-500 focus:border-indigo-500`}
-                    >
-                      <option value="">Select Supplier</option>
-                      {suppliers.map(supplier => (
-                        <option key={supplier.id} value={supplier.id}>{supplier.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                <InputField
-                  label="Quantity"
-                  type="number"
-                  value={form.quantity}
-                      onChange={(e) => setForm({ ...form, quantity: e.target.value })}
-                  required
-                />
-                    
-                    <InputField
-                      label="Low Stock Threshold"
-                      type="number"
-                      value={form.lowStockThreshold}
-                      onChange={(e) => setForm({ ...form, lowStockThreshold: parseInt(e.target.value) })}
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                <InputField
-                      label="Purchase Price ($)"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={form.purchasePrice}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        // Allow only numbers and one decimal point
-                        if (value === '' || /^\d*\.?\d*$/.test(value)) {
-                          setForm({ ...form, purchasePrice: value });
-                        }
-                      }}
-                  required
-                />
-                    
-                <InputField
-                      label="Selling Price ($)"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={form.sellingPrice}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        // Allow only numbers and one decimal point
-                        if (value === '' || /^\d*\.?\d*$/.test(value)) {
-                          setForm({ ...form, sellingPrice: value });
-                        }
-                      }}
-                  required
-                />
-                  </div>
-                  
-                  {form.purchasePrice && form.sellingPrice && (
-                    <div className={`p-3 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
-                      <div className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                        Profit Margin: <span className="font-semibold text-green-600">{calculateMargin()}%</span>
-                      </div>
-                    </div>
-                  )}
-                  
-                <InputField
-                  label="Expiry Date"
-                  type="date"
-                  value={form.expiryDate}
-                    onChange={(e) => setForm({ ...form, expiryDate: e.target.value })}
-                  />
-                  
-                  <div>
-                    <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>Product Image</label>
-                    <div className="flex items-center gap-4">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageChange}
-                        className={`px-3 py-2 border rounded-lg ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-100' : 'border-gray-300'} focus:ring-indigo-500 focus:border-indigo-500`}
-                      />
-                      {form.imageUrl && (
-                        <img src={form.imageUrl} alt="Preview" className="h-12 w-12 object-cover rounded" />
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="flex gap-3 pt-4">
-                  <button
-                    type="submit"
-                      className={`flex-1 py-2 px-4 rounded-lg font-medium ${
-                        isDarkMode 
-                          ? 'bg-indigo-600 hover:bg-indigo-700 text-white' 
-                          : 'bg-indigo-600 hover:bg-indigo-700 text-white'
-                      } transition-colors`}
-                    >
-                      {editing ? 'Update Product' : 'Add Product'}
-                  </button>
-                    <button
-                      type="button"
-                      onClick={resetForm}
-                      className={`flex-1 py-2 px-4 rounded-lg font-medium border ${
-                        isDarkMode 
-                          ? 'border-gray-600 hover:bg-gray-700 text-gray-300' 
-                          : 'border-gray-300 hover:bg-gray-50 text-gray-700'
-                      } transition-colors`}
-                    >
-                      Cancel
-                    </button>
-                </div>
-              </form>
-              </motion.div>
-            )}
-          </div>
-        </div>
+      {/* Add/Edit form panel removed */}
       </div>
       
       {/* Scanner Modal */}
