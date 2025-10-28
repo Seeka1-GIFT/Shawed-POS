@@ -889,10 +889,38 @@ export function RealDataProvider({ children }) {
       // TODO: Implement actual API call
       return { success: true };
     },
-    createProductFromPurchase: async (productName, category) => {
-      console.log('createProductFromPurchase called with:', productName, category);
-      // TODO: Implement actual API call
-      return { id: Date.now().toString(), name: productName, category };
+    createProductFromPurchase: async (productName, category, unitPrice) => {
+      console.log('createProductFromPurchase called with:', productName, category, unitPrice);
+      if (!apiService) {
+        console.error('API service is not available');
+        return null;
+      }
+      try {
+        // Use unitPrice for both buy/sell initially; can be edited later
+        const payload = {
+          name: productName,
+          category: category || 'General',
+          barcode: '',
+          quantity: 0,
+          buyPrice: Number(unitPrice || 1),
+          sellPrice: Number(unitPrice || 1),
+          supplierId: null,
+          lowStockThreshold: 5,
+        };
+        const res = await apiService.createProduct(payload);
+        if (res?.success) {
+          // Add to local state so it appears immediately in UI
+          setData(prev => ({
+            ...prev,
+            products: [...(prev.products || []), res.data],
+          }));
+          return res.data;
+        }
+        return null;
+      } catch (e) {
+        console.error('createProductFromPurchase error:', e);
+        return null;
+      }
     },
     addPurchasePayment: async (orderId, paymentData) => {
       console.log('addPurchasePayment called with:', orderId, paymentData);
