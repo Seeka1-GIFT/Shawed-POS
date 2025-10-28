@@ -793,9 +793,23 @@ export function RealDataProvider({ children }) {
       
       try {
         console.log('📦 Creating purchase order:', orderData);
+        // Normalize payload for backend
+        const payload = {
+          supplierId: orderData.supplierId,
+          orderDate: orderData.orderDate,
+          expectedDate: orderData.expectedDate || null,
+          status: orderData.status || 'pending',
+          notes: orderData.notes || '',
+          totalAmount: Number(orderData.totalAmount || 0),
+          items: (orderData.items || []).map(it => ({
+            productId: it.productId,
+            quantity: Number(it.quantity || 0),
+            unitPrice: Number(it.unitPrice || 0),
+          })),
+        };
         const result = await apiService.request('/purchase-orders', {
           method: 'POST',
-          body: JSON.stringify(orderData),
+          body: JSON.stringify(payload),
         });
         
         if (result.success) {
