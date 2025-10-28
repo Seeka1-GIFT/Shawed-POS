@@ -48,6 +48,8 @@ export default function Products() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
   const [showGenerator, setShowGenerator] = useState(false);
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState({ id: null, name: '' });
   const [filters, setFilters] = useState({ q: '', category: 'all', supplier: 'all', stock: 'all', expiry: 'all' });
   const fileInputRef = useRef(null);
   const [showHistoryFor, setShowHistoryFor] = useState(null);
@@ -166,19 +168,24 @@ export default function Products() {
     setShowAddModal(true);
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this product?')) {
-      try {
-        const result = await deleteProduct(id);
-        if (!result.success) {
-          alert(`Failed to delete product: ${result.message}`);
-        } else {
-          alert('Product deleted successfully');
-        }
-      } catch (error) {
-        console.error('Error deleting product:', error);
-        alert('Error: ' + error.message);
+  const openDeleteConfirm = (product) => {
+    setDeleteTarget({ id: product.id, name: product.name });
+    setShowConfirmDelete(true);
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget.id) return;
+    try {
+      const result = await deleteProduct(deleteTarget.id);
+      if (!result.success) {
+        alert(`Failed to delete product: ${result.message}`);
       }
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      alert('Error: ' + error.message);
+    } finally {
+      setShowConfirmDelete(false);
+      setDeleteTarget({ id: null, name: '' });
     }
   };
 
@@ -691,7 +698,7 @@ export default function Products() {
                                 <Edit2 className="h-4 w-4" />
                                 Edit
                               </button>
-                              <button onClick={()=>handleDelete(product.id)} className="px-2 py-1 rounded-md bg-red-50 text-red-700 hover:bg-red-100 border border-red-200 transition-colors text-xs flex items-center gap-1" title="Delete product">
+                              <button onClick={()=>openDeleteConfirm(product)} className="px-2 py-1 rounded-md bg-red-50 text-red-700 hover:bg-red-100 border border-red-200 transition-colors text-xs flex items-center gap-1" title="Delete product">
                                 <Trash2 className="h-4 w-4" />
                                 Delete
                               </button>
@@ -829,6 +836,24 @@ export default function Products() {
               </div>
             </div>
           </motion.div>
+        </div>
+      )}
+
+      {/* Delete confirmation modal */}
+      {showConfirmDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={()=>setShowConfirmDelete(false)}>
+          <div className={`w-full max-w-md mx-4 rounded-2xl shadow-xl ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`} onClick={(e)=>e.stopPropagation()}>
+            <div className={`px-6 py-4 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+              <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>Delete product</h3>
+            </div>
+            <div className="px-6 py-5">
+              <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Are you sure you want to delete <span className="font-semibold">{deleteTarget.name}</span>? This action cannot be undone.</p>
+            </div>
+            <div className={`px-6 py-4 border-t flex justify-end gap-2 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+              <button onClick={()=>setShowConfirmDelete(false)} className={`px-4 py-2 rounded-md ${isDarkMode ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'} transition-colors`}>Cancel</button>
+              <button onClick={handleDelete} className="px-4 py-2 rounded-md bg-red-600 hover:bg-red-700 text-white transition-colors">Delete</button>
+            </div>
+          </div>
         </div>
       )}
 
