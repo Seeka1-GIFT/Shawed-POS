@@ -36,9 +36,20 @@ export default function InventoryAlerts() {
     return daysUntilExpiry <= 30 && daysUntilExpiry > 0;
   });
 
-  // Calculate total inventory value
+  // Calculate total inventory value (robust to different field names and nulls)
+  const toNumber = (val) => {
+    if (val === null || val === undefined || val === '') return 0;
+    const n = typeof val === 'string' ? parseFloat(val) : Number(val);
+    return Number.isFinite(n) ? n : 0;
+  };
+
   const totalInventoryValue = products.reduce((total, product) => {
-    return total + (product.purchasePrice * product.quantity);
+    const qty = toNumber(product.quantity);
+    // Support various price field names used across the app/API
+    const unitCost = toNumber(
+      product.purchasePrice ?? product.buyPrice ?? product.buy_price ?? 0
+    );
+    return total + unitCost * qty;
   }, 0);
 
   const alerts = [
