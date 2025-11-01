@@ -552,29 +552,34 @@ export default function PurchaseOrders() {
                 </div>
 
                 {/* Add Items Section */}
-                <div className="mb-4">
-                  <h4 className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
-                    Add Items
-                  </h4>
+                <div className="mb-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-blue-900/30 border border-blue-700/50' : 'bg-blue-50 border border-blue-200'}`}>
+                      <Package className={`h-5 w-5 ${isDarkMode ? 'text-blue-300' : 'text-blue-600'}`} />
+                    </div>
+                    <h4 className={`text-lg font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+                      Add Items
+                    </h4>
+                  </div>
                   
-                  <div className="grid grid-cols-1 gap-2 mb-2">
+                  <div className="grid grid-cols-1 gap-3 mb-3">
                     {/* Searchable Product Input */}
                     <div className="relative" ref={dropdownRef}>
                       <div className="relative">
-                        <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+                        <Search className={`absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} z-10`} />
                         <input
                           type="text"
                           placeholder="Search for product..."
                           value={productSearch}
                           onChange={(e) => handleProductSearch(e.target.value)}
                           onFocus={() => setShowProductDropdown(productSearch.length > 0)}
-                          className={`w-full pl-10 pr-10 py-2 border ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-100' : 'border-gray-300 bg-white text-gray-900'} rounded-lg shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500`}
+                          className={`w-full pl-12 pr-12 py-3 border-2 ${isDarkMode ? 'border-gray-600 bg-gray-700/50 text-gray-100 placeholder-gray-400 focus:border-blue-500 focus:bg-gray-700' : 'border-gray-300 bg-white text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:bg-gray-50'} rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200`}
                         />
                         {productSearch && (
                           <button
                             type="button"
                             onClick={clearProductSearch}
-                            className={`absolute right-3 top-1/2 transform -translate-y-1/2 ${isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'}`}
+                            className={`absolute right-4 top-1/2 transform -translate-y-1/2 p-1 ${isDarkMode ? 'text-gray-400 hover:text-gray-300 hover:bg-gray-600' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'} rounded-lg transition-all duration-200`}
                           >
                             <X className="h-4 w-4" />
                           </button>
@@ -583,7 +588,11 @@ export default function PurchaseOrders() {
                       
                       {/* Product Dropdown */}
                       {showProductDropdown && (
-                        <div className={`absolute z-10 w-full mt-1 ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'} border rounded-lg shadow-lg max-h-60 overflow-y-auto`}>
+                        <motion.div
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className={`absolute z-10 w-full mt-2 ${isDarkMode ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-300'} border-2 rounded-xl shadow-2xl max-h-60 overflow-y-auto`}
+                        >
                           {products
                             .filter(product =>
                               product.name.toLowerCase().includes(productSearch.toLowerCase())
@@ -593,65 +602,128 @@ export default function PurchaseOrders() {
                                 key={product.id}
                                 type="button"
                                 onClick={() => selectProduct(product)}
-                                className={`w-full text-left px-4 py-2 hover:${isDarkMode ? 'bg-gray-600' : 'bg-gray-100'} ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}
+                                className={`w-full text-left px-4 py-3 hover:${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'} ${isDarkMode ? 'text-gray-100' : 'text-gray-900'} transition-colors duration-150 flex items-center gap-2`}
                               >
-                                {product.name}
+                                <Package className={`h-4 w-4 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+                                <span>{product.name}</span>
                               </button>
                             ))}
-                          
-                          {/* Add New Product Option */}
-                          {showAddNewProduct && (
-                            <div className={`border-t ${isDarkMode ? 'border-gray-600' : 'border-gray-300'} p-2`}>
-                              <div className="flex items-center space-x-2">
-                                <input
-                                  type="text"
-                                  placeholder="Enter new product name"
-                                  value={newProductName}
-                                  onChange={(e) => setNewProductName(e.target.value)}
-                                  className={`flex-1 px-2 py-1 text-sm border ${isDarkMode ? 'border-gray-600 bg-gray-800 text-gray-100' : 'border-gray-300 bg-white text-gray-900'} rounded`}
-                                />
-                                <button
-                                  type="button"
-                                  onClick={addNewProduct}
-                                  className={`px-3 py-1 text-sm ${isDarkMode ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-green-100 hover:bg-green-200 text-green-800'} rounded transition-colors`}
-                                >
-                                  Add
-                                </button>
-                              </div>
-                            </div>
-                          )}
-                        </div>
+                        </motion.div>
                       )}
                     </div>
                     
-                    <div className="grid grid-cols-3 gap-2 items-center">
-                      <input
-                        type="number"
-                        name="quantity"
-                        placeholder="Quantity"
-                        value={newItem.quantity}
-                        onChange={handleItemChange}
-                        className={`px-3 py-2 border ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-100' : 'border-gray-300 bg-white text-gray-900'} rounded-lg shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500`}
-                      />
-                      <input
-                        type="number"
-                        step="0.01"
-                        name="unitPrice"
-                        placeholder="Unit Price"
-                        value={newItem.unitPrice}
-                        onChange={handleItemChange}
-                        className={`px-3 py-2 border ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-100' : 'border-gray-300 bg-white text-gray-900'} rounded-lg shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500`}
-                      />
-                      <div className={`${isDarkMode ? 'text-gray-200' : 'text-gray-800'} text-sm text-right`}>${newItemTotal.toFixed(2)}</div>
-                    </div>
+                    {/* Add New Product Section - Standalone, Beautiful Design */}
+                    {showAddNewProduct && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className={`${isDarkMode ? 'bg-gradient-to-r from-green-900/20 to-emerald-900/20 border border-green-700/50' : 'bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200'} rounded-xl p-4 shadow-lg`}
+                      >
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-green-800/50' : 'bg-green-200/50'}`}>
+                            <Plus className={`h-5 w-5 ${isDarkMode ? 'text-green-300' : 'text-green-600'}`} />
+                          </div>
+                          <div>
+                            <h5 className={`font-semibold ${isDarkMode ? 'text-green-200' : 'text-green-800'}`}>
+                              Create New Product
+                            </h5>
+                            <p className={`text-xs ${isDarkMode ? 'text-green-300/70' : 'text-green-700/70'}`}>
+                              Product not found? Add it now
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 relative">
+                            <input
+                              type="text"
+                              placeholder="Enter new product name"
+                              value={newProductName}
+                              onChange={(e) => setNewProductName(e.target.value)}
+                              onKeyPress={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  addNewProduct();
+                                }
+                              }}
+                              className={`w-full pl-4 pr-4 py-3 border-2 ${isDarkMode ? 'border-green-700/50 bg-gray-800/50 text-gray-100 placeholder-gray-400 focus:border-green-500 focus:bg-gray-800' : 'border-green-300 bg-white text-gray-900 placeholder-gray-500 focus:border-green-500 focus:bg-white'} rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/20 transition-all duration-200 font-medium`}
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={addNewProduct}
+                            disabled={!newProductName.trim()}
+                            className={`px-6 py-3 ${isDarkMode ? 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:from-gray-700 disabled:to-gray-700 disabled:text-gray-500' : 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:from-gray-400 disabled:to-gray-400 disabled:text-gray-200'} text-white rounded-xl transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 disabled:transform-none disabled:shadow-none flex items-center gap-2`}
+                          >
+                            <Plus className="h-5 w-5" />
+                            <span>Add Product</span>
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
                     
-                    <button
-                      type="button"
-                      onClick={addItem}
-                      className={`py-2 px-4 ${isDarkMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-primary-600 hover:bg-primary-700'} text-white rounded-lg transition-colors`}
-                    >
-                      Add Item
-                    </button>
+                    {/* Product Details Inputs */}
+                    {newItem.productId && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className={`${isDarkMode ? 'bg-gray-700/50 border border-gray-600' : 'bg-gray-50 border border-gray-200'} rounded-xl p-4 space-y-3`}
+                      >
+                        <div className="flex items-center gap-2 mb-3">
+                          <CheckCircle className={`h-5 w-5 ${isDarkMode ? 'text-green-400' : 'text-green-600'}`} />
+                          <span className={`font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+                            {productSearch || 'Selected Product'}
+                          </span>
+                        </div>
+                        
+                        <div className="grid grid-cols-3 gap-3 items-end">
+                          <div>
+                            <label className={`block text-xs font-medium mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                              Quantity
+                            </label>
+                            <input
+                              type="number"
+                              name="quantity"
+                              placeholder="0"
+                              value={newItem.quantity}
+                              onChange={handleItemChange}
+                              className={`w-full px-4 py-3 border-2 ${isDarkMode ? 'border-gray-600 bg-gray-800 text-gray-100 placeholder-gray-500 focus:border-blue-500 focus:bg-gray-800' : 'border-gray-300 bg-white text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:bg-white'} rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 font-medium`}
+                            />
+                          </div>
+                          <div>
+                            <label className={`block text-xs font-medium mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                              Unit Price
+                            </label>
+                            <input
+                              type="number"
+                              step="0.01"
+                              name="unitPrice"
+                              placeholder="0.00"
+                              value={newItem.unitPrice}
+                              onChange={handleItemChange}
+                              className={`w-full px-4 py-3 border-2 ${isDarkMode ? 'border-gray-600 bg-gray-800 text-gray-100 placeholder-gray-500 focus:border-blue-500 focus:bg-gray-800' : 'border-gray-300 bg-white text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:bg-white'} rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 font-medium`}
+                            />
+                          </div>
+                          <div>
+                            <label className={`block text-xs font-medium mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                              Total
+                            </label>
+                            <div className={`px-4 py-3 ${isDarkMode ? 'bg-blue-900/30 border-2 border-blue-700/50' : 'bg-blue-50 border-2 border-blue-200'} rounded-xl font-bold text-lg ${isDarkMode ? 'text-blue-200' : 'text-blue-700'} text-right`}>
+                              ${newItemTotal.toFixed(2)}
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <button
+                          type="button"
+                          onClick={addItem}
+                          disabled={!newItem.quantity || !newItem.unitPrice}
+                          className={`w-full py-3 px-4 ${isDarkMode ? 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-700 disabled:to-gray-700 disabled:text-gray-500' : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-400 disabled:text-gray-200'} text-white rounded-xl transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 disabled:transform-none disabled:shadow-none flex items-center justify-center gap-2`}
+                        >
+                          <Plus className="h-5 w-5" />
+                          <span>Add Item to Order</span>
+                        </button>
+                      </motion.div>
+                    )}
                   </div>
 
                   {/* Items List */}
