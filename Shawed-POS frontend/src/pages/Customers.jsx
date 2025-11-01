@@ -427,37 +427,44 @@ export default function Customers() {
       className="space-y-6"
     >
       {/* Header */}
-      <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-4 sm:p-6 rounded-xl sm:rounded-2xl shadow-sm`}>
+      <div className={`${isDarkMode ? 'bg-gradient-to-r from-gray-800 to-gray-750 border border-gray-700' : 'bg-gradient-to-r from-white to-gray-50 border border-gray-200'} p-5 sm:p-6 rounded-2xl shadow-lg`}>
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
-            Customers
-          </h2>
+          <div>
+            <h2 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-1`}>
+              Customers
+            </h2>
+            <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              Manage your customer relationships and track balances
+            </p>
+          </div>
           <button
             onClick={toggleForm}
-            className={`flex items-center px-4 py-2 ${isDarkMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-primary-600 hover:bg-primary-700'} text-white rounded-lg transition-colors`}
+            className={`flex items-center px-5 py-3 ${isDarkMode ? 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800' : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800'} text-white rounded-xl transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105`}
           >
             <Plus className="h-5 w-5 mr-2" />
-            {editingCustomer ? 'Update Customer' : 'Add Customer'}
+            <span className="font-semibold">{editingCustomer ? 'Update Customer' : 'Add Customer'}</span>
           </button>
         </div>
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-3 sm:p-4 rounded-xl sm:rounded-2xl shadow-sm`}
+          className={`relative overflow-hidden ${isDarkMode ? 'bg-gradient-to-br from-blue-900/50 to-blue-800/30 border border-blue-700/50' : 'bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200'} p-4 sm:p-5 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300`}
         >
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between relative z-10">
             <div>
-              <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Customers</p>
-              <p className={`text-2xl font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+              <p className={`text-xs sm:text-sm font-medium ${isDarkMode ? 'text-blue-300' : 'text-blue-600'} mb-1 uppercase tracking-wide`}>Total Customers</p>
+              <p className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-blue-900'}`}>
                 {stats.totalCustomers}
               </p>
             </div>
-            <Users className={`h-8 w-8 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+            <div className={`p-3 ${isDarkMode ? 'bg-blue-800/50' : 'bg-blue-200/50'} rounded-xl`}>
+              <Users className={`h-7 w-7 ${isDarkMode ? 'text-blue-300' : 'text-blue-600'}`} />
+            </div>
           </div>
         </motion.div>
 
@@ -465,16 +472,18 @@ export default function Customers() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-3 sm:p-4 rounded-xl sm:rounded-2xl shadow-sm`}
+          className={`relative overflow-hidden ${isDarkMode ? 'bg-gradient-to-br from-green-900/50 to-green-800/30 border border-green-700/50' : 'bg-gradient-to-br from-green-50 to-green-100 border border-green-200'} p-4 sm:p-5 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300`}
         >
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between relative z-10">
             <div>
-              <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Owed</p>
-              <p className={`text-2xl font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+              <p className={`text-xs sm:text-sm font-medium ${isDarkMode ? 'text-green-300' : 'text-green-600'} mb-1 uppercase tracking-wide`}>Total Owed</p>
+              <p className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-green-900'}`}>
                 ${stats.totalOwed.toFixed(2)}
               </p>
             </div>
-            <DollarSign className={`h-8 w-8 ${isDarkMode ? 'text-green-400' : 'text-green-600'}`} />
+            <div className={`p-3 ${isDarkMode ? 'bg-green-800/50' : 'bg-green-200/50'} rounded-xl`}>
+              <DollarSign className={`h-7 w-7 ${isDarkMode ? 'text-green-300' : 'text-green-600'}`} />
+            </div>
           </div>
         </motion.div>
 
@@ -482,16 +491,18 @@ export default function Customers() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-3 sm:p-4 rounded-xl sm:rounded-2xl shadow-sm`}
+          className={`relative overflow-hidden ${isDarkMode ? 'bg-gradient-to-br from-amber-900/50 to-amber-800/30 border border-amber-700/50' : 'bg-gradient-to-br from-amber-50 to-amber-100 border border-amber-200'} p-4 sm:p-5 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300`}
         >
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between relative z-10">
             <div>
-              <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>With Debt</p>
-              <p className={`text-2xl font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+              <p className={`text-xs sm:text-sm font-medium ${isDarkMode ? 'text-amber-300' : 'text-amber-600'} mb-1 uppercase tracking-wide`}>With Debt</p>
+              <p className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-amber-900'}`}>
                 {stats.customersWithDebt}
               </p>
             </div>
-            <TrendingUp className={`h-8 w-8 ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`} />
+            <div className={`p-3 ${isDarkMode ? 'bg-amber-800/50' : 'bg-amber-200/50'} rounded-xl`}>
+              <TrendingUp className={`h-7 w-7 ${isDarkMode ? 'text-amber-300' : 'text-amber-600'}`} />
+            </div>
           </div>
         </motion.div>
 
@@ -499,16 +510,18 @@ export default function Customers() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-3 sm:p-4 rounded-xl sm:rounded-2xl shadow-sm`}
+          className={`relative overflow-hidden ${isDarkMode ? 'bg-gradient-to-br from-purple-900/50 to-purple-800/30 border border-purple-700/50' : 'bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200'} p-4 sm:p-5 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300`}
         >
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between relative z-10">
             <div>
-              <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Sales</p>
-              <p className={`text-2xl font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+              <p className={`text-xs sm:text-sm font-medium ${isDarkMode ? 'text-purple-300' : 'text-purple-600'} mb-1 uppercase tracking-wide`}>Total Sales</p>
+              <p className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-purple-900'}`}>
                 {stats.totalSales}
               </p>
             </div>
-            <Calendar className={`h-8 w-8 ${isDarkMode ? 'text-purple-400' : 'text-purple-600'}`} />
+            <div className={`p-3 ${isDarkMode ? 'bg-purple-800/50' : 'bg-purple-200/50'} rounded-xl`}>
+              <Calendar className={`h-7 w-7 ${isDarkMode ? 'text-purple-300' : 'text-purple-600'}`} />
+            </div>
           </div>
         </motion.div>
       </div>
@@ -520,13 +533,13 @@ export default function Customers() {
           <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-4 sm:p-6 rounded-xl sm:rounded-2xl shadow-sm`}>
             {/* Search */}
             <div className="relative mb-6">
-              <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+              <Search className={`absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} z-10`} />
               <input
                 type="text"
                 placeholder="Search customers by name, phone, or address..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className={`w-full pl-10 pr-4 py-3 border ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-100' : 'border-gray-300 bg-white text-gray-900'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                className={`w-full pl-12 pr-4 py-3.5 border-2 ${isDarkMode ? 'border-gray-600 bg-gray-700/50 text-gray-100 placeholder-gray-400 focus:border-blue-500 focus:bg-gray-700' : 'border-gray-300 bg-white text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:bg-gray-50'} rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200`}
               />
             </div>
 
@@ -557,66 +570,78 @@ export default function Customers() {
                     </thead>
                     <tbody>
                       {filteredCustomers.map((customer) => (
-                        <tr key={customer.id} className={`border-b ${isDarkMode ? 'border-gray-600 hover:bg-gray-700' : 'border-gray-200 hover:bg-gray-50'}`}>
-                          <td className={`py-3 px-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-                            <div className="font-medium">{customer.name}</div>
+                        <tr key={customer.id} className={`border-b transition-all duration-200 ${isDarkMode ? 'border-gray-700/50 hover:bg-gray-700/50' : 'border-gray-200 hover:bg-gray-50/80'}`}>
+                          <td className={`py-4 px-3 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+                            <div className="font-semibold text-base">{customer.name}</div>
                             {customer.email && (
-                              <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                                {customer.email}
+                              <div className={`text-xs mt-1 flex items-center gap-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                <span className="truncate">{customer.email}</span>
                               </div>
                             )}
                           </td>
-                          <td className={`py-3 px-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                            {customer.phone || '-'}
+                          <td className={`py-4 px-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                            <div className="flex items-center gap-2">
+                              <Phone className="h-4 w-4 opacity-50" />
+                              {customer.phone || '-'}
+                            </div>
                           </td>
-                          <td className={`py-3 px-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                            {customer.address || '-'}
+                          <td className={`py-4 px-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                            <div className="flex items-center gap-2">
+                              <MapPin className="h-4 w-4 opacity-50" />
+                              <span className="truncate max-w-xs">{customer.address || '-'}</span>
+                            </div>
                           </td>
-                          <td className={`py-3 px-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-                            <span className={`font-medium ${creditMap[customer.id] > 0 ? (isDarkMode ? 'text-red-400' : 'text-red-600') : (isDarkMode ? 'text-green-400' : 'text-green-600')}`}>
-                              ${creditMap[customer.id]?.toFixed(2) ?? '0.00'}
-                            </span>
+                          <td className={`py-4 px-3`}>
+                            {creditMap[customer.id] > 0 ? (
+                              <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${isDarkMode ? 'bg-red-900/30 text-red-300 border border-red-700/50' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+                                ${creditMap[customer.id]?.toFixed(2) ?? '0.00'}
+                              </span>
+                            ) : (
+                              <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${isDarkMode ? 'bg-green-900/30 text-green-300 border border-green-700/50' : 'bg-green-50 text-green-700 border border-green-200'}`}>
+                                ${creditMap[customer.id]?.toFixed(2) ?? '0.00'}
+                              </span>
+                            )}
                           </td>
-                          <td className={`py-3 px-2`}>
-                            <div className="flex space-x-2">
+                          <td className={`py-4 px-3`}>
+                            <div className="flex space-x-1.5">
                               <button
                                 onClick={() => handleViewDetails(customer)}
-                                className={`p-2 ${isDarkMode ? 'hover:bg-gray-600 text-gray-400' : 'hover:bg-gray-100 text-gray-600'} rounded-lg transition-colors`}
+                                className={`p-2.5 ${isDarkMode ? 'hover:bg-blue-900/30 text-blue-400 hover:text-blue-300' : 'hover:bg-blue-50 text-blue-600 hover:text-blue-700'} rounded-lg transition-all duration-200 hover:scale-110`}
                                 title="View Details"
                               >
                                 <Eye className="h-4 w-4" />
                               </button>
                               <button
                                 onClick={() => handlePayment(customer)}
-                                className={`p-2 ${isDarkMode ? 'hover:bg-gray-600 text-green-400' : 'hover:bg-gray-100 text-green-600'} rounded-lg transition-colors`}
+                                className={`p-2.5 ${isDarkMode ? 'hover:bg-green-900/30 text-green-400 hover:text-green-300' : 'hover:bg-green-50 text-green-600 hover:text-green-700'} rounded-lg transition-all duration-200 hover:scale-110`}
                                 title="Record Payment"
                               >
                                 <CreditCard className="h-4 w-4" />
                               </button>
                               <button
                                 onClick={() => handleAddDebt(customer)}
-                                className={`p-2 ${isDarkMode ? 'hover:bg-gray-600 text-red-400' : 'hover:bg-gray-100 text-red-600'} rounded-lg transition-colors`}
+                                className={`p-2.5 ${isDarkMode ? 'hover:bg-amber-900/30 text-amber-400 hover:text-amber-300' : 'hover:bg-amber-50 text-amber-600 hover:text-amber-700'} rounded-lg transition-all duration-200 hover:scale-110`}
                                 title="Add Debt"
                               >
                                 <AlertTriangle className="h-4 w-4" />
                               </button>
                               <button
                                 onClick={() => handlePaymentHistory(customer)}
-                                className={`p-2 ${isDarkMode ? 'hover:bg-gray-600 text-blue-400' : 'hover:bg-gray-100 text-blue-600'} rounded-lg transition-colors`}
+                                className={`p-2.5 ${isDarkMode ? 'hover:bg-purple-900/30 text-purple-400 hover:text-purple-300' : 'hover:bg-purple-50 text-purple-600 hover:text-purple-700'} rounded-lg transition-all duration-200 hover:scale-110`}
                                 title="Payment History"
                               >
                                 <History className="h-4 w-4" />
                               </button>
                               <button
                                 onClick={() => handleEdit(customer)}
-                                className={`p-2 ${isDarkMode ? 'hover:bg-gray-600 text-gray-400' : 'hover:bg-gray-100 text-gray-600'} rounded-lg transition-colors`}
+                                className={`p-2.5 ${isDarkMode ? 'hover:bg-gray-600 text-gray-400 hover:text-gray-300' : 'hover:bg-gray-100 text-gray-600 hover:text-gray-700'} rounded-lg transition-all duration-200 hover:scale-110`}
                                 title="Edit Customer"
                               >
                                 <Edit2 className="h-4 w-4" />
                               </button>
                               <button
                                 onClick={() => handleDelete(customer.id)}
-                                className={`p-2 ${isDarkMode ? 'hover:bg-gray-600 text-red-400' : 'hover:bg-gray-100 text-red-600'} rounded-lg transition-colors`}
+                                className={`p-2.5 ${isDarkMode ? 'hover:bg-red-900/30 text-red-400 hover:text-red-300' : 'hover:bg-red-50 text-red-600 hover:text-red-700'} rounded-lg transition-all duration-200 hover:scale-110`}
                                 title="Delete Customer"
                               >
                                 <Trash2 className="h-4 w-4" />
@@ -881,16 +906,21 @@ export default function Customers() {
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-xl max-w-md w-full mx-4 overflow-hidden`}
+            className={`${isDarkMode ? 'bg-gradient-to-b from-gray-800 to-gray-850 border border-gray-700' : 'bg-gradient-to-b from-white to-gray-50 border border-gray-200'} rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden`}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className={`flex items-center justify-between p-6 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-              <h3 className={`text-xl font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
-                Record Payment
-              </h3>
+            <div className={`flex items-center justify-between p-6 ${isDarkMode ? 'bg-gradient-to-r from-green-900/30 to-green-800/20 border-b border-green-700/30' : 'bg-gradient-to-r from-green-50 to-green-100/50 border-b border-green-200'} rounded-t-2xl`}>
+              <div className="flex items-center gap-3">
+                <div className={`p-2 ${isDarkMode ? 'bg-green-800/50' : 'bg-green-200/50'} rounded-lg`}>
+                  <CreditCard className={`h-5 w-5 ${isDarkMode ? 'text-green-300' : 'text-green-600'}`} />
+                </div>
+                <h3 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+                  Record Payment
+                </h3>
+              </div>
               <button
                 onClick={() => setShowPaymentModal(false)}
-                className={`p-2 rounded-lg ${isDarkMode ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-100 text-gray-600'} transition-colors`}
+                className={`p-2 rounded-lg ${isDarkMode ? 'hover:bg-gray-700/50 text-gray-400 hover:text-gray-300' : 'hover:bg-gray-100 text-gray-600 hover:text-gray-700'} transition-all duration-200 hover:scale-110`}
               >
                 <X className="h-5 w-5" />
               </button>
@@ -979,18 +1009,18 @@ export default function Customers() {
                   />
                 </div>
                 
-                <div className="flex space-x-3">
+                <div className="flex space-x-3 pt-2">
                   <button
                     type="submit"
-                    className={`flex-1 py-3 px-4 ${isDarkMode ? 'bg-green-600 hover:bg-green-700' : 'bg-green-600 hover:bg-green-700'} text-white rounded-lg transition-colors font-medium`}
+                    className={`flex-1 py-3 px-4 ${isDarkMode ? 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800' : 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800'} text-white rounded-xl transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center`}
                   >
-                    <CreditCard className="h-5 w-5 inline mr-2" />
+                    <CreditCard className="h-5 w-5 mr-2" />
                     Record Payment
                   </button>
                   <button
                     type="button"
                     onClick={() => setShowPaymentModal(false)}
-                    className={`py-3 px-4 ${isDarkMode ? 'bg-gray-600 hover:bg-gray-500' : 'bg-gray-200 hover:bg-gray-300'} ${isDarkMode ? 'text-gray-200' : 'text-gray-700'} rounded-lg transition-colors`}
+                    className={`py-3 px-6 ${isDarkMode ? 'bg-gray-700/50 hover:bg-gray-600/50 border border-gray-600' : 'bg-gray-100 hover:bg-gray-200 border border-gray-300'} ${isDarkMode ? 'text-gray-200' : 'text-gray-700'} rounded-xl transition-all duration-200 font-medium hover:scale-105`}
                   >
                     Cancel
                   </button>
@@ -1104,16 +1134,21 @@ export default function Customers() {
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-xl max-w-md w-full mx-4 overflow-hidden`}
+            className={`${isDarkMode ? 'bg-gradient-to-b from-gray-800 to-gray-850 border border-gray-700' : 'bg-gradient-to-b from-white to-gray-50 border border-gray-200'} rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden`}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className={`flex items-center justify-between p-6 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-              <h3 className={`text-xl font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
-                Add Debt
-              </h3>
+            <div className={`flex items-center justify-between p-6 ${isDarkMode ? 'bg-gradient-to-r from-amber-900/30 to-amber-800/20 border-b border-amber-700/30' : 'bg-gradient-to-r from-amber-50 to-amber-100/50 border-b border-amber-200'} rounded-t-2xl`}>
+              <div className="flex items-center gap-3">
+                <div className={`p-2 ${isDarkMode ? 'bg-amber-800/50' : 'bg-amber-200/50'} rounded-lg`}>
+                  <AlertTriangle className={`h-5 w-5 ${isDarkMode ? 'text-amber-300' : 'text-amber-600'}`} />
+                </div>
+                <h3 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+                  Add Debt
+                </h3>
+              </div>
               <button
                 onClick={() => setShowDebtModal(false)}
-                className={`p-2 rounded-lg ${isDarkMode ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-100 text-gray-600'} transition-colors`}
+                className={`p-2 rounded-lg ${isDarkMode ? 'hover:bg-gray-700/50 text-gray-400 hover:text-gray-300' : 'hover:bg-gray-100 text-gray-600 hover:text-gray-700'} transition-all duration-200 hover:scale-110`}
               >
                 <X className="h-5 w-5" />
               </button>
@@ -1184,18 +1219,18 @@ export default function Customers() {
                   />
                 </div>
                 
-                <div className="flex space-x-3">
+                <div className="flex space-x-3 pt-2">
                   <button
                     type="submit"
-                    className={`flex-1 py-3 px-4 ${isDarkMode ? 'bg-red-600 hover:bg-red-700' : 'bg-red-600 hover:bg-red-700'} text-white rounded-lg transition-colors font-medium`}
+                    className={`flex-1 py-3 px-4 ${isDarkMode ? 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800' : 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800'} text-white rounded-xl transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center`}
                   >
-                    <AlertTriangle className="h-5 w-5 inline mr-2" />
+                    <AlertTriangle className="h-5 w-5 mr-2" />
                     Add Debt
                   </button>
                   <button
                     type="button"
                     onClick={() => setShowDebtModal(false)}
-                    className={`py-3 px-4 ${isDarkMode ? 'bg-gray-600 hover:bg-gray-500' : 'bg-gray-200 hover:bg-gray-300'} ${isDarkMode ? 'text-gray-200' : 'text-gray-700'} rounded-lg transition-colors`}
+                    className={`py-3 px-6 ${isDarkMode ? 'bg-gray-700/50 hover:bg-gray-600/50 border border-gray-600' : 'bg-gray-100 hover:bg-gray-200 border border-gray-300'} ${isDarkMode ? 'text-gray-200' : 'text-gray-700'} rounded-xl transition-all duration-200 font-medium hover:scale-105`}
                   >
                     Cancel
                   </button>
