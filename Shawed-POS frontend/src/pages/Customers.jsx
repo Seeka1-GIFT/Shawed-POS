@@ -31,7 +31,7 @@ import {
  * until paid in full; partial payments are not tracked.
  */
 export default function Customers() {
-  const { customers, sales, addCustomer, updateCustomer, deleteCustomer, addPayment, addDebt } = useContext(RealDataContext);
+  const { customers, sales, payments, debts, addCustomer, updateCustomer, deleteCustomer, addPayment, addDebt } = useContext(RealDataContext);
   
   // Add null safety check
   const context = useContext(RealDataContext);
@@ -152,7 +152,7 @@ export default function Customers() {
     setDebtForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handlePaymentSubmit = (e) => {
+  const handlePaymentSubmit = async (e) => {
     e.preventDefault();
     if (!paymentForm.amount || !selectedCustomer) return;
 
@@ -167,13 +167,22 @@ export default function Customers() {
       createdAt: new Date().toISOString()
     };
 
-    addPayment(payment);
-    setPaymentForm({ amount: '', method: 'cash', notes: '' });
-    setShowPaymentModal(false);
-    alert(`Payment of $${paymentForm.amount} recorded successfully!`);
+    try {
+      const result = await addPayment(payment);
+      if (result && result.success) {
+        setPaymentForm({ amount: '', method: 'cash', notes: '' });
+        setShowPaymentModal(false);
+        alert(`Payment of $${paymentForm.amount} recorded successfully!`);
+      } else {
+        alert(`Failed to record payment: ${result?.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error recording payment:', error);
+      alert(`Error recording payment: ${error.message}`);
+    }
   };
 
-  const handleDebtSubmit = (e) => {
+  const handleDebtSubmit = async (e) => {
     e.preventDefault();
     if (!debtForm.amount || !selectedCustomer) return;
 
@@ -188,10 +197,19 @@ export default function Customers() {
       createdAt: new Date().toISOString()
     };
 
-    addDebt(debt);
-    setDebtForm({ amount: '', reason: '', notes: '' });
-    setShowDebtModal(false);
-    alert(`Debt of $${debtForm.amount} added successfully!`);
+    try {
+      const result = await addDebt(debt);
+      if (result && result.success) {
+        setDebtForm({ amount: '', reason: '', notes: '' });
+        setShowDebtModal(false);
+        alert(`Debt of $${debtForm.amount} added successfully!`);
+      } else {
+        alert(`Failed to add debt: ${result?.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error adding debt:', error);
+      alert(`Error adding debt: ${error.message}`);
+    }
   };
 
   const toggleForm = () => {
@@ -217,24 +235,23 @@ export default function Customers() {
     });
     
     // Add manual debts
-    // Handle debts (placeholder - no debts data yet)
-    const debts = [];
-    debts.forEach((debt) => {
+    const customerDebts = debts || [];
+    customerDebts.forEach((debt) => {
       if (debt.customerId && map[debt.customerId] != null) {
         map[debt.customerId] += debt.amount;
       }
     });
     
-    // Handle payments (placeholder - no payments data yet)
-    const payments = [];
-    payments.forEach((payment) => {
+    // Handle payments
+    const customerPayments = payments || [];
+    customerPayments.forEach((payment) => {
       if (payment.customerId && map[payment.customerId] != null) {
         map[payment.customerId] -= payment.amount;
       }
     });
     
     return map;
-  }, [customers, sales]);
+  }, [customers, sales, payments, debts]);
 
   // Filter customers based on search term
   const filteredCustomers = useMemo(() => {
@@ -264,8 +281,8 @@ export default function Customers() {
   // Calculate transaction history (payments and debts) with running balances
   const getPaymentHistoryWithBalances = (customerId) => {
     const customerSales = sales.filter(sale => sale.customerId === customerId);
-    const customerPayments = []; // Placeholder - no payments data yet
-    const customerDebts = []; // Placeholder - no debts data yet
+    const customerPayments = (payments || []).filter(p => p.customerId === customerId);
+    const customerDebts = (debts || []).filter(d => d.customerId === customerId);
 
     // Combine sales, payments, and debts, sort by date (ascending for running calc)
     const allTransactions = [
