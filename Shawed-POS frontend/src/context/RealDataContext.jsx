@@ -923,9 +923,10 @@ export function RealDataProvider({ children }) {
       // Try to sync with backend (non-blocking)
       if (apiService) {
         try {
+          // Only send status - receivedDate is not in database schema
+          // The backend will automatically update updatedAt when status changes
           const orderData = {
-            status: 'received',
-            receivedDate: receivedDate
+            status: 'received'
           };
           
           const result = await apiService.request(`/purchase-orders/${id}`, {
@@ -938,7 +939,10 @@ export function RealDataProvider({ children }) {
             setData(prev => ({
               ...prev,
               purchaseOrders: prev.purchaseOrders.map(order => 
-                order.id === id ? result.data || { ...order, status: 'received', receivedDate: receivedDate } : order
+                order.id === id ? { 
+                  ...result.data, 
+                  receivedDate: receivedDate // Keep local receivedDate for UI
+                } : order
               )
             }));
             
