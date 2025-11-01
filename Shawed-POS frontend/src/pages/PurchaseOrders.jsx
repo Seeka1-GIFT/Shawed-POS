@@ -153,15 +153,21 @@ export default function PurchaseOrders() {
   const handleProductSearch = (value) => {
     setProductSearch(value);
     setShowProductDropdown(value.length > 0);
-    setShowAddNewProduct(false);
     
     // Check if there are matching products
     const filteredProducts = products.filter(product =>
       product.name.toLowerCase().includes(value.toLowerCase())
     );
     
-    if (value.length > 0 && filteredProducts.length === 0) {
+    // Show "Create New Product" option when:
+    // 1. User has typed something AND no products match, OR
+    // 2. User wants to add a new product (always show option if search is not empty)
+    if (value.length > 0) {
       setShowAddNewProduct(true);
+      setNewProductName(value); // Pre-fill with search value
+    } else {
+      setShowAddNewProduct(false);
+      setNewProductName('');
     }
   };
 
@@ -173,17 +179,18 @@ export default function PurchaseOrders() {
   };
 
   const addNewProduct = () => {
-    if (!newProductName.trim()) {
+    const productName = (newProductName || productSearch || '').trim();
+    if (!productName) {
       alert('Please enter a product name');
       return;
     }
 
     const newProductId = `new-${Date.now()}`;
     setNewItem(prev => ({ ...prev, productId: newProductId }));
-    setProductSearch(newProductName.trim());
+    setProductSearch(productName);
     setShowProductDropdown(false);
-    setShowAddNewProduct(false);
-    setNewProductName('');
+    setShowAddNewProduct(true);
+    setNewProductName(productName);
   };
 
   const clearProductSearch = () => {
@@ -608,27 +615,52 @@ export default function PurchaseOrders() {
                                 <span>{product.name}</span>
                               </button>
                             ))}
+                          
+                          {/* Always show option to create new product */}
+                          {productSearch.length > 0 && (
+                            <div className={`border-t-2 ${isDarkMode ? 'border-gray-600' : 'border-gray-300'} p-2`}>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setNewProductName(productSearch);
+                                  setShowProductDropdown(false);
+                                  setShowAddNewProduct(true);
+                                }}
+                                className={`w-full text-left px-4 py-3 rounded-lg ${isDarkMode ? 'bg-green-900/30 hover:bg-green-900/50 border border-green-700/50' : 'bg-green-50 hover:bg-green-100 border border-green-200'} transition-colors duration-150 flex items-center gap-2`}
+                              >
+                                <Plus className={`h-5 w-5 ${isDarkMode ? 'text-green-300' : 'text-green-600'}`} />
+                                <div>
+                                  <div className={`font-semibold ${isDarkMode ? 'text-green-200' : 'text-green-800'}`}>
+                                    Create "{productSearch}"
+                                  </div>
+                                  <div className={`text-xs ${isDarkMode ? 'text-green-300/70' : 'text-green-700/70'}`}>
+                                    Add as new product
+                                  </div>
+                                </div>
+                              </button>
+                            </div>
+                          )}
                         </motion.div>
                       )}
                     </div>
                     
-                    {/* Add New Product Section - Standalone, Beautiful Design */}
-                    {showAddNewProduct && (
+                    {/* Add New Product Section - Always visible when typing */}
+                    {productSearch.length > 0 && (
                       <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className={`${isDarkMode ? 'bg-gradient-to-r from-green-900/20 to-emerald-900/20 border border-green-700/50' : 'bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200'} rounded-xl p-4 shadow-lg`}
+                        className={`${isDarkMode ? 'bg-gradient-to-r from-green-900/20 to-emerald-900/20 border-2 border-green-700/50' : 'bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200'} rounded-xl p-4 shadow-lg`}
                       >
                         <div className="flex items-center gap-2 mb-3">
                           <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-green-800/50' : 'bg-green-200/50'}`}>
                             <Plus className={`h-5 w-5 ${isDarkMode ? 'text-green-300' : 'text-green-600'}`} />
                           </div>
-                          <div>
-                            <h5 className={`font-semibold ${isDarkMode ? 'text-green-200' : 'text-green-800'}`}>
+                          <div className="flex-1">
+                            <h5 className={`font-bold text-base ${isDarkMode ? 'text-green-200' : 'text-green-800'}`}>
                               Create New Product
                             </h5>
-                            <p className={`text-xs ${isDarkMode ? 'text-green-300/70' : 'text-green-700/70'}`}>
-                              Product not found? Add it now
+                            <p className={`text-sm ${isDarkMode ? 'text-green-300/80' : 'text-green-700/80'}`}>
+                              Can't find it? Create "{productSearch}" as a new product
                             </p>
                           </div>
                         </div>
@@ -637,7 +669,7 @@ export default function PurchaseOrders() {
                             <input
                               type="text"
                               placeholder="Enter new product name"
-                              value={newProductName}
+                              value={newProductName || productSearch}
                               onChange={(e) => setNewProductName(e.target.value)}
                               onKeyPress={(e) => {
                                 if (e.key === 'Enter') {
@@ -650,12 +682,17 @@ export default function PurchaseOrders() {
                           </div>
                           <button
                             type="button"
-                            onClick={addNewProduct}
-                            disabled={!newProductName.trim()}
+                            onClick={() => {
+                              if (newProductName || productSearch) {
+                                setNewProductName(newProductName || productSearch);
+                                addNewProduct();
+                              }
+                            }}
+                            disabled={!newProductName && !productSearch}
                             className={`px-6 py-3 ${isDarkMode ? 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:from-gray-700 disabled:to-gray-700 disabled:text-gray-500' : 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:from-gray-400 disabled:to-gray-400 disabled:text-gray-200'} text-white rounded-xl transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 disabled:transform-none disabled:shadow-none flex items-center gap-2`}
                           >
                             <Plus className="h-5 w-5" />
-                            <span>Add Product</span>
+                            <span>Create Product</span>
                           </button>
                         </div>
                       </motion.div>
