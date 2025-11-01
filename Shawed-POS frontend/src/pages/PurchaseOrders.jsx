@@ -35,7 +35,7 @@ export default function PurchaseOrders() {
     return <div className="p-4 text-red-500">Loading purchase orders data...</div>;
   }
   
-  const { products = [], suppliers = [], purchaseOrders = [], addPurchaseOrder, updatePurchaseOrder, deletePurchaseOrder, receivePurchaseOrder, createProductFromPurchase, addPurchasePayment } = context;
+  const { products = [], suppliers = [], purchaseOrders = [], addPurchaseOrder, updatePurchaseOrder, deletePurchaseOrder, receivePurchaseOrder, createProductFromPurchase, addPurchasePayment, fetchPurchaseOrders } = context;
   const { isDarkMode } = useContext(ThemeContext);
   
   const [form, setForm] = useState({
@@ -72,9 +72,16 @@ export default function PurchaseOrders() {
   const [paymentForm, setPaymentForm] = useState({ amount: '', method: 'cash', notes: '' });
   const [filters, setFilters] = useState({ q: '', supplierId: 'all', status: 'all', from: '', to: '' });
 
+  // Helper function to safely convert to number
+  const toNumber = (value) => {
+    if (typeof value === 'number') return isNaN(value) ? 0 : value;
+    const num = parseFloat(value || 0);
+    return isNaN(num) ? 0 : num;
+  };
+
   const filteredOrders = purchaseOrders.filter(o => {
     const q = filters.q.trim().toLowerCase();
-    const inSearch = !q || o.id.includes(q) || o.items.some(it => it.productName.toLowerCase().includes(q));
+    const inSearch = !q || o.id?.includes(q) || o.items?.some(it => it.productName?.toLowerCase().includes(q));
     const supplierOk = filters.supplierId === 'all' || o.supplierId === filters.supplierId;
     const statusOk = filters.status === 'all' || o.status === filters.status;
     const d = new Date(o.orderDate);
@@ -353,7 +360,7 @@ export default function PurchaseOrders() {
   const exportOrderCSV = (order) => {
     const headers = ['Product','Quantity','Unit Price','Line Total'];
     const rows = order.items.map(it => [it.productName, it.quantity, it.unitPrice.toFixed(2), (it.quantity*it.unitPrice).toFixed(2)]);
-    const csv = [headers.join(','), ...rows.map(r => r.join(',')), '', `Total,,,$${order.totalAmount.toFixed(2)}`].join('\n');
+    const csv = [headers.join(','), ...rows.map(r => r.join(',')), '', `Total,,,$${toNumber(order.totalAmount).toFixed(2)}`].join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -372,7 +379,7 @@ export default function PurchaseOrders() {
       <table><thead><tr><th>Product</th><th>Qty</th><th>Unit Price</th><th>Total</th></tr></thead><tbody>
         ${order.items.map(it => `<tr><td>${it.productName}</td><td>${it.quantity}</td><td>$${it.unitPrice.toFixed(2)}</td><td>$${(it.quantity*it.unitPrice).toFixed(2)}</td></tr>`).join('')}
       </tbody></table>
-      <div style="text-align:right;margin-top:8px"><strong>Total: $${order.totalAmount.toFixed(2)}</strong></div>
+      <div style="text-align:right;margin-top:8px"><strong>Total: $${toNumber(order.totalAmount).toFixed(2)}</strong></div>
     </body></html>`;
     const w = window.open('', '_blank'); if(!w) return; w.document.write(html); w.document.close(); w.focus(); w.print();
   };
@@ -437,17 +444,53 @@ export default function PurchaseOrders() {
                           <td className={`${isDarkMode ? 'text-gray-100' : 'text-gray-900'} py-2`}>{order.id.slice(-6)}</td>
                           <td className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} py-2`}>{order.supplierName}</td>
                           <td className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} py-2`}>{order.orderDate}</td>
-                          <td className={`${isDarkMode ? 'text-gray-100' : 'text-gray-900'} py-2 text-right`}>${order.totalAmount.toFixed(2)}</td>
-                          <td className={`${isDarkMode ? 'text-gray-100' : 'text-gray-900'} py-2 text-right`}>${Number(order.amountPaid||0).toFixed(2)}</td>
-                          <td className={`${isDarkMode ? 'text-gray-100' : 'text-gray-900'} py-2 text-right`}>${(order.totalAmount - (order.amountPaid||0)).toFixed(2)}</td>
+                          <td className={`${isDarkMode ? 'text-gray-100' : 'text-gray-900'} py-2 text-right`}>${toNumber(order.totalAmount).toFixed(2)}</td>
+                          <td className={`${isDarkMode ? 'text-gray-100' : 'text-gray-900'} py-2 text-right`}>${toNumber(order.amountPaid).toFixed(2)}</td>
+                          <td className={`${isDarkMode ? 'text-gray-100' : 'text-gray-900'} py-2 text-right`}>${(toNumber(order.totalAmount) - toNumber(order.amountPaid)).toFixed(2)}</td>
                           <td className={`${getStatusColor(order.status)} py-2 flex items-center gap-1`}>{getStatusIcon(order.status)} {order.status}</td>
                           <td className="py-2">
                             <div className="flex gap-2">
                               {order.status === 'pending' && (
-                                <button onClick={()=>receivePurchaseOrder(order.id)} className="btn-success text-xs">Receive</button>
+                                <button 
+                                  onClick={async () => {
+                                    try {
+                                      const result = await receivePurchaseOrder(order.id);
+                                      if (result && result.success) {
+                                        alert('Purchase order marked as received successfully!');
+                                        // Refresh data to ensure UI updates
+                                        if (fetchPurchaseOrders) {
+                                          await fetchPurchaseOrders();
+                                        }
+                                      } else {
+                                        alert(`Failed to receive order: ${result?.message || 'Unknown error'}`);
+                                      }
+                                    } catch (error) {
+                                      console.error('Error receiving order:', error);
+                                      alert(`Error: ${error.message}`);
+                                    }
+                                  }} 
+                                  className="btn-success text-xs"
+                                >
+                                  Receive
+                                </button>
                               )}
                               <button onClick={()=>startEdit(order)} className="btn-secondary text-xs">Edit</button>
-                              <button onClick={()=>deletePurchaseOrder(order.id)} className="btn-danger text-xs">Delete</button>
+                              <button onClick={async () => {
+                                if (window.confirm('Are you sure you want to delete this purchase order?')) {
+                                  try {
+                                    const result = await deletePurchaseOrder(order.id);
+                                    if (result && result.success) {
+                                      alert('Purchase order deleted successfully!');
+                                      if (fetchPurchaseOrders) {
+                                        await fetchPurchaseOrders();
+                                      }
+                                    }
+                                  } catch (error) {
+                                    console.error('Error deleting order:', error);
+                                    alert(`Error: ${error.message}`);
+                                  }
+                                }
+                              }} className="btn-danger text-xs">Delete</button>
                             </div>
                           </td>
                         </tr>
@@ -883,7 +926,7 @@ export default function PurchaseOrders() {
                 <div className={`mt-2 pt-2 border-t ${isDarkMode ? 'border-gray-600' : 'border-gray-300'} flex justify-end`}>
                   <div className="text-right">
                     <div className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Total</div>
-                    <div className={`text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>${selectedOrder.totalAmount.toFixed(2)}</div>
+                    <div className={`text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>${toNumber(selectedOrder?.totalAmount).toFixed(2)}</div>
                   </div>
                 </div>
               </div>
