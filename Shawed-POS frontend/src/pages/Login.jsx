@@ -2,8 +2,8 @@ import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserContext } from '../context/UserContext';
 import { ThemeContext } from '../context/ThemeContext';
-import { motion } from 'framer-motion';
-import { Eye, EyeOff, AlertCircle, Lock, User, Mail } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Eye, EyeOff, AlertCircle, Lock, User, Mail, X, CheckCircle, Send } from 'lucide-react';
 
 export default function Login() {
   const { login, isAuthenticated, getLoginAttempts, isUserLocked, resetLoginAttempts } = useContext(UserContext);
@@ -18,6 +18,11 @@ export default function Login() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [loginAttempts, setLoginAttempts] = useState(0);
+  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetSuccess, setResetSuccess] = useState(false);
+  const [resetError, setResetError] = useState('');
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -53,8 +58,57 @@ export default function Login() {
   };
 
   const handleForgotPassword = () => {
-    // In a real app, this would trigger password reset flow
-    alert('Password reset functionality would be implemented here.\n\nFor demo purposes, use:\nEmail: mainadmin@shawedpos.com\nPassword: admin123');
+    setShowForgotPasswordModal(true);
+    setResetEmail('');
+    setResetSuccess(false);
+    setResetError('');
+  };
+
+  const handleResetEmailChange = (e) => {
+    setResetEmail(e.target.value);
+    setResetError('');
+  };
+
+  const handlePasswordReset = async (e) => {
+    e.preventDefault();
+    setResetLoading(true);
+    setResetError('');
+    setResetSuccess(false);
+
+    if (!resetEmail || !resetEmail.includes('@')) {
+      setResetError('Please enter a valid email address');
+      setResetLoading(false);
+      return;
+    }
+
+    try {
+      // In a real app, this would call the API
+      // For now, simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Demo: Show success for demo email, error for others
+      if (resetEmail.toLowerCase() === 'mainadmin@shawedpos.com' || resetEmail.toLowerCase().includes('admin')) {
+        setResetSuccess(true);
+        setTimeout(() => {
+          setShowForgotPasswordModal(false);
+          setResetEmail('');
+          setResetSuccess(false);
+        }, 3000);
+      } else {
+        setResetError('Email not found. For demo purposes, use: mainadmin@shawedpos.com');
+      }
+    } catch (err) {
+      setResetError('Failed to send reset email. Please try again later.');
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
+  const closeForgotPasswordModal = () => {
+    setShowForgotPasswordModal(false);
+    setResetEmail('');
+    setResetSuccess(false);
+    setResetError('');
   };
 
   const handleUnlockAccount = () => {
@@ -274,6 +328,165 @@ export default function Login() {
           </motion.button>
         </div>
       </div>
+
+      {/* Forgot Password Modal */}
+      <AnimatePresence>
+        {showForgotPasswordModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={closeForgotPasswordModal}
+              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            />
+
+            {/* Modal */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className={`relative w-full max-w-md ${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-2xl z-50`}
+            >
+              {/* Header */}
+              <div className={`flex items-center justify-between p-6 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                <h3 className={`text-xl font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+                  Reset Password
+                </h3>
+                <button
+                  onClick={closeForgotPasswordModal}
+                  className={`p-2 rounded-lg transition-colors ${
+                    isDarkMode 
+                      ? 'text-gray-400 hover:text-gray-300 hover:bg-gray-700' 
+                      : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Content */}
+              <div className="p-6">
+                {resetSuccess ? (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="text-center py-4"
+                  >
+                    <div className="flex justify-center mb-4">
+                      <div className={`p-3 rounded-full ${isDarkMode ? 'bg-green-900/30' : 'bg-green-100'}`}>
+                        <CheckCircle className={`h-8 w-8 ${isDarkMode ? 'text-green-400' : 'text-green-600'}`} />
+                      </div>
+                    </div>
+                    <h4 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+                      Reset Email Sent!
+                    </h4>
+                    <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                      We've sent a password reset link to your email address. Please check your inbox.
+                    </p>
+                    <p className={`text-xs mt-2 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                      For demo purposes: Password is admin123
+                    </p>
+                  </motion.div>
+                ) : (
+                  <form onSubmit={handlePasswordReset} className="space-y-4">
+                    <div>
+                      <p className={`text-sm mb-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                        Enter your email address and we'll send you a link to reset your password.
+                      </p>
+                    </div>
+
+                    {/* Email Input */}
+                    <div>
+                      <label htmlFor="resetEmail" className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                        Email Address
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <Mail className={`h-5 w-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-400'}`} />
+                        </div>
+                        <input
+                          id="resetEmail"
+                          type="email"
+                          value={resetEmail}
+                          onChange={handleResetEmailChange}
+                          placeholder="Enter your email address"
+                          required
+                          className={`appearance-none relative block w-full pl-10 pr-3 py-3 border ${
+                            resetError
+                              ? isDarkMode
+                                ? 'border-red-500 bg-red-900/20 text-red-300'
+                                : 'border-red-500 bg-red-50 text-red-900'
+                              : isDarkMode
+                                ? 'border-gray-600 bg-gray-700 text-gray-100 placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500'
+                                : 'border-gray-300 bg-white text-gray-900 placeholder-gray-500 focus:ring-primary-500 focus:border-primary-500'
+                          } rounded-lg focus:outline-none focus:z-10 sm:text-sm`}
+                        />
+                      </div>
+                      {resetError && (
+                        <motion.p
+                          initial={{ opacity: 0, y: -5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className={`mt-2 text-sm flex items-center ${isDarkMode ? 'text-red-400' : 'text-red-600'}`}
+                        >
+                          <AlertCircle className="h-4 w-4 mr-1" />
+                          {resetError}
+                        </motion.p>
+                      )}
+                    </div>
+
+                    {/* Demo Info */}
+                    <div className={`p-3 rounded-lg text-xs ${isDarkMode ? 'bg-blue-900/30 text-blue-300 border border-blue-700/50' : 'bg-blue-50 text-blue-700 border border-blue-200'}`}>
+                      <strong>Demo:</strong> Use <code className="px-1 py-0.5 rounded bg-black/10">mainadmin@shawedpos.com</code> for testing
+                    </div>
+
+                    {/* Submit Button */}
+                    <div className="flex gap-3 pt-2">
+                      <button
+                        type="button"
+                        onClick={closeForgotPasswordModal}
+                        className={`flex-1 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                          isDarkMode
+                            ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        }`}
+                      >
+                        Cancel
+                      </button>
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        type="submit"
+                        disabled={resetLoading || !resetEmail}
+                        className={`flex-1 px-4 py-3 rounded-lg text-sm font-medium text-white transition-colors flex items-center justify-center gap-2 ${
+                          resetLoading || !resetEmail
+                            ? 'bg-gray-400 cursor-not-allowed'
+                            : isDarkMode
+                              ? 'bg-blue-600 hover:bg-blue-700'
+                              : 'bg-primary-600 hover:bg-primary-700'
+                        }`}
+                      >
+                        {resetLoading ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            Sending...
+                          </>
+                        ) : (
+                          <>
+                            <Send className="h-4 w-4" />
+                            Send Reset Link
+                          </>
+                        )}
+                      </motion.button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
