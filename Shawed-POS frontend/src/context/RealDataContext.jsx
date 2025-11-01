@@ -19,6 +19,8 @@ export function RealDataProvider({ children }) {
     expenses: [],
     suppliers: [],
     users: [],
+    payments: [],
+    debts: [],
     businessSettings: {
       name: '',
       address: '',
@@ -56,6 +58,8 @@ export function RealDataProvider({ children }) {
       expenses: [],
       suppliers: [],
       users: [],
+      payments: [],
+      debts: [],
       businessSettings: {
         name: '',
         address: '',
@@ -347,6 +351,26 @@ export function RealDataProvider({ children }) {
       return { success: false, message: error.message };
     }
   };
+
+  // Load payments and debts from localStorage on mount
+  useEffect(() => {
+    try {
+      const savedPayments = localStorage.getItem('shawed-payments');
+      const savedDebts = localStorage.getItem('shawed-debts');
+      
+      if (savedPayments) {
+        const payments = JSON.parse(savedPayments);
+        setData(prev => ({ ...prev, payments }));
+      }
+      
+      if (savedDebts) {
+        const debts = JSON.parse(savedDebts);
+        setData(prev => ({ ...prev, debts }));
+      }
+    } catch (error) {
+      console.error('Failed to load payments/debts from localStorage:', error);
+    }
+  }, []);
 
   // Load initial data when component mounts (only public endpoints)
   useEffect(() => {
@@ -926,6 +950,62 @@ export function RealDataProvider({ children }) {
       console.log('addPurchasePayment called with:', orderId, paymentData);
       // TODO: Implement actual API call
       return { success: true };
+    },
+    
+    // Payment and Debt Operations
+    addPayment: async (paymentData) => {
+      console.log('addPayment called with:', paymentData);
+      try {
+        // Store payment in local state
+        const payment = {
+          ...paymentData,
+          id: paymentData.id || Date.now().toString(),
+          createdAt: paymentData.createdAt || new Date().toISOString(),
+        };
+        
+        setData(prev => ({
+          ...prev,
+          payments: [...(prev.payments || []), payment]
+        }));
+        
+        // Persist to localStorage as backup
+        const existingPayments = JSON.parse(localStorage.getItem('shawed-payments') || '[]');
+        existingPayments.push(payment);
+        localStorage.setItem('shawed-payments', JSON.stringify(existingPayments));
+        
+        console.log('✅ Payment added successfully');
+        return { success: true, data: payment };
+      } catch (error) {
+        console.error('addPayment error:', error);
+        return { success: false, message: error.message };
+      }
+    },
+    addDebt: async (debtData) => {
+      console.log('addDebt called with:', debtData);
+      try {
+        // Store debt in local state
+        const debt = {
+          ...debtData,
+          id: debtData.id || Date.now().toString(),
+          createdAt: debtData.createdAt || new Date().toISOString(),
+        };
+        
+        setData(prev => ({
+          ...prev,
+          debts: [...(prev.debts || []), debt]
+        }));
+        
+        // Persist to localStorage as backup
+        const existingDebts = JSON.parse(localStorage.getItem('shawed-debts') || '[]');
+        existingDebts.push(debt);
+        localStorage.setItem('shawed-debts', JSON.stringify(existingDebts));
+        
+        console.log('✅ Debt added successfully');
+        return { success: true, data: debt };
+      } catch (error) {
+        console.error('addDebt error:', error);
+        return { success: false, message: error.message };
+      }
     },
     
     // Helper Functions
