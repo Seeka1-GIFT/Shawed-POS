@@ -127,7 +127,12 @@ export default function Customers() {
 
   const handlePayment = (customer) => {
     setSelectedCustomer(customer);
-    setPaymentForm({ amount: '', method: 'cash', notes: '' });
+    const currentBalance = creditMap[customer.id] || 0;
+    setPaymentForm({ 
+      amount: currentBalance > 0 ? currentBalance.toFixed(2) : '', 
+      method: 'cash', 
+      notes: '' 
+    });
     setShowPaymentModal(true);
   };
 
@@ -156,11 +161,17 @@ export default function Customers() {
     e.preventDefault();
     if (!paymentForm.amount || !selectedCustomer) return;
 
+    const paymentAmount = parseFloat(paymentForm.amount);
+    if (isNaN(paymentAmount) || paymentAmount <= 0) {
+      alert('Please enter a valid payment amount');
+      return;
+    }
+
     const payment = {
       id: Date.now().toString(),
       customerId: selectedCustomer.id,
       customerName: selectedCustomer.name,
-      amount: parseFloat(paymentForm.amount),
+      amount: paymentAmount,
       method: paymentForm.method,
       notes: paymentForm.notes,
       date: new Date().toISOString(),
@@ -172,7 +183,7 @@ export default function Customers() {
       if (result && result.success) {
         setPaymentForm({ amount: '', method: 'cash', notes: '' });
         setShowPaymentModal(false);
-        alert(`Payment of $${paymentForm.amount} recorded successfully!`);
+        alert(`Payment of $${paymentAmount.toFixed(2)} recorded successfully!`);
       } else {
         alert(`Failed to record payment: ${result?.message || 'Unknown error'}`);
       }
@@ -184,13 +195,22 @@ export default function Customers() {
 
   const handleDebtSubmit = async (e) => {
     e.preventDefault();
-    if (!debtForm.amount || !selectedCustomer) return;
+    if (!debtForm.amount || !selectedCustomer || !debtForm.reason) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    const debtAmount = parseFloat(debtForm.amount);
+    if (isNaN(debtAmount) || debtAmount <= 0) {
+      alert('Please enter a valid debt amount');
+      return;
+    }
 
     const debt = {
       id: Date.now().toString(),
       customerId: selectedCustomer.id,
       customerName: selectedCustomer.name,
-      amount: parseFloat(debtForm.amount),
+      amount: debtAmount,
       reason: debtForm.reason,
       notes: debtForm.notes,
       date: new Date().toISOString(),
@@ -202,7 +222,7 @@ export default function Customers() {
       if (result && result.success) {
         setDebtForm({ amount: '', reason: '', notes: '' });
         setShowDebtModal(false);
-        alert(`Debt of $${debtForm.amount} added successfully!`);
+        alert(`Debt of $${debtAmount.toFixed(2)} added successfully!`);
       } else {
         alert(`Failed to add debt: ${result?.message || 'Unknown error'}`);
       }
@@ -891,9 +911,23 @@ export default function Customers() {
               
               <form onSubmit={handlePaymentSubmit} className="space-y-4">
                 <div>
-                  <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
-                    Payment Amount
-                  </label>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Payment Amount
+                    </label>
+                    {creditMap[selectedCustomer.id] > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const balance = creditMap[selectedCustomer.id] || 0;
+                          setPaymentForm(prev => ({ ...prev, amount: balance.toFixed(2) }));
+                        }}
+                        className={`text-xs px-2 py-1 ${isDarkMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-500 hover:bg-blue-600'} text-white rounded transition-colors`}
+                      >
+                        Fill Balance
+                      </button>
+                    )}
+                  </div>
                   <input
                     type="number"
                     step="0.01"
@@ -906,6 +940,11 @@ export default function Customers() {
                     className={`w-full px-4 py-3 border ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-100' : 'border-gray-300 bg-white text-gray-900'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
                     required
                   />
+                  {creditMap[selectedCustomer.id] > 0 && (
+                    <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                      Maximum: ${creditMap[selectedCustomer.id].toFixed(2)}
+                    </p>
+                  )}
                 </div>
                 
                 <div>
