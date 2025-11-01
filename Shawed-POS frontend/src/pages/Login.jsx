@@ -385,9 +385,6 @@ export default function Login() {
                     <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                       We've sent a password reset link to your email address. Please check your inbox.
                     </p>
-                    <p className={`text-xs mt-2 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-                      For demo purposes: Password is admin123
-                    </p>
                   </motion.div>
                 ) : (
                   <form onSubmit={handlePasswordReset} className="space-y-4">
@@ -434,11 +431,6 @@ export default function Login() {
                           {resetError}
                         </motion.p>
                       )}
-                    </div>
-
-                    {/* Demo Info */}
-                    <div className={`p-3 rounded-lg text-xs ${isDarkMode ? 'bg-blue-900/30 text-blue-300 border border-blue-700/50' : 'bg-blue-50 text-blue-700 border border-blue-200'}`}>
-                      <strong>Demo:</strong> Use <code className="px-1 py-0.5 rounded bg-black/10">mainadmin@shawedpos.com</code> for testing
                     </div>
 
                     {/* Submit Button */}
