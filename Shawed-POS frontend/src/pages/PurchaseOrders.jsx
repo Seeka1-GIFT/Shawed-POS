@@ -447,7 +447,19 @@ export default function PurchaseOrders() {
                           <td className={`${isDarkMode ? 'text-gray-100' : 'text-gray-900'} py-2 text-right`}>${toNumber(order.totalAmount).toFixed(2)}</td>
                           <td className={`${isDarkMode ? 'text-gray-100' : 'text-gray-900'} py-2 text-right`}>${toNumber(order.amountPaid).toFixed(2)}</td>
                           <td className={`${isDarkMode ? 'text-gray-100' : 'text-gray-900'} py-2 text-right`}>${(toNumber(order.totalAmount) - toNumber(order.amountPaid)).toFixed(2)}</td>
-                          <td className={`${getStatusColor(order.status)} py-2 flex items-center gap-1`}>{getStatusIcon(order.status)} {order.status}</td>
+                          <td className={`py-2`}>
+                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
+                              order.status === 'received' ? (isDarkMode ? 'bg-green-900/30 text-green-300 border border-green-700/50' : 'bg-green-100 text-green-700 border border-green-200') :
+                              order.status === 'pending' ? (isDarkMode ? 'bg-yellow-900/30 text-yellow-300 border border-yellow-700/50' : 'bg-yellow-100 text-yellow-700 border border-yellow-200') :
+                              order.status === 'partially_received' ? (isDarkMode ? 'bg-blue-900/30 text-blue-300 border border-blue-700/50' : 'bg-blue-100 text-blue-700 border border-blue-200') :
+                              order.status === 'completed' ? (isDarkMode ? 'bg-emerald-900/30 text-emerald-300 border border-emerald-700/50' : 'bg-emerald-100 text-emerald-700 border border-emerald-200') :
+                              order.status === 'cancelled' ? (isDarkMode ? 'bg-red-900/30 text-red-300 border border-red-700/50' : 'bg-red-100 text-red-700 border border-red-200') :
+                              (isDarkMode ? 'bg-gray-700/30 text-gray-300 border border-gray-600/50' : 'bg-gray-100 text-gray-700 border border-gray-200')
+                            }`}>
+                              {getStatusIcon(order.status)}
+                              <span className="capitalize">{order.status === 'partially_received' ? 'Partially Received' : order.status === 'received' ? 'Received' : order.status || 'Pending'}</span>
+                            </span>
+                          </td>
                           <td className="py-2">
                             <div className="flex gap-2">
                               {order.status === 'pending' && (
