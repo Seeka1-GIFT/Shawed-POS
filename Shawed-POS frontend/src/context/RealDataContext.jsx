@@ -910,52 +910,57 @@ export function RealDataProvider({ children }) {
     },
     receivePurchaseOrder: async (id, receivedItems) => {
       console.log('receivePurchaseOrder called with:', id, receivedItems);
-      if (!apiService) {
-        console.error('API service is not available');
-        return { success: false, message: 'API service not available' };
-      }
       
-      try {
-        // Update order status to 'received' and set receivedDate
-        const receivedDate = new Date().toISOString().split('T')[0];
-        const orderData = {
-          status: 'received',
-          receivedDate: receivedDate
-        };
-        
-        const result = await apiService.request(`/purchase-orders/${id}`, {
-          method: 'PUT',
-          body: JSON.stringify(orderData),
-        });
-        
-        if (result.success) {
-          // Update local state
-          setData(prev => ({
-            ...prev,
-            purchaseOrders: prev.purchaseOrders.map(order => 
-              order.id === id ? { ...order, status: 'received', receivedDate: receivedDate } : order
-            )
-          }));
+      // Optimistic update - update UI immediately
+      const receivedDate = new Date().toISOString().split('T')[0];
+      setData(prev => ({
+        ...prev,
+        purchaseOrders: prev.purchaseOrders.map(order => 
+          order.id === id ? { ...order, status: 'received', receivedDate: receivedDate } : order
+        )
+      }));
+      
+      // Try to sync with backend (non-blocking)
+      if (apiService) {
+        try {
+          const orderData = {
+            status: 'received',
+            receivedDate: receivedDate
+          };
+          
+          const result = await apiService.request(`/purchase-orders/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(orderData),
+          });
+          
+          if (result.success) {
+            // Update with backend response if available
+            setData(prev => ({
+              ...prev,
+              purchaseOrders: prev.purchaseOrders.map(order => 
+                order.id === id ? result.data || { ...order, status: 'received', receivedDate: receivedDate } : order
+              )
+            }));
+            
+            console.log('✅ Purchase order marked as received (synced with backend)');
+          } else {
+            console.warn('⚠️ Backend update failed, but local state updated:', result.message);
+          }
           
           // Emit event to trigger data refresh
           window.dispatchEvent(new CustomEvent('purchaseOrderReceived', { 
             detail: { orderId: id } 
           }));
           
-          console.log('✅ Purchase order marked as received');
+          return { success: true, data: { id, status: 'received', receivedDate } };
+        } catch (error) {
+          console.error('receivePurchaseOrder API error (local state already updated):', error);
+          // Local state already updated, just return success
+          return { success: true, data: { id, status: 'received', receivedDate }, warning: 'Backend sync failed, but order marked as received locally' };
         }
-        
-        return result;
-      } catch (error) {
-        console.error('receivePurchaseOrder error:', error);
-        // Even if API fails, update local state as fallback
-        setData(prev => ({
-          ...prev,
-          purchaseOrders: prev.purchaseOrders.map(order => 
-            order.id === id ? { ...order, status: 'received', receivedDate: new Date().toISOString().split('T')[0] } : order
-          )
-        }));
-        return { success: true, data: { id, status: 'received' } };
+      } else {
+        console.log('✅ Purchase order marked as received (local only)');
+        return { success: true, data: { id, status: 'received', receivedDate } };
       }
     },
     createProductFromPurchase: async (productName, category, unitPrice, quantity) => {
