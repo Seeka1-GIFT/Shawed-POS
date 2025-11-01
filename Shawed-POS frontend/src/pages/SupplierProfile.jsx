@@ -16,15 +16,20 @@ export default function SupplierProfile() {
     return <div className="p-4 text-red-500">Loading supplier data...</div>;
   }
   
-  const { suppliers = [], purchaseOrders = [], updateSupplier } = context;
+  const { suppliers = [], purchaseOrders = [] } = context;
 
   const supplier = suppliers.find(s => s.id === id);
-  const [attachments, setAttachments] = useState(supplier?.attachments || []);
   const orders = useMemo(()=> purchaseOrders.filter(o => o.supplierId === id), [purchaseOrders, id]);
 
   const totals = useMemo(()=> {
-    const total = orders.reduce((sum,o)=> sum + (o.totalAmount||0), 0);
-    const paid = orders.reduce((sum,o)=> sum + (o.amountPaid||0), 0);
+    const total = orders.reduce((sum,o)=> {
+      const amt = typeof o.totalAmount === 'number' ? o.totalAmount : parseFloat(o.totalAmount || 0);
+      return sum + (isNaN(amt) ? 0 : amt);
+    }, 0);
+    const paid = orders.reduce((sum,o)=> {
+      const amt = typeof o.amountPaid === 'number' ? o.amountPaid : parseFloat(o.amountPaid || 0);
+      return sum + (isNaN(amt) ? 0 : amt);
+    }, 0);
     return { total, paid, outstanding: total - paid };
   }, [orders]);
 
@@ -36,7 +41,9 @@ export default function SupplierProfile() {
     orders.forEach(o=>{
       const key = (o.orderDate||'').slice(0,7);
       if(!map[key]) map[key] = { month:key, value:0, orders:0 };
-      map[key].value += o.totalAmount||0; map[key].orders += 1;
+      const amt = typeof o.totalAmount === 'number' ? o.totalAmount : parseFloat(o.totalAmount || 0);
+      map[key].value += (isNaN(amt) ? 0 : amt);
+      map[key].orders += 1;
     });
     return Object.values(map).sort((a,b)=> a.month.localeCompare(b.month));
   },[orders]);
@@ -47,9 +54,21 @@ export default function SupplierProfile() {
     );
   }
 
+  // Helper function to safely convert to number
+  const toNumber = (value) => {
+    if (typeof value === 'number') return isNaN(value) ? 0 : value;
+    const num = parseFloat(value || 0);
+    return isNaN(num) ? 0 : num;
+  };
+
   const exportCSV = () => {
-    const headers = ['Order ID','Date','Status','Items','Total','Paid'];
-    const rows = orders.map(o => [o.id, o.orderDate, o.status, o.items.length, o.totalAmount.toFixed(2), (o.amountPaid||0).toFixed(2)]);
+    const headers = ['Order ID','Date','Status','Items','Total','Paid','Balance'];
+    const rows = orders.map(o => {
+      const total = toNumber(o.totalAmount);
+      const paid = toNumber(o.amountPaid);
+      const balance = total - paid;
+      return [o.id, o.orderDate, o.status, o.items?.length || 0, total.toFixed(2), paid.toFixed(2), balance.toFixed(2)];
+    });
     const csv = [headers.join(','), ...rows.map(r=>r.join(','))].join('\n');
     const blob = new Blob([csv], { type:'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`supplier-${supplier.name}-orders.csv`; a.click(); URL.revokeObjectURL(url);
@@ -57,14 +76,13 @@ export default function SupplierProfile() {
 
   const printProfile = () => {
     const styles = `body{font-family:ui-sans-serif,system-ui;padding:16px} h1{font-size:18px;margin-bottom:8px} table{width:100%;border-collapse:collapse;margin-top:8px} th,td{padding:8px;border-bottom:1px solid #e5e7eb;text-align:left;font-size:12px} th{background:#f5f5f5}`;
-    const html = `<html><head><title>${supplier.name}</title><style>${styles}</style></head><body><h1>Supplier: ${supplier.name}</h1><div>Email: ${supplier.email||'-'} | Phone: ${supplier.phone||'-'}</div><div>Address: ${supplier.address||'-'}</div><div>Total Purchases: $${totals.total.toFixed(2)} | Outstanding: $${totals.outstanding.toFixed(2)}</div><table><thead><tr><th>Order</th><th>Date</th><th>Status</th><th>Total</th></tr></thead><tbody>${orders.map(o=>`<tr><td>${o.id}</td><td>${o.orderDate}</td><td>${o.status}</td><td>$${o.totalAmount.toFixed(2)}</td></tr>`).join('')}</tbody></table></body></html>`;
+    const html = `<html><head><title>${supplier.name}</title><style>${styles}</style></head><body><h1>Supplier: ${supplier.name}</h1><div>Email: ${supplier.email||'-'} | Phone: ${supplier.phone||'-'}</div><div>Address: ${supplier.address||'-'}</div><div>Total Purchases: $${totals.total.toFixed(2)} | Outstanding: $${totals.outstanding.toFixed(2)}</div><table><thead><tr><th>Order</th><th>Date</th><th>Status</th><th>Total</th><th>Paid</th><th>Balance</th></tr></thead><tbody>${orders.map(o=>{
+      const total = toNumber(o.totalAmount);
+      const paid = toNumber(o.amountPaid);
+      const balance = total - paid;
+      return `<tr><td>${o.id}</td><td>${o.orderDate}</td><td>${o.status}</td><td>$${total.toFixed(2)}</td><td>$${paid.toFixed(2)}</td><td>$${balance.toFixed(2)}</td></tr>`;
+    }).join('')}</tbody></table></body></html>`;
     const w = window.open('', '_blank'); if(!w) return; w.document.write(html); w.document.close(); w.focus(); w.print();
-  };
-
-  const handleFiles = (e) => {
-    const files = Array.from(e.target.files || []);
-    const mapped = files.map(f => ({ id: `att-${Date.now()}-${f.name}`, name: f.name, size: f.size, type: f.type }));
-    setAttachments(prev => [...prev, ...mapped]);
   };
 
   return (
@@ -126,25 +144,8 @@ export default function SupplierProfile() {
       </div>
 
       {/* Bank & Tax Details removed as requested */}
+      {/* Attachments section removed as requested */}
 
-      <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-6 rounded-2xl shadow-sm`}>
-        <h3 className={`text-xl font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'} mb-4`}>Attachments</h3>
-        <input type="file" multiple onChange={handleFiles} className={`mb-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`} />
-        <ul className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} list-disc pl-5`}>
-          {attachments.map(a => (
-            <li key={a.id}>{a.name} ({Math.ceil(a.size/1024)} KB)</li>
-          ))}
-          {attachments.length === 0 && (<li className="list-none">No attachments</li>)}
-        </ul>
-        <div className="flex justify-end mt-3">
-          <button
-            onClick={()=>{ updateSupplier(id, { attachments }); }}
-            className={`${isDarkMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-primary-600 hover:bg-primary-700'} text-white rounded-lg px-4 py-2`}
-          >
-            Save Attachments
-          </button>
-        </div>
-      </div>
       <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-6 rounded-2xl shadow-sm`}>
         <h3 className={`text-xl font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'} mb-4`}>Purchase Orders</h3>
         <div className="overflow-x-auto">
@@ -156,18 +157,37 @@ export default function SupplierProfile() {
                 <th className={`text-left py-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Status</th>
                 <th className={`text-right py-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Total</th>
                 <th className={`text-right py-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Paid</th>
+                <th className={`text-right py-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Balance</th>
               </tr>
             </thead>
             <tbody>
-              {orders.map(o => (
-                <tr key={o.id} className={`border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-                  <td className={`${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>{o.id.slice(-6)}</td>
-                  <td className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{o.orderDate}</td>
-                  <td className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{o.status}</td>
-                  <td className={`${isDarkMode ? 'text-gray-200' : 'text-gray-900'} text-right`}>${o.totalAmount.toFixed(2)}</td>
-                  <td className={`${isDarkMode ? 'text-gray-200' : 'text-gray-900'} text-right`}>${(o.amountPaid||0).toFixed(2)}</td>
-                </tr>
-              ))}
+              {orders.map(o => {
+                const total = toNumber(o.totalAmount);
+                const paid = toNumber(o.amountPaid);
+                const balance = total - paid;
+                return (
+                  <tr key={o.id} className={`border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                    <td className={`${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>{o.id?.slice(-6) || o.id}</td>
+                    <td className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{o.orderDate}</td>
+                    <td className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        o.status === 'paid' ? (isDarkMode ? 'bg-green-900/50 text-green-300' : 'bg-green-100 text-green-700') :
+                        o.status === 'partially_paid' || o.status === 'partial' ? (isDarkMode ? 'bg-amber-900/50 text-amber-300' : 'bg-amber-100 text-amber-700') :
+                        (isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700')
+                      }`}>
+                        {o.status === 'partially_paid' ? 'Partially Paid' : o.status === 'partial' ? 'Partial' : o.status || 'Pending'}
+                      </span>
+                    </td>
+                    <td className={`${isDarkMode ? 'text-gray-200' : 'text-gray-900'} text-right font-medium`}>${total.toFixed(2)}</td>
+                    <td className={`${isDarkMode ? 'text-gray-200' : 'text-gray-900'} text-right font-medium ${paid > 0 ? (isDarkMode ? 'text-green-400' : 'text-green-600') : ''}`}>
+                      ${paid.toFixed(2)}
+                    </td>
+                    <td className={`text-right font-semibold ${balance > 0 ? (isDarkMode ? 'text-red-400' : 'text-red-600') : (isDarkMode ? 'text-green-400' : 'text-green-600')}`}>
+                      ${balance.toFixed(2)}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
