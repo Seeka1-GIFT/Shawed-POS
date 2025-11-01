@@ -11,8 +11,8 @@ export default function Login() {
   const navigate = useNavigate();
   
   const [formData, setFormData] = useState({
-    username: 'mainadmin@shawedpos.com',
-    password: 'admin123'
+    username: '',
+    password: ''
   });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
@@ -96,7 +96,11 @@ export default function Login() {
           transition={{ delay: 0.2 }}
           className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} py-8 px-6 shadow-xl rounded-2xl`}
         >
-          <form className="space-y-6" onSubmit={handleSubmit}>
+          <form className="space-y-6" onSubmit={handleSubmit} autoComplete="off">
+            {/* Hidden fields to prevent browser auto-fill */}
+            <input type="text" name="fakeusernameremembered" style={{ display: 'none' }} tabIndex="-1" autoComplete="off" />
+            <input type="password" name="fakepasswordremembered" style={{ display: 'none' }} tabIndex="-1" autoComplete="off" />
+            
             {/* Username Field */}
             <div>
               <label htmlFor="username" className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
@@ -110,7 +114,8 @@ export default function Login() {
                   id="username"
                   name="username"
                   type="text"
-                  autoComplete="username"
+                  autoComplete="off"
+                  data-form-type="other"
                   required
                   value={formData.username}
                   onChange={handleInputChange}
@@ -137,7 +142,8 @@ export default function Login() {
                   id="password"
                   name="password"
                   type={showPassword ? 'text' : 'password'}
-                  autoComplete="current-password"
+                  autoComplete="new-password"
+                  data-form-type="other"
                   required
                   value={formData.password}
                   onChange={handleInputChange}
