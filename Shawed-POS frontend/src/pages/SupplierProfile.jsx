@@ -2,7 +2,7 @@ import React, { useContext, useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { RealDataContext } from '../context/RealDataContext';
 import { ThemeContext } from '../context/ThemeContext';
-import { DollarSign, Calendar, Phone, Mail, MapPin, Globe, FileText, Download, Printer } from 'lucide-react';
+import { DollarSign, Calendar, Phone, Mail, MapPin, Globe, FileText, Download, Printer, ArrowLeft } from 'lucide-react';
 import { ResponsiveContainer, LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, BarChart, Bar } from 'recharts';
 
 export default function SupplierProfile() {
@@ -87,6 +87,19 @@ export default function SupplierProfile() {
 
   return (
     <div className="space-y-6">
+      {/* Back to Suppliers Button */}
+      <Link
+        to="/suppliers"
+        className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+          isDarkMode
+            ? 'bg-gray-700 hover:bg-gray-600 text-gray-100'
+            : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
+        }`}
+      >
+        <ArrowLeft className="h-4 w-4" />
+        <span>Back to Suppliers</span>
+      </Link>
+
       <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-6 rounded-2xl shadow-sm`}>
         <div className="flex items-center justify-between">
           <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>{supplier.name}</h2>
