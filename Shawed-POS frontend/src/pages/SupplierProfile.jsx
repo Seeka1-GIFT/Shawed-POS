@@ -10,13 +10,7 @@ export default function SupplierProfile() {
   const context = useContext(RealDataContext);
   const { isDarkMode } = useContext(ThemeContext);
   
-  // Add null safety check
-  if (!context) {
-    console.error('RealDataContext is undefined in SupplierProfile page');
-    return <div className="p-4 text-red-500">Loading supplier data...</div>;
-  }
-  
-  const { suppliers = [], purchaseOrders = [], addPurchasePayment, updatePurchaseOrder } = context;
+  // All hooks must be called before any conditional returns
   const [paymentForm, setPaymentForm] = useState({
     amount: '',
     method: 'cash',
@@ -25,17 +19,32 @@ export default function SupplierProfile() {
   });
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 
+  // Add null safety check AFTER hooks
+  if (!context) {
+    console.error('RealDataContext is undefined in SupplierProfile page');
+    return <div className="p-4 text-red-500">Loading supplier data...</div>;
+  }
+  
+  const { suppliers = [], purchaseOrders = [], addPurchasePayment, updatePurchaseOrder } = context;
+
+  // Helper function to safely convert to number (defined before use in useMemo)
+  const toNumber = (value) => {
+    if (typeof value === 'number') return isNaN(value) ? 0 : value;
+    const num = parseFloat(value || 0);
+    return isNaN(num) ? 0 : num;
+  };
+
   const supplier = suppliers.find(s => s.id === id);
   const orders = useMemo(()=> purchaseOrders.filter(o => o.supplierId === id), [purchaseOrders, id]);
 
   const totals = useMemo(()=> {
     const total = orders.reduce((sum,o)=> {
-      const amt = typeof o.totalAmount === 'number' ? o.totalAmount : parseFloat(o.totalAmount || 0);
-      return sum + (isNaN(amt) ? 0 : amt);
+      const amt = toNumber(o.totalAmount);
+      return sum + amt;
     }, 0);
     const paid = orders.reduce((sum,o)=> {
-      const amt = typeof o.amountPaid === 'number' ? o.amountPaid : parseFloat(o.amountPaid || 0);
-      return sum + (isNaN(amt) ? 0 : amt);
+      const amt = toNumber(o.amountPaid);
+      return sum + amt;
     }, 0);
     return { total, paid, outstanding: total - paid };
   }, [orders]);
@@ -43,18 +52,21 @@ export default function SupplierProfile() {
   const onTime = useMemo(()=> orders.filter(o => o.receivedDate && o.expectedDate && new Date(o.receivedDate) <= new Date(o.expectedDate)).length, [orders]);
   const onTimePct = orders.length ? (onTime / orders.length) * 100 : 0;
 
+  // Get orders with outstanding balance (defined before conditional return)
+  const ordersWithBalance = useMemo(() => {
+    if (!orders || orders.length === 0) return [];
+    return orders.filter(o => {
+      const total = toNumber(o.totalAmount);
+      const paid = toNumber(o.amountPaid);
+      return total - paid > 0;
+    });
+  }, [orders]);
+
   if (!supplier) {
     return (
       <div className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Supplier not found. <Link to="/suppliers" className="text-blue-600">Back</Link></div>
     );
   }
-
-  // Helper function to safely convert to number
-  const toNumber = (value) => {
-    if (typeof value === 'number') return isNaN(value) ? 0 : value;
-    const num = parseFloat(value || 0);
-    return isNaN(num) ? 0 : num;
-  };
 
   const exportCSV = () => {
     const headers = ['Order ID','Date','Status','Items','Total','Paid','Balance'];
@@ -80,113 +92,99 @@ export default function SupplierProfile() {
     const w = window.open('', '_blank'); if(!w) return; w.document.write(html); w.document.close(); w.focus(); w.print();
   };
 
-  // Get orders with outstanding balance
-  const ordersWithBalance = useMemo(() => {
-    return orders.filter(o => {
-      const total = toNumber(o.totalAmount);
-      const paid = toNumber(o.amountPaid);
-      return total - paid > 0;
-    });
-  }, [orders]);
 
   const handlePaymentSubmit = async (e) => {
     e.preventDefault();
     const amount = parseFloat(paymentForm.amount);
     
-    if (!amount || amount <= 0) {
+    if (!amount || amount <= 0 || isNaN(amount)) {
       alert('Please enter a valid payment amount');
       return;
     }
 
-    if (paymentForm.orderId === 'all') {
-      // Pay towards all outstanding orders proportionally
-      const totalOutstanding = totals.outstanding;
-      if (amount > totalOutstanding) {
-        alert(`Payment amount cannot exceed total outstanding balance of $${totalOutstanding.toFixed(2)}`);
-        return;
-      }
-      
-      // Distribute payment proportionally across orders
-      for (const order of ordersWithBalance) {
+    try {
+      if (paymentForm.orderId === 'all') {
+        // Pay towards all outstanding orders proportionally
+        const totalOutstanding = totals.outstanding;
+        if (amount > totalOutstanding) {
+          alert(`Payment amount cannot exceed total outstanding balance of $${totalOutstanding.toFixed(2)}`);
+          return;
+        }
+        
+        // Distribute payment proportionally across orders
+        for (const order of ordersWithBalance) {
+          const orderTotal = toNumber(order.totalAmount);
+          const orderPaid = toNumber(order.amountPaid);
+          const orderBalance = orderTotal - orderPaid;
+          const orderProportion = orderBalance / totalOutstanding;
+          const orderPaymentAmount = Math.round((amount * orderProportion) * 100) / 100; // Round to 2 decimals
+          
+          if (orderPaymentAmount > 0.01) { // Only process if payment > $0.01
+            const newAmountPaid = orderPaid + orderPaymentAmount;
+            const newBalance = orderTotal - newAmountPaid;
+            const paymentStatus = newBalance <= 0.01 ? 'paid' : 'partially_paid';
+            
+            // Update order payment using addPurchasePayment (it handles the update)
+            if (addPurchasePayment) {
+              await addPurchasePayment(order.id, {
+                amount: orderPaymentAmount,
+                method: paymentForm.method,
+                notes: paymentForm.notes || `Part of $${amount.toFixed(2)} payment to ${supplier.name}`,
+                date: new Date().toISOString().split('T')[0]
+              });
+            }
+          }
+        }
+        
+        alert(`Payment of $${amount.toFixed(2)} applied to all outstanding orders successfully!`);
+      } else {
+        // Pay towards specific order
+        const order = orders.find(o => o.id === paymentForm.orderId);
+        if (!order) {
+          alert('Order not found');
+          return;
+        }
+        
         const orderTotal = toNumber(order.totalAmount);
         const orderPaid = toNumber(order.amountPaid);
         const orderBalance = orderTotal - orderPaid;
-        const orderProportion = orderBalance / totalOutstanding;
-        const orderPaymentAmount = amount * orderProportion;
         
-        if (orderPaymentAmount > 0.01) { // Only process if payment > $0.01
-          const newAmountPaid = orderPaid + orderPaymentAmount;
-          const newBalance = orderTotal - newAmountPaid;
-          const paymentStatus = newBalance <= 0 ? 'paid' : 'partially_paid';
-          
-          // Update order payment
-          const { id, ...orderData } = order;
-          await updatePurchaseOrder(id, {
-            ...orderData,
-            amountPaid: newAmountPaid,
-            paymentStatus: paymentStatus
+        if (amount > orderBalance) {
+          alert(`Payment amount cannot exceed order balance of $${orderBalance.toFixed(2)}`);
+          return;
+        }
+        
+        // Record payment using addPurchasePayment (it handles the update)
+        if (addPurchasePayment) {
+          const result = await addPurchasePayment(order.id, {
+            amount: amount,
+            method: paymentForm.method,
+            notes: paymentForm.notes,
+            date: new Date().toISOString().split('T')[0]
           });
           
-          // Record payment
-          if (addPurchasePayment) {
-            await addPurchasePayment(order.id, {
-              amount: orderPaymentAmount,
-              method: paymentForm.method,
-              notes: paymentForm.notes || `Part of $${amount.toFixed(2)} payment to ${supplier.name}`,
-              date: new Date().toISOString().split('T')[0]
-            });
+          if (result && result.success) {
+            alert(`Payment of $${amount.toFixed(2)} recorded successfully for order ${order.id?.slice(-6) || order.id}!`);
+          } else {
+            alert(`Failed to record payment: ${result?.message || 'Unknown error'}`);
+            return;
           }
+        } else {
+          alert('Payment function not available');
+          return;
         }
       }
       
-      alert(`Payment of $${amount.toFixed(2)} applied to all outstanding orders successfully!`);
-    } else {
-      // Pay towards specific order
-      const order = orders.find(o => o.id === paymentForm.orderId);
-      if (!order) {
-        alert('Order not found');
-        return;
-      }
+      // Close modal and reset form
+      setPaymentForm({ amount: '', method: 'cash', notes: '', orderId: 'all' });
+      setShowPaymentModal(false);
       
-      const orderTotal = toNumber(order.totalAmount);
-      const orderPaid = toNumber(order.amountPaid);
-      const orderBalance = orderTotal - orderPaid;
-      
-      if (amount > orderBalance) {
-        alert(`Payment amount cannot exceed order balance of $${orderBalance.toFixed(2)}`);
-        return;
-      }
-      
-      const newAmountPaid = orderPaid + amount;
-      const newBalance = orderTotal - newAmountPaid;
-      const paymentStatus = newBalance <= 0 ? 'paid' : 'partially_paid';
-      
-      // Update order payment
-      const { id, ...orderData } = order;
-      await updatePurchaseOrder(id, {
-        ...orderData,
-        amountPaid: newAmountPaid,
-        paymentStatus: paymentStatus
-      });
-      
-      // Record payment
-      if (addPurchasePayment) {
-        await addPurchasePayment(order.id, {
-          amount: amount,
-          method: paymentForm.method,
-          notes: paymentForm.notes,
-          date: new Date().toISOString().split('T')[0]
-        });
-      }
-      
-      alert(`Payment of $${amount.toFixed(2)} recorded successfully for order ${order.id.slice(-6)}!`);
+      // Trigger a re-render by updating state - no need for full reload
+      // The context update should trigger a re-render automatically
+    } catch (error) {
+      console.error('Payment error:', error);
+      alert(`Error processing payment: ${error.message}`);
     }
-    
-    setPaymentForm({ amount: '', method: 'cash', notes: '', orderId: 'all' });
-    setShowPaymentModal(false);
-    
-    // Refresh data
-    window.location.reload(); // Simple refresh to update UI
   };
 
   return (
