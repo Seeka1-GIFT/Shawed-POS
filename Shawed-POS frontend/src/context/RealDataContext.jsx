@@ -102,12 +102,38 @@ export function RealDataProvider({ children }) {
       console.log(`✅ API Response for ${key}:`, result);
       
       if (result.success) {
-        setData(prev => ({
-          ...prev,
-          [key]: action === 'update' ? result.data : 
-                 action === 'add' ? [...prev[key], result.data] : result.data,
-          loading: { ...prev.loading, [key]: false }
-        }));
+        setData(prev => {
+          // For purchase orders, preserve payment data (amountPaid, paymentStatus) from localStorage
+          if (key === 'purchaseOrders' && action === 'fetch') {
+            // Get payment data from localStorage
+            const paymentData = JSON.parse(localStorage.getItem('shawed-purchase-payments') || '{}');
+            
+            // Merge payment data with API response
+            const ordersWithPayment = (result.data || []).map(order => {
+              if (paymentData[order.id]) {
+                return {
+                  ...order,
+                  amountPaid: paymentData[order.id].amountPaid || 0,
+                  paymentStatus: paymentData[order.id].paymentStatus || 'unpaid'
+                };
+              }
+              return order;
+            });
+            
+            return {
+              ...prev,
+              [key]: ordersWithPayment,
+              loading: { ...prev.loading, [key]: false }
+            };
+          }
+          
+          return {
+            ...prev,
+            [key]: action === 'update' ? result.data : 
+                   action === 'add' ? [...prev[key], result.data] : result.data,
+            loading: { ...prev.loading, [key]: false }
+          };
+        });
         console.log(`📊 Data updated for ${key}:`, result.data);
         return result.data;
       } else {
@@ -879,22 +905,47 @@ export function RealDataProvider({ children }) {
             paymentStatus: orderData.paymentStatus
           } : {};
           
-          setData(prev => ({
-            ...prev,
-            purchaseOrders: prev.purchaseOrders.map(order => {
+          let updatedOrderWithPayment = null;
+          
+          setData(prev => {
+            const updatedOrders = prev.purchaseOrders.map(order => {
               if (order.id === id) {
                 // Merge backend response with payment info (if provided)
-                return {
+                const updatedOrder = {
                   ...result.data,
                   ...paymentInfo,
                   // If payment info wasn't in orderData, preserve existing
                   amountPaid: paymentInfo.amountPaid !== undefined ? paymentInfo.amountPaid : (order.amountPaid || 0),
                   paymentStatus: paymentInfo.paymentStatus !== undefined ? paymentInfo.paymentStatus : (order.paymentStatus || 'unpaid')
                 };
+                
+                updatedOrderWithPayment = updatedOrder;
+                return updatedOrder;
               }
               return order;
-            })
-          }));
+            });
+            
+            return {
+              ...prev,
+              purchaseOrders: updatedOrders
+            };
+          });
+          
+          // Persist payment data to localStorage (outside of setData)
+          if (paymentInfo.amountPaid !== undefined && updatedOrderWithPayment) {
+            try {
+              const paymentData = JSON.parse(localStorage.getItem('shawed-purchase-payments') || '{}');
+              paymentData[id] = {
+                amountPaid: updatedOrderWithPayment.amountPaid,
+                paymentStatus: updatedOrderWithPayment.paymentStatus,
+                lastUpdated: new Date().toISOString()
+              };
+              localStorage.setItem('shawed-purchase-payments', JSON.stringify(paymentData));
+              console.log('✅ Payment data saved to localStorage in updatePurchaseOrder');
+            } catch (err) {
+              console.error('Failed to save payment data to localStorage:', err);
+            }
+          }
         }
         
         return result;
@@ -1055,21 +1106,35 @@ export function RealDataProvider({ children }) {
             paymentStatus: paymentStatus
           };
 
-          // Update purchase orders
-          return {
-            ...prev,
-            purchaseOrders: prev.purchaseOrders.map(o => 
-              o.id === orderId ? updatedOrder : o
-            )
-          };
-        });
+        // Update purchase orders
+        return {
+          ...prev,
+          purchaseOrders: prev.purchaseOrders.map(o => 
+            o.id === orderId ? updatedOrder : o
+          )
+        };
+      });
 
-        if (!updatedOrder) {
-          return { success: false, message: 'Order not found' };
-        }
+      if (!updatedOrder) {
+        return { success: false, message: 'Order not found' };
+      }
 
-        console.log('✅ Payment recorded successfully');
-        return { success: true, data: { orderId, paymentAmount: parseFloat(paymentData.amount || 0), newAmountPaid: updatedOrder.amountPaid, paymentStatus: updatedOrder.paymentStatus } };
+      // Persist payment data to localStorage
+      try {
+        const paymentData = JSON.parse(localStorage.getItem('shawed-purchase-payments') || '{}');
+        paymentData[orderId] = {
+          amountPaid: updatedOrder.amountPaid,
+          paymentStatus: updatedOrder.paymentStatus,
+          lastUpdated: new Date().toISOString()
+        };
+        localStorage.setItem('shawed-purchase-payments', JSON.stringify(paymentData));
+        console.log('✅ Payment data saved to localStorage');
+      } catch (err) {
+        console.error('Failed to save payment data to localStorage:', err);
+      }
+
+      console.log('✅ Payment recorded successfully');
+      return { success: true, data: { orderId, paymentAmount: parseFloat(paymentData.amount || 0), newAmountPaid: updatedOrder.amountPaid, paymentStatus: updatedOrder.paymentStatus } };
       } catch (error) {
         console.error('addPurchasePayment error:', error);
         return { success: false, message: error.message };
