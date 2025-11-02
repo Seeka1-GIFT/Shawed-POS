@@ -3,7 +3,6 @@ import { useParams, Link } from 'react-router-dom';
 import { RealDataContext } from '../context/RealDataContext';
 import { ThemeContext } from '../context/ThemeContext';
 import { DollarSign, Calendar, Phone, Mail, MapPin, Globe, FileText, Download, Printer, ArrowLeft } from 'lucide-react';
-import { ResponsiveContainer, CartesianGrid, XAxis, YAxis, Tooltip, BarChart, Bar } from 'recharts';
 
 export default function SupplierProfile() {
   const { id } = useParams();
@@ -35,18 +34,6 @@ export default function SupplierProfile() {
 
   const onTime = useMemo(()=> orders.filter(o => o.receivedDate && o.expectedDate && new Date(o.receivedDate) <= new Date(o.expectedDate)).length, [orders]);
   const onTimePct = orders.length ? (onTime / orders.length) * 100 : 0;
-
-  const monthlyData = useMemo(()=>{
-    const map = {};
-    orders.forEach(o=>{
-      const key = (o.orderDate||'').slice(0,7);
-      if(!map[key]) map[key] = { month:key, value:0, orders:0 };
-      const amt = typeof o.totalAmount === 'number' ? o.totalAmount : parseFloat(o.totalAmount || 0);
-      map[key].value += (isNaN(amt) ? 0 : amt);
-      map[key].orders += 1;
-    });
-    return Object.values(map).sort((a,b)=> a.month.localeCompare(b.month));
-  },[orders]);
 
   if (!supplier) {
     return (
@@ -123,22 +110,6 @@ export default function SupplierProfile() {
           <div className="p-4 rounded-xl border border-gray-200 dark:border-gray-700"><p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Orders</p><p className={`text-2xl font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>{orders.length}</p></div>
           <div className="p-4 rounded-xl border border-gray-200 dark:border-gray-700"><p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>On‑time %</p><p className={`text-2xl font-bold ${isDarkMode ? 'text-green-300' : 'text-green-600'}`}>{onTimePct.toFixed(0)}%</p></div>
           <div className="p-4 rounded-xl border border-gray-200 dark:border-gray-700"><p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Outstanding</p><p className={`text-2xl font-bold ${isDarkMode ? 'text-red-300' : 'text-red-600'}`}>${totals.outstanding.toFixed(2)}</p></div>
-        </div>
-        <div className="mt-4">
-          <div className={`${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'} rounded-lg p-4`}>
-            <div className={`font-medium mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>Monthly Orders Count</div>
-            <div className="h-56">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={monthlyData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? '#374151' : '#e5e7eb'} />
-                  <XAxis dataKey="month" stroke={isDarkMode ? '#9ca3af' : '#6b7280'} />
-                  <YAxis stroke={isDarkMode ? '#9ca3af' : '#6b7280'} />
-                  <Tooltip contentStyle={{ backgroundColor: isDarkMode ? '#1f2937' : '#ffffff', border: isDarkMode ? '1px solid #374151' : '1px solid #e5e7eb', color: isDarkMode ? '#f3f4f6' : '#111827' }} />
-                  <Bar dataKey="orders" fill={isDarkMode ? '#10b981' : '#16a34a'} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
         </div>
       </div>
 
