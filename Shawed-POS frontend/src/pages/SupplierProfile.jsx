@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { RealDataContext } from '../context/RealDataContext';
 import { ThemeContext } from '../context/ThemeContext';
 import { DollarSign, Calendar, Phone, Mail, MapPin, Globe, FileText, Download, Printer, ArrowLeft } from 'lucide-react';
-import { ResponsiveContainer, LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, BarChart, Bar } from 'recharts';
+import { ResponsiveContainer, CartesianGrid, XAxis, YAxis, Tooltip, BarChart, Bar } from 'recharts';
 
 export default function SupplierProfile() {
   const { id } = useParams();
@@ -124,21 +124,7 @@ export default function SupplierProfile() {
           <div className="p-4 rounded-xl border border-gray-200 dark:border-gray-700"><p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>On‑time %</p><p className={`text-2xl font-bold ${isDarkMode ? 'text-green-300' : 'text-green-600'}`}>{onTimePct.toFixed(0)}%</p></div>
           <div className="p-4 rounded-xl border border-gray-200 dark:border-gray-700"><p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Outstanding</p><p className={`text-2xl font-bold ${isDarkMode ? 'text-red-300' : 'text-red-600'}`}>${totals.outstanding.toFixed(2)}</p></div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-          <div className={`${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'} rounded-lg p-4`}>
-            <div className={`font-medium mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>Monthly Purchase Value</div>
-            <div className="h-56">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={monthlyData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? '#374151' : '#e5e7eb'} />
-                  <XAxis dataKey="month" stroke={isDarkMode ? '#9ca3af' : '#6b7280'} />
-                  <YAxis stroke={isDarkMode ? '#9ca3af' : '#6b7280'} />
-                  <Tooltip contentStyle={{ backgroundColor: isDarkMode ? '#1f2937' : '#ffffff', border: isDarkMode ? '1px solid #374151' : '1px solid #e5e7eb', color: isDarkMode ? '#f3f4f6' : '#111827' }} />
-                  <Line type="monotone" dataKey="value" strokeWidth={2} stroke={isDarkMode ? '#3b82f6' : '#0a72ff'} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
+        <div className="mt-4">
           <div className={`${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'} rounded-lg p-4`}>
             <div className={`font-medium mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>Monthly Orders Count</div>
             <div className="h-56">
