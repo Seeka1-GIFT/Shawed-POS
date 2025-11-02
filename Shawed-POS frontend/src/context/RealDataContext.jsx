@@ -862,18 +862,38 @@ export function RealDataProvider({ children }) {
       }
       
       try {
+        // Remove fields that don't exist in DB schema before sending to backend
+        const { amountPaid, paymentStatus, items, ...schemaFields } = orderData;
+        const backendPayload = { ...schemaFields };
+        
         const result = await apiService.request(`/purchase-orders/${id}`, {
           method: 'PUT',
-          body: JSON.stringify(orderData),
+          body: JSON.stringify(backendPayload),
         });
         
         if (result.success) {
-          // Update local state
+          // Update local state with backend response
+          // Note: amountPaid and paymentStatus are not in DB schema, preserve from orderData if present
+          const paymentInfo = orderData.amountPaid !== undefined ? {
+            amountPaid: orderData.amountPaid,
+            paymentStatus: orderData.paymentStatus
+          } : {};
+          
           setData(prev => ({
             ...prev,
-            purchaseOrders: prev.purchaseOrders.map(order => 
-              order.id === id ? result.data : order
-            )
+            purchaseOrders: prev.purchaseOrders.map(order => {
+              if (order.id === id) {
+                // Merge backend response with payment info (if provided)
+                return {
+                  ...result.data,
+                  ...paymentInfo,
+                  // If payment info wasn't in orderData, preserve existing
+                  amountPaid: paymentInfo.amountPaid !== undefined ? paymentInfo.amountPaid : (order.amountPaid || 0),
+                  paymentStatus: paymentInfo.paymentStatus !== undefined ? paymentInfo.paymentStatus : (order.paymentStatus || 'unpaid')
+                };
+              }
+              return order;
+            })
           }));
         }
         
