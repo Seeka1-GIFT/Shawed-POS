@@ -276,11 +276,30 @@ export default function PurchaseOrders() {
     const amtPaid = parseFloat(form.amountPaid || '0');
     const computedStatus = amtPaid <= 0 ? 'unpaid' : (amtPaid >= totalAmount ? 'paid' : 'partially_paid');
 
+    // Helper function to format date as yyyy-MM-dd
+    const formatDate = (dateStr) => {
+      if (!dateStr) return null;
+      // If already in yyyy-MM-dd format, return as is
+      if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) return dateStr;
+      // If in ISO format, convert to yyyy-MM-dd
+      if (dateStr.includes('T')) {
+        return dateStr.split('T')[0];
+      }
+      // Try to parse and format
+      try {
+        const date = new Date(dateStr);
+        if (isNaN(date.getTime())) return dateStr;
+        return date.toISOString().split('T')[0];
+      } catch {
+        return dateStr;
+      }
+    };
+
     const order = {
       id: form.id || `po-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       supplierId: form.supplierId,
-      orderDate: form.orderDate,
-      expectedDate: form.expectedDate,
+      orderDate: formatDate(form.orderDate) || form.orderDate,
+      expectedDate: form.expectedDate ? formatDate(form.expectedDate) : null,
       status: form.status || 'pending',
       notes: form.notes,
       items: form.items,
@@ -311,16 +330,35 @@ export default function PurchaseOrders() {
   };
 
   const startEdit = (order) => {
+    // Helper function to format date for input field (yyyy-MM-dd)
+    const formatDateForInput = (dateStr) => {
+      if (!dateStr) return '';
+      // If already in yyyy-MM-dd format, return as is
+      if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) return dateStr;
+      // If in ISO format, convert to yyyy-MM-dd
+      if (dateStr.includes('T')) {
+        return dateStr.split('T')[0];
+      }
+      // Try to parse and format
+      try {
+        const date = new Date(dateStr);
+        if (isNaN(date.getTime())) return '';
+        return date.toISOString().split('T')[0];
+      } catch {
+        return '';
+      }
+    };
+
     setForm({
       id: order.id,
       supplierId: order.supplierId,
-      orderDate: order.orderDate,
-      expectedDate: order.expectedDate,
-      notes: order.notes,
+      orderDate: formatDateForInput(order.orderDate),
+      expectedDate: formatDateForInput(order.expectedDate),
+      notes: order.notes || '',
       items: order.items || [],
       status: order.status || 'pending',
       paymentStatus: order.paymentStatus || 'unpaid',
-      amountPaid: String(order.amountPaid || '') ,
+      amountPaid: String(order.amountPaid || ''),
       createdAt: order.createdAt
     });
     setEditing(true);
