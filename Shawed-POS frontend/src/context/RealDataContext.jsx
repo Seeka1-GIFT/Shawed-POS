@@ -1022,8 +1022,58 @@ export function RealDataProvider({ children }) {
     },
     addPurchasePayment: async (orderId, paymentData) => {
       console.log('addPurchasePayment called with:', orderId, paymentData);
-      // TODO: Implement actual API call
-      return { success: true };
+      try {
+        // Helper to convert to number
+        const toNum = (value) => {
+          if (typeof value === 'number') return isNaN(value) ? 0 : value;
+          const num = parseFloat(value || 0);
+          return isNaN(num) ? 0 : num;
+        };
+
+        // Update purchase order in state and calculate payment
+        let updatedOrder = null;
+        setData(prev => {
+          // Find the order
+          const order = prev.purchaseOrders.find(o => o.id === orderId);
+          if (!order) {
+            return prev;
+          }
+
+          // Calculate new payment amounts
+          const currentAmountPaid = toNum(order.amountPaid || 0);
+          const paymentAmount = parseFloat(paymentData.amount || 0);
+          const newAmountPaid = currentAmountPaid + paymentAmount;
+          const orderTotal = toNum(order.totalAmount);
+          const newBalance = orderTotal - newAmountPaid;
+          
+          // Determine payment status
+          const paymentStatus = newBalance <= 0 ? 'paid' : (newAmountPaid > 0 ? 'partially_paid' : 'unpaid');
+
+          updatedOrder = {
+            ...order,
+            amountPaid: newAmountPaid,
+            paymentStatus: paymentStatus
+          };
+
+          // Update purchase orders
+          return {
+            ...prev,
+            purchaseOrders: prev.purchaseOrders.map(o => 
+              o.id === orderId ? updatedOrder : o
+            )
+          };
+        });
+
+        if (!updatedOrder) {
+          return { success: false, message: 'Order not found' };
+        }
+
+        console.log('✅ Payment recorded successfully');
+        return { success: true, data: { orderId, paymentAmount: parseFloat(paymentData.amount || 0), newAmountPaid: updatedOrder.amountPaid, paymentStatus: updatedOrder.paymentStatus } };
+      } catch (error) {
+        console.error('addPurchasePayment error:', error);
+        return { success: false, message: error.message };
+      }
     },
     
     // Payment and Debt Operations
