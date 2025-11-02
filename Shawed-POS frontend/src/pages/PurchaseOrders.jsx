@@ -264,7 +264,7 @@ export default function PurchaseOrders() {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!form.supplierId || form.items.length === 0) {
@@ -277,24 +277,37 @@ export default function PurchaseOrders() {
     const computedStatus = amtPaid <= 0 ? 'unpaid' : (amtPaid >= totalAmount ? 'paid' : 'partially_paid');
 
     const order = {
+      id: form.id || `po-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       supplierId: form.supplierId,
       orderDate: form.orderDate,
       expectedDate: form.expectedDate,
-      status: 'pending',
+      status: form.status || 'pending',
       notes: form.notes,
       items: form.items,
       totalAmount,
+      amountPaid: amtPaid,
+      paymentStatus: computedStatus,
     };
 
     if (editing) {
-      updatePurchaseOrder(order);
-      alert('Purchase order updated successfully!');
+      // Extract id and pass orderData separately
+      const { id, ...orderData } = order;
+      const result = await updatePurchaseOrder(id, orderData);
+      if (result && result.success) {
+        alert('Purchase order updated successfully!');
+        // Refresh data to ensure UI updates everywhere (including Supplier Profile)
+        if (fetchPurchaseOrders) {
+          await fetchPurchaseOrders();
+        }
+        resetForm();
+      } else {
+        alert(`Failed to update order: ${result?.message || 'Unknown error'}`);
+      }
     } else {
       addPurchaseOrder(order);
       alert(`Purchase order created successfully!`);
+      resetForm();
     }
-
-    resetForm();
   };
 
   const startEdit = (order) => {
@@ -304,7 +317,8 @@ export default function PurchaseOrders() {
       orderDate: order.orderDate,
       expectedDate: order.expectedDate,
       notes: order.notes,
-      items: order.items,
+      items: order.items || [],
+      status: order.status || 'pending',
       paymentStatus: order.paymentStatus || 'unpaid',
       amountPaid: String(order.amountPaid || '') ,
       createdAt: order.createdAt
