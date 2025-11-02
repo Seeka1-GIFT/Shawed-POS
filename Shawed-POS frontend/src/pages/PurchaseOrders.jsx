@@ -310,8 +310,19 @@ export default function PurchaseOrders() {
 
     if (editing) {
       // Extract id and pass orderData separately
-      const { id, ...orderData } = order;
-      const result = await updatePurchaseOrder(id, orderData);
+      // Only send fields that exist in the database schema to backend
+      // Note: amountPaid and paymentStatus are not in the schema, but include them for local state update
+      const { id, items, ...orderDataForBackend } = order;
+      const { amountPaid, paymentStatus, ...schemaFields } = orderDataForBackend;
+      
+      // Update order in backend (only schema fields)
+      const result = await updatePurchaseOrder(id, {
+        ...schemaFields,
+        // Include payment info so it can be preserved in local state
+        amountPaid,
+        paymentStatus
+      });
+      
       if (result && result.success) {
         alert('Purchase order updated successfully!');
         // Refresh data to ensure UI updates everywhere (including Supplier Profile)
