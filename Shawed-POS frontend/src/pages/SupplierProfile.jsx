@@ -91,13 +91,33 @@ export default function SupplierProfile() {
   };
 
   const printProfile = () => {
-    const styles = `body{font-family:ui-sans-serif,system-ui;padding:16px} h1{font-size:18px;margin-bottom:8px} table{width:100%;border-collapse:collapse;margin-top:8px} th,td{padding:8px;border-bottom:1px solid #e5e7eb;text-align:left;font-size:12px} th{background:#f5f5f5}`;
-    const html = `<html><head><title>${supplier.name}</title><style>${styles}</style></head><body><h1>Supplier: ${supplier.name}</h1><div>Email: ${supplier.email||'-'} | Phone: ${supplier.phone||'-'}</div><div>Address: ${supplier.address||'-'}</div><div>Total Purchases: $${totals.total.toFixed(2)} | Outstanding: $${totals.outstanding.toFixed(2)}</div><table><thead><tr><th>Order</th><th>Date</th><th>Status</th><th>Total</th><th>Paid</th><th>Balance</th></tr></thead><tbody>${orders.map(o=>{
+    const styles = `body{font-family:ui-sans-serif,system-ui;padding:16px} h1{font-size:18px;margin-bottom:8px} h2{font-size:14px;margin-top:16px;margin-bottom:6px} table{width:100%;border-collapse:collapse;margin-top:8px} th,td{padding:8px;border-bottom:1px solid #e5e7eb;text-align:left;font-size:12px} th{background:#f5f5f5}`;
+    const ordersTable = `<table><thead><tr><th>Order</th><th>Date</th><th>Status</th><th>Total</th><th>Paid</th><th>Balance</th></tr></thead><tbody>${orders.map(o=>{
       const total = toNumber(o.totalAmount);
       const paid = toNumber(o.amountPaid);
       const balance = total - paid;
       return `<tr><td>${o.id}</td><td>${o.orderDate}</td><td>${o.status}</td><td>$${total.toFixed(2)}</td><td>$${paid.toFixed(2)}</td><td>$${balance.toFixed(2)}</td></tr>`;
-    }).join('')}</tbody></table></body></html>`;
+    }).join('')}</tbody></table>`;
+
+    const txRows = supplierTransactions.map(tx => {
+      const date = (tx.date || tx.createdAt || '').toString().slice(0,10);
+      const amount = Number(tx.amount || 0).toFixed(2);
+      const method = tx.method || '-';
+      const note = (tx.note || tx.notes || '').toString().replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      return `<tr><td>${date}</td><td>${tx.orderId}</td><td>$${amount}</td><td>${method}</td><td>${note}</td></tr>`;
+    }).join('');
+    const txTable = `<table><thead><tr><th>Date</th><th>Order</th><th>Amount</th><th>Method</th><th>Notes</th></tr></thead><tbody>${txRows}</tbody></table>`;
+
+    const html = `<html><head><title>${supplier.name}</title><style>${styles}</style></head><body>
+      <h1>Supplier: ${supplier.name}</h1>
+      <div>Email: ${supplier.email||'-'} | Phone: ${supplier.phone||'-'}</div>
+      <div>Address: ${supplier.address||'-'}</div>
+      <div>Total Purchases: $${totals.total.toFixed(2)} | Outstanding: $${totals.outstanding.toFixed(2)}</div>
+      <h2>Purchase Orders</h2>
+      ${ordersTable}
+      <h2>Payment Transactions</h2>
+      ${supplierTransactions.length ? txTable : '<div style="font-size:12px;color:#6b7280">No payments recorded for this supplier.</div>'}
+    </body></html>`;
     const w = window.open('', '_blank'); if(!w) return; w.document.write(html); w.document.close(); w.focus(); w.print();
   };
 
