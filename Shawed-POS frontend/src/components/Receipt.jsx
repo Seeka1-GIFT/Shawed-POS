@@ -17,9 +17,7 @@ export default function Receipt({
   const { businessSettings, customers = [] } = useContext(RealDataContext);
   const receiptRef = useRef();
 
-  if (!isVisible || !sale) return null;
-  
-  // Debug logging
+  // Debug logging will run only when visible/sale exist (we guard below)
   console.log('Receipt component - sale:', sale);
   console.log('Receipt component - sale.items:', sale?.items);
   console.log('Receipt component - sale.saleItems:', sale?.saleItems);
@@ -66,6 +64,8 @@ export default function Receipt({
       console.error('Print error:', error);
     }
   });
+
+  if (!isVisible || !sale) return null;
 
   const formatDate = (dateString) => {
     if (!dateString) return 'Unknown Date';
