@@ -1133,8 +1133,44 @@ export function RealDataProvider({ children }) {
         console.error('Failed to save payment data to localStorage:', err);
       }
 
+      // Create a standalone transaction entry for this payment
+      const transaction = {
+        id: `${orderId}-${Date.now()}`,
+        orderId,
+        type: 'purchase',
+        amount: parseFloat(paymentData.amount || 0),
+        method: paymentData.method || 'cash',
+        note: paymentData.note || '',
+        createdAt: new Date().toISOString()
+      };
+
+      // Add transaction to in-memory payments list
+      setData(prev => ({
+        ...prev,
+        payments: [...(prev.payments || []), transaction]
+      }));
+
+      // Persist transaction in general payments log
+      try {
+        const existingPayments = JSON.parse(localStorage.getItem('shawed-payments') || '[]');
+        existingPayments.push(transaction);
+        localStorage.setItem('shawed-payments', JSON.stringify(existingPayments));
+      } catch (err) {
+        console.error('Failed to append to shawed-payments:', err);
+      }
+
+      // Persist transaction in per-order list
+      try {
+        const perOrder = JSON.parse(localStorage.getItem('shawed-purchase-payment-transactions') || '{}');
+        perOrder[orderId] = Array.isArray(perOrder[orderId]) ? perOrder[orderId] : [];
+        perOrder[orderId].push(transaction);
+        localStorage.setItem('shawed-purchase-payment-transactions', JSON.stringify(perOrder));
+      } catch (err) {
+        console.error('Failed to save purchase payment transaction list:', err);
+      }
+
       console.log('✅ Payment recorded successfully');
-      return { success: true, data: { orderId, paymentAmount: parseFloat(paymentData.amount || 0), newAmountPaid: updatedOrder.amountPaid, paymentStatus: updatedOrder.paymentStatus } };
+      return { success: true, data: { orderId, paymentAmount: parseFloat(paymentData.amount || 0), newAmountPaid: updatedOrder.amountPaid, paymentStatus: updatedOrder.paymentStatus, transaction } };
       } catch (error) {
         console.error('addPurchasePayment error:', error);
         return { success: false, message: error.message };
