@@ -83,7 +83,38 @@ export default function Receipt({
     return sale?.saleDate || sale?.date || sale?.createdAt || null;
   };
 
-  // Generate QR code data
+  // Items helper (moved up to avoid TDZ issues)
+  const getSaleItems = () => {
+    return sale?.saleItems || sale?.items || [];
+  };
+
+  // Calculations (moved up so later functions can rely on them)
+  const calculateSubtotal = () => {
+    if (sale?.subtotal) return sale.subtotal;
+    const items = getSaleItems();
+    return items.reduce((sum, item) => {
+      const price = item?.price || item?.product?.sellPrice || item?.product?.sellingPrice || 0;
+      const quantity = item?.quantity || 0;
+      const itemTotal = item?.total || (price * quantity);
+      return sum + itemTotal;
+    }, 0);
+  };
+
+  const calculateTax = () => {
+    const taxRate = businessInfo.taxRate || 0;
+    const subtotal = calculateSubtotal();
+    return subtotal * (taxRate / 100);
+  };
+
+  const calculateGrandTotal = () => {
+    const subtotal = calculateSubtotal();
+    const taxAmount = calculateTax();
+    const discountAmount = sale?.discount || 0;
+    return subtotal + taxAmount - discountAmount;
+  };
+
+
+  // Generate QR code data (after helpers are available)
   const generateQRData = () => {
     const receiptData = {
       id: getReceiptNumber(),
@@ -99,7 +130,6 @@ export default function Receipt({
     };
     return JSON.stringify(receiptData);
   };
-
 
   const handleDownload = () => {
     const printContent = document.getElementById('receipt-content');
@@ -234,39 +264,6 @@ export default function Receipt({
     }
   };
 
-  // Get the correct items field from sale data
-  const getSaleItems = () => {
-    return sale?.saleItems || sale?.items || [];
-  };
-
-  const calculateSubtotal = () => {
-    // Calculate subtotal from items if not provided
-    if (sale?.subtotal) return sale.subtotal;
-    
-    const items = getSaleItems();
-    return items.reduce((sum, item) => {
-      // Handle different item structures
-      const price = item?.price || item?.product?.sellPrice || item?.product?.sellingPrice || 0;
-      const quantity = item?.quantity || 0;
-      const itemTotal = item?.total || (price * quantity);
-      return sum + itemTotal;
-    }, 0);
-  };
-
-  const calculateTax = () => {
-    // Use tax rate from business settings
-    const taxRate = businessInfo.taxRate || 0;
-    const subtotal = calculateSubtotal();
-    return subtotal * (taxRate / 100);
-  };
-
-  const calculateGrandTotal = () => {
-    // Always calculate the total to ensure tax is included
-    const subtotal = calculateSubtotal();
-    const taxAmount = calculateTax();
-    const discountAmount = sale?.discount || 0;
-    return subtotal + taxAmount - discountAmount;
-  };
 
   const subtotal = calculateSubtotal();
   const tax = calculateTax();
