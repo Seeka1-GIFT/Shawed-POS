@@ -17,7 +17,31 @@ export default function Receipt({
   const { businessSettings, customers = [] } = useContext(RealDataContext);
   const receiptRef = useRef();
 
-  // Print functionality - moved before conditional return
+  if (!isVisible || !sale) return null;
+  
+  // Debug logging
+  console.log('Receipt component - sale:', sale);
+  console.log('Receipt component - sale.items:', sale?.items);
+  console.log('Receipt component - sale.saleItems:', sale?.saleItems);
+  console.log('Receipt component - sale.date:', sale?.date);
+  console.log('Receipt component - sale.saleDate:', sale?.saleDate);
+  console.log('Receipt component - sale.total:', sale?.total);
+  console.log('Receipt component - sale.subtotal:', sale?.subtotal);
+  console.log('Receipt component - businessSettings:', businessSettings);
+  
+  const businessInfo = businessSettings || {};
+
+  // Generate a numeric receipt number, preferring existing numeric values
+  const getReceiptNumber = () => {
+    const explicit = sale?.receiptNumber || sale?.receiptNo || sale?.receipt;
+    if (explicit && /^\d+$/.test(String(explicit))) return String(explicit);
+    const dateStr = getSaleDate();
+    const ts = dateStr ? new Date(dateStr).getTime() : Date.now();
+    // Use last 8 digits of epoch millis to keep it short and numeric
+    return String(ts).slice(-8);
+  };
+
+  // Print functionality - moved after helper definitions
   const handlePrint = useReactToPrint({
     contentRef: receiptRef,
     documentTitle: sale ? `Receipt-${getReceiptNumber()}` : 'Receipt',
@@ -42,30 +66,6 @@ export default function Receipt({
       console.error('Print error:', error);
     }
   });
-  
-  if (!isVisible || !sale) return null;
-  
-  // Debug logging
-  console.log('Receipt component - sale:', sale);
-  console.log('Receipt component - sale.items:', sale?.items);
-  console.log('Receipt component - sale.saleItems:', sale?.saleItems);
-  console.log('Receipt component - sale.date:', sale?.date);
-  console.log('Receipt component - sale.saleDate:', sale?.saleDate);
-  console.log('Receipt component - sale.total:', sale?.total);
-  console.log('Receipt component - sale.subtotal:', sale?.subtotal);
-  console.log('Receipt component - businessSettings:', businessSettings);
-  
-  const businessInfo = businessSettings || {};
-
-  // Generate a numeric receipt number, preferring existing numeric values
-  const getReceiptNumber = () => {
-    const explicit = sale?.receiptNumber || sale?.receiptNo || sale?.receipt;
-    if (explicit && /^\d+$/.test(String(explicit))) return String(explicit);
-    const dateStr = getSaleDate();
-    const ts = dateStr ? new Date(dateStr).getTime() : Date.now();
-    // Use last 8 digits of epoch millis to keep it short and numeric
-    return String(ts).slice(-8);
-  };
 
   const formatDate = (dateString) => {
     if (!dateString) return 'Unknown Date';
