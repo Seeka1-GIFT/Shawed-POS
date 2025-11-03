@@ -25,7 +25,7 @@ export default function SupplierProfile() {
     return <div className="p-4 text-red-500">Loading supplier data...</div>;
   }
   
-  const { suppliers = [], purchaseOrders = [], addPurchasePayment, updatePurchaseOrder } = context;
+  const { suppliers = [], purchaseOrders = [], payments = [], addPurchasePayment, updatePurchaseOrder } = context;
 
   // Helper function to safely convert to number (defined before use in useMemo)
   const toNumber = (value) => {
@@ -36,6 +36,15 @@ export default function SupplierProfile() {
 
   const supplier = suppliers.find(s => s.id === id);
   const orders = useMemo(()=> purchaseOrders.filter(o => o.supplierId === id), [purchaseOrders, id]);
+  const ordersById = useMemo(()=> Object.fromEntries(orders.map(o => [o.id, o])), [orders]);
+
+  // Payment transactions for this supplier (from global payments log)
+  const supplierTransactions = useMemo(()=> {
+    if (!payments || payments.length === 0) return [];
+    return payments
+      .filter(tx => tx.type === 'purchase' && ordersById[tx.orderId])
+      .sort((a,b)=> new Date(b.createdAt || b.date || 0) - new Date(a.createdAt || a.date || 0));
+  }, [payments, ordersById]);
 
   const totals = useMemo(()=> {
     const total = orders.reduce((sum,o)=> {
@@ -304,6 +313,39 @@ export default function SupplierProfile() {
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Payment Transactions View */}
+      <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-6 rounded-2xl shadow-sm`}>
+        <h3 className={`text-xl font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'} mb-4`}>Payment Transactions</h3>
+        {supplierTransactions.length === 0 ? (
+          <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>No payments recorded for this supplier yet.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr className={`${isDarkMode ? 'border-gray-700' : 'border-gray-200'} border-b`}>
+                  <th className={`text-left py-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Date</th>
+                  <th className={`text-left py-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Order</th>
+                  <th className={`text-right py-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Amount</th>
+                  <th className={`text-left py-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Method</th>
+                  <th className={`text-left py-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Notes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {supplierTransactions.map(tx => (
+                  <tr key={tx.id} className={`${isDarkMode ? 'border-gray-700' : 'border-gray-200'} border-b`}>
+                    <td className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{(tx.date || tx.createdAt || '').toString().slice(0, 10)}</td>
+                    <td className={`${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>{tx.orderId?.slice(-6) || tx.orderId}</td>
+                    <td className={`${isDarkMode ? 'text-green-300' : 'text-green-600'} text-right font-semibold`}>${Number(tx.amount || 0).toFixed(2)}</td>
+                    <td className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{tx.method || '-'}</td>
+                    <td className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} truncate max-w-xs`}>{tx.note || tx.notes || '-'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Payment Modal */}
