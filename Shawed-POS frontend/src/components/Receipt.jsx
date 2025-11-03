@@ -14,13 +14,13 @@ export default function Receipt({
   onClose, 
   isDarkMode = false 
 }) {
-  const { businessSettings } = useContext(RealDataContext);
+  const { businessSettings, customers = [] } = useContext(RealDataContext);
   const receiptRef = useRef();
 
   // Print functionality - moved before conditional return
   const handlePrint = useReactToPrint({
     contentRef: receiptRef,
-    documentTitle: sale ? `Receipt-${(sale.id || 'unknown').slice(-8)}` : 'Receipt',
+    documentTitle: sale ? `Receipt-${getReceiptNumber()}` : 'Receipt',
     pageStyle: `
       @media print {
         body { margin: 0; padding: 10px; }
@@ -57,6 +57,16 @@ export default function Receipt({
   
   const businessInfo = businessSettings || {};
 
+  // Generate a numeric receipt number, preferring existing numeric values
+  const getReceiptNumber = () => {
+    const explicit = sale?.receiptNumber || sale?.receiptNo || sale?.receipt;
+    if (explicit && /^\d+$/.test(String(explicit))) return String(explicit);
+    const dateStr = getSaleDate();
+    const ts = dateStr ? new Date(dateStr).getTime() : Date.now();
+    // Use last 8 digits of epoch millis to keep it short and numeric
+    return String(ts).slice(-8);
+  };
+
   const formatDate = (dateString) => {
     if (!dateString) return 'Unknown Date';
     try {
@@ -76,7 +86,7 @@ export default function Receipt({
   // Generate QR code data
   const generateQRData = () => {
     const receiptData = {
-      id: sale.id || 'N/A',
+      id: getReceiptNumber(),
       date: getSaleDate() || new Date().toISOString(),
       total: sale.total || 0,
       items: getSaleItems().map(item => ({
@@ -198,7 +208,7 @@ export default function Receipt({
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `receipt-${sale.id}-${new Date().toISOString().split('T')[0]}.html`;
+    a.download = `receipt-${getReceiptNumber()}-${new Date().toISOString().split('T')[0]}.html`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -209,7 +219,7 @@ export default function Receipt({
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `Receipt #${sale.id}`,
+          title: `Receipt #${getReceiptNumber()}`,
           text: `Receipt from ${businessInfo.name || 'Business POS'} - Total: $${grandTotal.toFixed(2)}`,
           url: window.location.href,
         });
@@ -218,7 +228,7 @@ export default function Receipt({
       }
     } else {
       // Fallback: copy to clipboard
-      const receiptText = `Receipt #${sale?.id || 'Unknown'}\nDate: ${formatDate(getSaleDate())}\nTotal: $${grandTotal.toFixed(2)}\nItems: ${getSaleItems().length}`;
+      const receiptText = `Receipt #${getReceiptNumber()}\nDate: ${formatDate(getSaleDate())}\nTotal: $${grandTotal.toFixed(2)}\nItems: ${getSaleItems().length}`;
       navigator.clipboard.writeText(receiptText);
       alert('Receipt details copied to clipboard!');
     }
@@ -330,7 +340,7 @@ export default function Receipt({
                 {businessInfo.email && ` • Email: ${businessInfo.email.trim().replace(/\n/g, '')}`}
               </div>
               <div className={`text-sm font-bold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
-                Receipt #: {(sale?.id || 'Unknown').slice(-8)}
+                Receipt #: {getReceiptNumber()}
               </div>
             </div>
 
@@ -344,14 +354,16 @@ export default function Receipt({
                 <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Payment Method:</span>
                 <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{sale?.paymentMethod || 'Unknown'}</span>
               </div>
-              {sale?.customerId && (
-                <div className="flex justify-between text-sm">
-                  <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Customer:</span>
-                  <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
-                    {sale?.customerId ? 'Customer ID: ' + sale.customerId : 'Walk-in'}
-                  </span>
-                </div>
-              )}
+              <div className="flex justify-between text-sm">
+                <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Customer:</span>
+                <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+                  {(() => {
+                    const nameFromSale = sale?.customer?.name || sale?.customerName;
+                    const nameFromList = customers.find(c => c.id === sale?.customerId)?.name;
+                    return nameFromSale || nameFromList || 'Walk-in Customer';
+                  })()}
+                </span>
+              </div>
             </div>
 
             {/* Items Table */}
