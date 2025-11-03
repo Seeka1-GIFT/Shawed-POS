@@ -29,6 +29,11 @@ export default function Receipt({
   
   const businessInfo = businessSettings || {};
 
+  // Get the correct date field from sale data (declare early for other helpers)
+  const getSaleDate = () => {
+    return sale?.saleDate || sale?.date || sale?.createdAt || null;
+  };
+
   // Generate a numeric receipt number, preferring existing numeric values
   const getReceiptNumber = () => {
     const explicit = sale?.receiptNumber || sale?.receiptNo || sale?.receipt;
@@ -78,10 +83,7 @@ export default function Receipt({
     }
   };
 
-  // Get the correct date field from sale data
-  const getSaleDate = () => {
-    return sale?.saleDate || sale?.date || sale?.createdAt || null;
-  };
+  // getSaleDate defined above
 
   // Items helper (moved up to avoid TDZ issues)
   const getSaleItems = () => {
