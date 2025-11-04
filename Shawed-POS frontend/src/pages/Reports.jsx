@@ -251,9 +251,19 @@ export default function Reports() {
       })();
       const paidRaw = Number(s.amountPaid || s.amount_paid || inferredPaid || 0);
       const paid = (paidRaw === 0 && !s.paymentStatus && isWalkIn) ? totalAmt : paidRaw;
-      const status = s.paymentStatus || s.payment_status || (
-        paid <= 0 ? 'Credit' : (paid >= totalAmt ? 'Paid' : 'Partial / Credit')
-      );
+      
+      // Use the paymentStatus from the sale object directly - it's what the user selected
+      // Only fall back to calculation if paymentStatus is not set
+      let status = s.paymentStatus || s.payment_status;
+      if (!status) {
+        // Fallback: only calculate if paymentStatus is not explicitly set
+        if (isWalkIn) {
+          status = 'Paid'; // Walk-in sales are always paid
+        } else {
+          status = paid <= 0 ? 'Credit' : (paid >= totalAmt ? 'Paid' : 'Partial / Credit');
+        }
+      }
+      
       const balance = Math.max(0, totalAmt - paid);
       const customerName = s.customerId ? 
         (s.customer?.name || customers.find(c=> c.id === s.customerId)?.name || 'Customer') : 'Walk-in';
@@ -268,7 +278,7 @@ export default function Reports() {
         date: s.saleDate || s.createdAt || s.date
       };
     }).sort((a,b)=> new Date(b.date) - new Date(a.date));
-  }, [filteredSales, customers]);
+  }, [filteredSales, customers, payments]);
 
   const filteredExpenses = useMemo(() => {
     return (expenses || []).filter(expense => {
