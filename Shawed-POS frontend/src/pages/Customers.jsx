@@ -1107,48 +1107,52 @@ export default function Customers() {
                         lastDateStr = dateStr;
                         return (
                           <React.Fragment key={row.id}>
-                            {showDateHeader && idx > 0 && (
+                            {showDateHeader && (
                               <tr>
-                                <td colSpan="7" className={`py-2 px-2 ${isDarkMode ? 'border-gray-700 bg-gray-700/50' : 'border-gray-200 bg-gray-50'}`}></td>
+                                <td colSpan="7" className={`py-3 px-4 ${isDarkMode ? 'bg-gray-700/70 border-t border-b border-gray-600' : 'bg-gray-100 border-t border-b border-gray-200'}`}>
+                                  <div className={`font-semibold text-sm ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+                                    📅 {dateStr}
+                                  </div>
+                                </td>
                               </tr>
                             )}
-                            <tr className={`border-b ${isDarkMode ? 'border-gray-600 hover:bg-gray-700' : 'border-gray-200 hover:bg-gray-50'}`}>
-                              <td className={`py-3 px-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-                                <div className="font-medium">{dateStr}</div>
-                                <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{timeStr}</div>
+                            <tr className={`border-b-2 ${isDarkMode ? 'border-gray-700 hover:bg-gray-700/50' : 'border-gray-200 hover:bg-gray-50'} transition-colors`}>
+                              <td className={`py-4 px-3 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+                                <div className="font-semibold">{dateStr}</div>
+                                <div className={`text-xs font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{timeStr}</div>
                               </td>
-                              <td className={`py-3 px-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-                                <span className={`text-xs px-2 py-1 rounded ${
-                                  row.type === 'sale' ? (isDarkMode ? 'bg-blue-900/50 text-blue-300' : 'bg-blue-100 text-blue-700') :
-                                  row.type === 'payment' ? (isDarkMode ? 'bg-green-900/50 text-green-300' : 'bg-green-100 text-green-700') :
-                                  (isDarkMode ? 'bg-red-900/50 text-red-300' : 'bg-red-100 text-red-700')
+                              <td className={`py-4 px-3 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+                                <span className={`text-xs font-semibold px-3 py-1.5 rounded-full ${
+                                  row.type === 'sale' ? (isDarkMode ? 'bg-blue-900/50 text-blue-300 border border-blue-700' : 'bg-blue-100 text-blue-700 border border-blue-300') :
+                                  row.type === 'payment' ? (isDarkMode ? 'bg-green-900/50 text-green-300 border border-green-700' : 'bg-green-100 text-green-700 border border-green-300') :
+                                  (isDarkMode ? 'bg-red-900/50 text-red-300 border border-red-700' : 'bg-red-100 text-red-700 border border-red-300')
                                 }`}>
                                   {row.type === 'sale' ? 'SALE' : row.type === 'payment' ? 'PAYMENT' : 'DEBT'}
                                 </span>
                               </td>
-                              <td className={`py-3 px-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-                                <span className={`font-medium ${row.previousDebt > 0 ? (isDarkMode ? 'text-red-400' : 'text-red-600') : (isDarkMode ? 'text-green-400' : 'text-green-600')}`}>
+                              <td className={`py-4 px-3 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+                                <span className={`font-semibold text-sm ${row.previousDebt > 0 ? (isDarkMode ? 'text-red-400' : 'text-red-600') : (isDarkMode ? 'text-green-400' : 'text-green-600')}`}>
                                   ${row.previousDebt.toFixed(2)}
                                 </span>
                               </td>
-                              <td className={`py-3 px-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-                                <span className={`font-medium ${
+                              <td className={`py-4 px-3 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+                                <span className={`font-bold text-base ${
                                   row.type === 'payment' ? 'text-green-600' : 
                                   row.type === 'sale' ? 'text-blue-600' : 'text-red-600'
                                 }`}>
-                                  {row.type === 'payment' ? '-' : row.type === 'sale' ? '+' : '+'}${row.amountAbs.toFixed(2)}
+                                  {row.type === 'payment' ? '−' : row.type === 'sale' ? '+' : '+'}${row.amountAbs.toFixed(2)}
                                 </span>
                               </td>
-                              <td className={`py-3 px-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                                {row.method.replace('_', ' ').toUpperCase()}
+                              <td className={`py-4 px-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                                <span className="font-medium">{row.method.replace('_', ' ').toUpperCase()}</span>
                               </td>
-                              <td className={`py-3 px-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-                                <span className={`font-medium ${row.remainingBalance > 0 ? (isDarkMode ? 'text-red-400' : 'text-red-600') : (isDarkMode ? 'text-green-400' : 'text-green-600')}`}>
+                              <td className={`py-4 px-3 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+                                <span className={`font-bold text-sm ${row.remainingBalance > 0 ? (isDarkMode ? 'text-red-400' : 'text-red-600') : (isDarkMode ? 'text-green-400' : 'text-green-600')}`}>
                                   ${row.remainingBalance.toFixed(2)}
                                 </span>
                               </td>
-                              <td className={`py-3 px-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                                {row.notes || '-'}
+                              <td className={`py-4 px-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                                <span className="text-sm">{row.notes || '-'}</span>
                               </td>
                             </tr>
                           </React.Fragment>
