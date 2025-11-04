@@ -83,13 +83,13 @@ export default function PaymentGateway({
       
       switch (selectedMethod) {
         case 'merchant':
-          result = await processCashPayment();
+          result = await processCashPayment('merchant');
           break;
         case 'evc_plus':
-          result = await processCashPayment();
+          result = await processCashPayment('evc_plus');
           break;
         case 'e_dahab':
-          result = await processCashPayment();
+          result = await processCashPayment('e_dahab');
           break;
         case 'bank_transfer':
           result = await processBankTransfer();
@@ -115,15 +115,15 @@ export default function PaymentGateway({
     }
   };
 
-  const processCashPayment = async () => {
+  const processCashPayment = async (methodId) => {
     // Simulate cash payment processing
     await new Promise(resolve => setTimeout(resolve, 1000));
     return {
       success: true,
       transactionId: `CASH_${Date.now()}`,
-      method: 'payment-cash',
+      method: methodId || 'merchant',
       amount,
-      fee: 0,
+      fee: processingFee,
       timestamp: new Date().toISOString()
     };
   };
