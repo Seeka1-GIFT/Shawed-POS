@@ -1082,9 +1082,9 @@ export default function Customers() {
             </div>
             
             <div className="p-6">
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto overflow-y-auto max-h-[70vh]">
                 <table className="min-w-full text-left text-sm">
-                  <thead>
+                  <thead className={`sticky top-0 z-10 ${isDarkMode ? 'bg-gray-900' : 'bg-white'} shadow-sm`}>
                     <tr className={`border-b ${isDarkMode ? 'border-gray-600' : 'border-gray-200'}`}>
                       <th className={`py-3 px-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Date</th>
                       <th className={`py-3 px-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Type</th>
