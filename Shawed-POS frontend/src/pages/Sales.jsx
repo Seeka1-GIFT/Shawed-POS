@@ -168,26 +168,35 @@ export default function Sales() {
       const computedTax = chosenMethod === 'merchant' ? feeAmount : 0;
       // Create sale record with proper structure for backend
       const saleTotal = subtotal - discountValue + computedTax;
-      const amountPaidToSave = Number(paid);
       
-      // Determine payment status based on user selection
+      // Determine payment status and amount paid based on user selection
       let paymentStatusToSave;
+      let amountPaidToSave;
+      
       if (!customerId) {
         // Walk-in customers are always Paid
         paymentStatusToSave = 'Paid';
+        amountPaidToSave = saleTotal; // Walk-in always pays full amount
       } else {
         // For customers with accounts, use the user-selected status
         if (paymentStatusSelect === 'Paid') {
-          paymentStatusToSave = 'Paid'; // Always use "Paid" if user selected it
+          paymentStatusToSave = 'Paid';
+          // If user selected "Paid", ensure amountPaid equals total
+          amountPaidToSave = saleTotal;
         } else if (paymentStatusSelect === 'Credit') {
           // If Credit selected and partial payment, use "Partial / Credit"
-          if (amountPaidToSave > 0 && amountPaidToSave < saleTotal) {
+          const paidValue = Number(paid);
+          if (paidValue > 0 && paidValue < saleTotal) {
             paymentStatusToSave = 'Partial / Credit';
+            amountPaidToSave = paidValue;
           } else {
             paymentStatusToSave = 'Credit'; // Full credit
+            amountPaidToSave = paidValue || 0;
           }
         } else {
           // Fallback: calculate based on amounts
+          const paidValue = Number(paid);
+          amountPaidToSave = paidValue;
           paymentStatusToSave = amountPaidToSave >= saleTotal ? 'Paid' : (amountPaidToSave > 0 ? 'Partial / Credit' : 'Credit');
         }
       }
