@@ -146,7 +146,7 @@ export default function Sales() {
     }
   }, [customerId, paymentStatusSelect, total]);
 
-  const completeSale = async () => {
+  const completeSale = async (paymentInfo = null) => {
     if (cart.length === 0) return;
     // Check stock
     for (const item of cart) {
@@ -162,6 +162,10 @@ export default function Sales() {
     }
 
     try {
+      // Normalize payment info from gateway if provided
+      const chosenMethod = paymentInfo?.paymentMethod || paymentMethod;
+      const feeAmount = paymentInfo?.fee || 0;
+      const computedTax = chosenMethod === 'merchant' ? feeAmount : 0;
       // Create sale record with proper structure for backend
       const saleData = {
         customerId: customerId || null,
@@ -171,8 +175,8 @@ export default function Sales() {
           price: item.product.sellPrice || item.product.sellingPrice || 0
         })),
         discount: discountValue,
-        tax: 0,
-        paymentMethod: paymentMethod
+        tax: computedTax,
+        paymentMethod: chosenMethod
       };
       
       console.log('🛒 FRONTEND: Sending sale data to backend:', saleData);
@@ -186,12 +190,13 @@ export default function Sales() {
           items: cart,
           subtotal,
           discount: discountValue,
-          total,
-          paymentMethod,
+          total: subtotal - discountValue + computedTax,
+          paymentMethod: chosenMethod,
           amountPaid: paid,
           balance,
           paymentStatus,
           customerId: customerId || null,
+          fee: computedTax
         };
         
         // Store the sale for receipt and show receipt
@@ -504,8 +509,7 @@ export default function Sales() {
       }}
       onPaymentSuccess={async (paymentResult) => {
         console.log('Payment successful:', paymentResult);
-        setPaymentMethod(paymentResult.method);
-        await completeSale(); // Complete the sale after successful payment
+        await completeSale(paymentResult); // Complete the sale with chosen method/fee
         setShowPaymentGateway(false);
       }}
       onPaymentError={(error) => {
