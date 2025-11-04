@@ -25,33 +25,33 @@ export default function PaymentGateway({
 
   const paymentMethods = [
     {
-      id: 'cash',
-      name: 'MARCHENT',
+      id: 'merchant',
+      name: 'Merchant',
       icon: Banknote,
-      description: 'Pay with cash',
+      description: 'Pay with Merchant',
       color: 'text-green-600',
       bgColor: 'bg-green-50 dark:bg-green-900',
+      fee: 0.05, // 5% fee
+      available: true
+    },
+    {
+      id: 'evc_plus',
+      name: 'Evc‑Plus',
+      icon: Smartphone,
+      description: 'Pay with Evc‑Plus',
+      color: 'text-yellow-600',
+      bgColor: 'bg-yellow-50 dark:bg-yellow-900',
       fee: 0, // 0% fee
       available: true
     },
     {
-      id: 'mpesa',
-      name: 'M-Pesa',
+      id: 'e_dahab',
+      name: 'E‑Dahab',
       icon: Smartphone,
-      description: 'Mobile Money Payment',
-      color: 'text-yellow-600',
-      bgColor: 'bg-yellow-50 dark:bg-yellow-900',
-      fee: 0.02, // 2% fee
-      available: true
-    },
-    {
-      id: 'stripe',
-      name: 'Credit Card',
-      icon: CreditCard,
-      description: 'Visa, Mastercard, American Express',
+      description: 'Pay with E‑Dahab',
       color: 'text-blue-600',
       bgColor: 'bg-blue-50 dark:bg-blue-900',
-      fee: 0.029, // 2.9% fee
+      fee: 0, // 0% fee
       available: true
     },
     {
@@ -61,7 +61,7 @@ export default function PaymentGateway({
       description: 'Direct bank transfer',
       color: 'text-purple-600',
       bgColor: 'bg-purple-50 dark:bg-purple-900',
-      fee: 0.015, // 1.5% fee
+      fee: 0, // 0% fee
       available: true
     }
   ];
@@ -82,14 +82,14 @@ export default function PaymentGateway({
       let result;
       
       switch (selectedMethod) {
-        case 'cash':
+        case 'merchant':
           result = await processCashPayment();
           break;
-        case 'mpesa':
-          result = await processMpesaPayment();
+        case 'evc_plus':
+          result = await processCashPayment();
           break;
-        case 'stripe':
-          result = await processStripePayment();
+        case 'e_dahab':
+          result = await processCashPayment();
           break;
         case 'bank_transfer':
           result = await processBankTransfer();
