@@ -169,7 +169,28 @@ export default function Sales() {
       // Create sale record with proper structure for backend
       const saleTotal = subtotal - discountValue + computedTax;
       const amountPaidToSave = Number(paid);
-      const paymentStatusToSave = amountPaidToSave >= saleTotal ? 'Paid' : (amountPaidToSave > 0 ? 'Partial / Credit' : 'Credit');
+      
+      // Determine payment status based on user selection
+      let paymentStatusToSave;
+      if (!customerId) {
+        // Walk-in customers are always Paid
+        paymentStatusToSave = 'Paid';
+      } else {
+        // For customers with accounts, use the user-selected status
+        if (paymentStatusSelect === 'Paid') {
+          paymentStatusToSave = 'Paid'; // Always use "Paid" if user selected it
+        } else if (paymentStatusSelect === 'Credit') {
+          // If Credit selected and partial payment, use "Partial / Credit"
+          if (amountPaidToSave > 0 && amountPaidToSave < saleTotal) {
+            paymentStatusToSave = 'Partial / Credit';
+          } else {
+            paymentStatusToSave = 'Credit'; // Full credit
+          }
+        } else {
+          // Fallback: calculate based on amounts
+          paymentStatusToSave = amountPaidToSave >= saleTotal ? 'Paid' : (amountPaidToSave > 0 ? 'Partial / Credit' : 'Credit');
+        }
+      }
 
       const saleData = {
         customerId: customerId || null,
