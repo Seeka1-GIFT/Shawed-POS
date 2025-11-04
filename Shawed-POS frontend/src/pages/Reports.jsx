@@ -60,6 +60,8 @@ export default function Reports() {
     customers = [], 
     sales = [], 
     expenses = [], 
+    payments = [], 
+    debts = [], 
     suppliers = [], 
     purchaseOrders = [], 
     businessSettings = {},
@@ -116,10 +118,8 @@ export default function Reports() {
     );
   }
   
-  // Placeholder data for properties not yet implemented in RealDataContext
-  const purchases = []; // Placeholder - not yet implemented
-  const debts = []; // Placeholder - not yet implemented  
-  const payments = []; // Placeholder - not yet implemented
+  // Placeholder for future features
+  const purchases = []; // not used yet 
   const { isDarkMode } = useContext(ThemeContext);
 
   // Debug logging for data structure
@@ -191,6 +191,12 @@ export default function Reports() {
   const { start, end } = getDateRange(selectedPeriod);
 
   // Filter data by date range
+  const sameDay = (a, b) => {
+    if (!a || !b) return false;
+    const da = new Date(a); const db = new Date(b);
+    return da.toDateString() === db.toDateString();
+  };
+
   const filteredSales = useMemo(() => {
     return sales.filter(sale => {
       // Use correct date field from API response (saleDate or createdAt)
@@ -208,7 +214,15 @@ export default function Reports() {
         (String(sale.paymentMethod || '').toLowerCase() === String(paymentFilter).toLowerCase());
       
       // Derive status using correct field names
-      const paidRaw = Number(sale.amountPaid || sale.amount_paid || 0);
+      // Fallback: infer paid for legacy sales using same-day customer payments
+      const inferredPaid = (() => {
+        if (!sale.customerId) return 0;
+        const saleDate = sale.saleDate || sale.createdAt || sale.date;
+        const sum = (payments || []).filter(p => p.customerId === sale.customerId && sameDay(p.date, saleDate))
+          .reduce((sum, p) => sum + Number(p.amount || 0), 0);
+        return sum;
+      })();
+      const paidRaw = Number(sale.amountPaid || sale.amount_paid || inferredPaid || 0);
       const totalAmt = Number(sale.total || 0);
       // Walk-in fallback: if no paid info and no explicit status, treat as Paid
       const isWalkIn = !sale.customerId && sale.customerId !== 0;
@@ -228,7 +242,14 @@ export default function Reports() {
     return filteredSales.map(s => {
       const totalAmt = Number(s.total || 0);
       const isWalkIn = !s.customerId && s.customerId !== 0;
-      const paidRaw = Number(s.amountPaid || s.amount_paid || 0);
+      const inferredPaid = (() => {
+        if (!s.customerId) return 0;
+        const saleDate = s.saleDate || s.createdAt || s.date;
+        const sum = (payments || []).filter(p => p.customerId === s.customerId && sameDay(p.date, saleDate))
+          .reduce((sum, p) => sum + Number(p.amount || 0), 0);
+        return sum;
+      })();
+      const paidRaw = Number(s.amountPaid || s.amount_paid || inferredPaid || 0);
       const paid = (paidRaw === 0 && !s.paymentStatus && isWalkIn) ? totalAmt : paidRaw;
       const status = s.paymentStatus || s.payment_status || (
         paid <= 0 ? 'Credit' : (paid >= totalAmt ? 'Paid' : 'Partial / Credit')
