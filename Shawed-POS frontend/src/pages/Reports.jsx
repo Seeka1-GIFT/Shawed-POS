@@ -258,8 +258,12 @@ export default function Reports() {
     const cogs = (filteredSales || []).reduce((sum, sale) => {
       const saleItems = sale.saleItems || sale.items || [];
       return sum + saleItems.reduce((itemSum, item) => {
-        const product = item.product || {};
-        const buyPrice = parseFloat(product.buyPrice || product.purchasePrice || product.sellPrice || 0);
+        // Prefer embedded product.buyPrice; fall back to products context by id; NEVER use sellPrice as buy
+        const embedded = item.product || {};
+        const fromList = products.find(p => p.id === (item.productId || embedded.id)) || {};
+        const buyPrice = parseFloat(
+          embedded.buyPrice ?? embedded.purchasePrice ?? fromList.buyPrice ?? fromList.purchasePrice ?? 0
+        );
         const quantity = parseInt(item.quantity || 0);
         return itemSum + (buyPrice * quantity);
       }, 0);
