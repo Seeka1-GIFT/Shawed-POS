@@ -99,6 +99,16 @@ export default function PaymentGateway({
       }
 
       if (result.success) {
+        // Normalize payload so callers can reliably read payment method/fee
+        const methodLabels = {
+          merchant: 'Merchant',
+          evc_plus: 'Evc‑Plus',
+          e_dahab: 'E‑Dahab',
+          bank_transfer: 'Bank Transfer'
+        };
+        result.paymentMethod = selectedMethod; // canonical key expected by consumer
+        result.paymentMethodLabel = methodLabels[selectedMethod] || selectedMethod;
+        result.fee = typeof result.fee === 'number' ? result.fee : processingFee;
         setPaymentStatus('success');
         setTimeout(() => {
           onPaymentSuccess(result);
