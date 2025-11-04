@@ -305,15 +305,33 @@ export function RealDataProvider({ children }) {
       });
       
       if (result.success) {
+        // Enrich response with local fields if backend omitted them
+        const responseSale = result.data || {};
+        const totalFromRequest = saleData.total || saleData.subtotal || 0;
+        const paidFromRequest = saleData.amountPaid ?? 0;
+        const methodFromRequest = saleData.paymentMethod || responseSale.paymentMethod;
+        const statusFromRequest = saleData.paymentStatus || responseSale.paymentStatus || (
+          (paidFromRequest >= totalFromRequest) ? 'Paid' : (paidFromRequest > 0 ? 'Partial / Credit' : 'Credit')
+        );
+        const enrichedSale = {
+          ...responseSale,
+          total: responseSale.total ?? totalFromRequest,
+          amountPaid: responseSale.amountPaid ?? paidFromRequest,
+          paymentMethod: methodFromRequest,
+          paymentStatus: statusFromRequest,
+          customerId: responseSale.customerId ?? saleData.customerId ?? null,
+          date: responseSale.saleDate || responseSale.createdAt || saleData.date || new Date().toISOString(),
+        };
+
         // Update local state
         setData(prev => ({
           ...prev,
-          sales: [...(prev.sales || []), result.data]
+          sales: [...(prev.sales || []), enrichedSale]
         }));
         
         // Emit event to trigger data refresh across components
         window.dispatchEvent(new CustomEvent('saleCreated', { 
-          detail: { sale: result.data } 
+          detail: { sale: enrichedSale } 
         }));
         
         console.log('✅ Sale created and event emitted for auto-refresh');
