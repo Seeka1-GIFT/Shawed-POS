@@ -167,6 +167,10 @@ export default function Sales() {
       const feeAmount = paymentInfo?.fee || 0;
       const computedTax = chosenMethod === 'merchant' ? feeAmount : 0;
       // Create sale record with proper structure for backend
+      const saleTotal = subtotal - discountValue + computedTax;
+      const amountPaidToSave = Number(paid);
+      const paymentStatusToSave = amountPaidToSave >= saleTotal ? 'Paid' : (amountPaidToSave > 0 ? 'Partial / Credit' : 'Credit');
+
       const saleData = {
         customerId: customerId || null,
         items: cart.map(item => ({
@@ -176,7 +180,10 @@ export default function Sales() {
         })),
         discount: discountValue,
         tax: computedTax,
-        paymentMethod: chosenMethod
+        paymentMethod: chosenMethod,
+        total: saleTotal,
+        amountPaid: amountPaidToSave,
+        paymentStatus: paymentStatusToSave
       };
       
       console.log('🛒 FRONTEND: Sending sale data to backend:', saleData);
@@ -190,11 +197,11 @@ export default function Sales() {
           items: cart,
           subtotal,
           discount: discountValue,
-          total: subtotal - discountValue + computedTax,
+          total: saleTotal,
           paymentMethod: chosenMethod,
-          amountPaid: paid,
-          balance,
-          paymentStatus,
+          amountPaid: amountPaidToSave,
+          balance: Math.max(0, saleTotal - amountPaidToSave),
+          paymentStatus: paymentStatusToSave,
           customerId: customerId || null,
           fee: computedTax
         };
