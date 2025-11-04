@@ -31,13 +31,15 @@ export default function Dashboard() {
   } = useContext(RealDataContext);
   const { isDarkMode } = useContext(ThemeContext);
 
-  // Load dashboard stats when component mounts
-  useEffect(() => {
-    const token = localStorage.getItem('authToken');
-    if (token) {
-      fetchDashboardStats();
-    }
-  }, [fetchDashboardStats]);
+  // We rely on local computed data for the dashboard to avoid noisy
+  // network errors if the remote reporting endpoint is sleeping.
+  // If in the future you want to enable server stats, uncomment below.
+  // useEffect(() => {
+  //   const token = localStorage.getItem('authToken');
+  //   if (token) {
+  //     fetchDashboardStats();
+  //   }
+  // }, [fetchDashboardStats]);
 
   // Determine current date string in YYYY-MM-DD format
   const todayStr = new Date().toISOString().slice(0, 10);
