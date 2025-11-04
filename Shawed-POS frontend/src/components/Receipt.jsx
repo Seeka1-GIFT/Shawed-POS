@@ -358,14 +358,14 @@ export default function Receipt({
                 <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Payment Method:</span>
                 <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
                   {(() => {
-                    const method = sale?.paymentMethod || '';
+                    const method = sale?.paymentMethod || sale?.method || '';
                     const labels = {
                       merchant: 'Merchant',
                       evc_plus: 'Evc‑Plus',
                       e_dahab: 'E‑Dahab',
                       bank_transfer: 'Bank Transfer'
                     };
-                    return labels[method] || method || 'Unknown';
+                    return sale?.paymentMethodLabel || labels[method] || method || 'Unknown';
                   })()}
                 </span>
               </div>
