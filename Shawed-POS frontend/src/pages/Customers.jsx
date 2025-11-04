@@ -304,46 +304,56 @@ export default function Customers() {
     const customerPayments = (payments || []).filter(p => p.customerId === customerId);
     const customerDebts = (debts || []).filter(d => d.customerId === customerId);
 
-    // Combine sales, payments, and debts, sort by date (ascending for running calc)
+    // Combine sales, payments, and debts with proper date handling
     const allTransactions = [
-      ...customerSales.map(sale => ({
+      ...customerSales.map((sale, idx) => ({
         type: 'sale',
-        date: sale.date,
-        amount: sale.total,
-        id: sale.id
+        date: sale.saleDate || sale.createdAt || sale.date || new Date(Date.now() - idx * 1000).toISOString(),
+        amount: sale.total || 0,
+        id: sale.id || `sale-${idx}`,
+        method: sale.paymentMethod || 'SALE',
+        notes: sale.notes || ''
       })),
-      ...customerDebts.map(debt => ({
+      ...customerDebts.map((debt, idx) => ({
         type: 'debt',
-        date: debt.date,
-        amount: debt.amount, // Positive increases balance
-        id: debt.id,
+        date: debt.date || debt.createdAt || new Date(Date.now() - (idx + customerSales.length) * 1000).toISOString(),
+        amount: debt.amount || 0,
+        id: debt.id || `debt-${idx}`,
         method: `DEBT - ${debt.reason ? debt.reason.replace('_', ' ') : 'MANUAL'}`,
-        notes: debt.notes
+        notes: debt.notes || ''
       })),
-      ...customerPayments.map(payment => ({
+      ...customerPayments.map((payment, idx) => ({
         type: 'payment',
-        date: payment.date,
-        amount: -payment.amount, // Negative for payments
-        id: payment.id,
-        method: payment.method,
-        notes: payment.notes
+        date: payment.date || payment.createdAt || new Date(Date.now() - (idx + customerSales.length + customerDebts.length) * 1000).toISOString(),
+        amount: -(payment.amount || 0), // Negative for payments
+        id: payment.id || `payment-${idx}`,
+        method: payment.method || 'PAYMENT',
+        notes: payment.notes || ''
       }))
-    ].sort((a, b) => new Date(a.date) - new Date(b.date));
+    ].sort((a, b) => {
+      const dateA = new Date(a.date);
+      const dateB = new Date(b.date);
+      if (dateA.getTime() === dateB.getTime()) {
+        // If same timestamp, sort by type (sale first, then debt, then payment)
+        const typeOrder = { sale: 0, debt: 1, payment: 2 };
+        return (typeOrder[a.type] || 3) - (typeOrder[b.type] || 3);
+      }
+      return dateA - dateB;
+    });
 
-    // Calculate running balance and produce only payment/debt rows for the history
+    // Calculate running balance and produce ALL transaction rows for the history
     let runningBalance = 0;
     const history = [];
 
     allTransactions.forEach(transaction => {
-      if (transaction.type === 'sale') {
-        // sales increase the balance but are not shown as separate rows in history table
-        runningBalance += transaction.amount;
-        return;
-      }
-
-      // For debts and payments, capture previous and new balances
       const previousDebt = runningBalance;
-      runningBalance += transaction.amount; // adds (debt) or subtracts (payment)
+      
+      if (transaction.type === 'sale') {
+        runningBalance += transaction.amount;
+      } else {
+        runningBalance += transaction.amount; // adds (debt) or subtracts (payment)
+      }
+      
       const remainingBalance = runningBalance;
 
       history.push({
@@ -351,14 +361,19 @@ export default function Customers() {
         date: transaction.date,
         previousDebt,
         remainingBalance,
-        amountAbs: Math.abs(transaction.amount),
-        method: transaction.method || (transaction.type === 'payment' ? 'PAYMENT' : 'DEBT'),
+        amountAbs: transaction.type === 'sale' ? transaction.amount : Math.abs(transaction.amount),
+        method: transaction.method,
         type: transaction.type,
         notes: transaction.notes
       });
     });
 
-    return history.sort((a, b) => new Date(b.date) - new Date(a.date)); // Most recent first
+    // Sort by date descending (most recent first)
+    return history.sort((a, b) => {
+      const dateA = new Date(a.date);
+      const dateB = new Date(b.date);
+      return dateB - dateA;
+    });
   };
 
   const printPaymentHistory = () => {
@@ -1072,40 +1087,74 @@ export default function Customers() {
                   <thead>
                     <tr className={`border-b ${isDarkMode ? 'border-gray-600' : 'border-gray-200'}`}>
                       <th className={`py-3 px-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Date</th>
+                      <th className={`py-3 px-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Type</th>
                       <th className={`py-3 px-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Previous Debt</th>
-                      <th className={`py-3 px-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Amount Paid</th>
+                      <th className={`py-3 px-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Amount</th>
                       <th className={`py-3 px-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Method</th>
                       <th className={`py-3 px-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Remaining Balance</th>
                       <th className={`py-3 px-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Notes</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {getPaymentHistoryWithBalances(selectedCustomer.id).map((row) => (
-                      <tr key={row.id} className={`border-b ${isDarkMode ? 'border-gray-600 hover:bg-gray-700' : 'border-gray-200 hover:bg-gray-50'}`}>
-                        <td className={`py-3 px-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-                          {new Date(row.date).toLocaleDateString()}
-                        </td>
-                        <td className={`py-3 px-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-                          <span className={`font-medium ${row.previousDebt > 0 ? (isDarkMode ? 'text-red-400' : 'text-red-600') : (isDarkMode ? 'text-green-400' : 'text-green-600')}`}>
-                            ${row.previousDebt.toFixed(2)}
-                          </span>
-                        </td>
-                        <td className={`py-3 px-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-                          <span className={`font-medium ${row.type === 'payment' ? 'text-green-600' : 'text-red-600'}`}>${row.amountAbs.toFixed(2)}</span>
-                        </td>
-                        <td className={`py-3 px-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                          {row.method.replace('_', ' ').toUpperCase()}
-                        </td>
-                        <td className={`py-3 px-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-                          <span className={`font-medium ${row.remainingBalance > 0 ? (isDarkMode ? 'text-red-400' : 'text-red-600') : (isDarkMode ? 'text-green-400' : 'text-green-600')}`}>
-                            ${row.remainingBalance.toFixed(2)}
-                          </span>
-                        </td>
-                        <td className={`py-3 px-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                          {row.notes || '-'}
-                        </td>
-                      </tr>
-                    ))}
+                    {(() => {
+                      const rows = getPaymentHistoryWithBalances(selectedCustomer.id);
+                      let lastDateStr = '';
+                      return rows.map((row, idx) => {
+                        const dateObj = new Date(row.date);
+                        const dateStr = dateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+                        const timeStr = dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                        const showDateHeader = dateStr !== lastDateStr;
+                        lastDateStr = dateStr;
+                        return (
+                          <React.Fragment key={row.id}>
+                            {showDateHeader && idx > 0 && (
+                              <tr>
+                                <td colSpan="7" className={`py-2 px-2 ${isDarkMode ? 'border-gray-700 bg-gray-700/50' : 'border-gray-200 bg-gray-50'}`}></td>
+                              </tr>
+                            )}
+                            <tr className={`border-b ${isDarkMode ? 'border-gray-600 hover:bg-gray-700' : 'border-gray-200 hover:bg-gray-50'}`}>
+                              <td className={`py-3 px-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+                                <div className="font-medium">{dateStr}</div>
+                                <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{timeStr}</div>
+                              </td>
+                              <td className={`py-3 px-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+                                <span className={`text-xs px-2 py-1 rounded ${
+                                  row.type === 'sale' ? (isDarkMode ? 'bg-blue-900/50 text-blue-300' : 'bg-blue-100 text-blue-700') :
+                                  row.type === 'payment' ? (isDarkMode ? 'bg-green-900/50 text-green-300' : 'bg-green-100 text-green-700') :
+                                  (isDarkMode ? 'bg-red-900/50 text-red-300' : 'bg-red-100 text-red-700')
+                                }`}>
+                                  {row.type === 'sale' ? 'SALE' : row.type === 'payment' ? 'PAYMENT' : 'DEBT'}
+                                </span>
+                              </td>
+                              <td className={`py-3 px-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+                                <span className={`font-medium ${row.previousDebt > 0 ? (isDarkMode ? 'text-red-400' : 'text-red-600') : (isDarkMode ? 'text-green-400' : 'text-green-600')}`}>
+                                  ${row.previousDebt.toFixed(2)}
+                                </span>
+                              </td>
+                              <td className={`py-3 px-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+                                <span className={`font-medium ${
+                                  row.type === 'payment' ? 'text-green-600' : 
+                                  row.type === 'sale' ? 'text-blue-600' : 'text-red-600'
+                                }`}>
+                                  {row.type === 'payment' ? '-' : row.type === 'sale' ? '+' : '+'}${row.amountAbs.toFixed(2)}
+                                </span>
+                              </td>
+                              <td className={`py-3 px-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                                {row.method.replace('_', ' ').toUpperCase()}
+                              </td>
+                              <td className={`py-3 px-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+                                <span className={`font-medium ${row.remainingBalance > 0 ? (isDarkMode ? 'text-red-400' : 'text-red-600') : (isDarkMode ? 'text-green-400' : 'text-green-600')}`}>
+                                  ${row.remainingBalance.toFixed(2)}
+                                </span>
+                              </td>
+                              <td className={`py-3 px-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                                {row.notes || '-'}
+                              </td>
+                            </tr>
+                          </React.Fragment>
+                        );
+                      });
+                    })()}
                   </tbody>
                 </table>
                 
