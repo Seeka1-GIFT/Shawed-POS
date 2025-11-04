@@ -208,10 +208,14 @@ export default function Reports() {
         (String(sale.paymentMethod || '').toLowerCase() === String(paymentFilter).toLowerCase());
       
       // Derive status using correct field names
-      const paid = Number(sale.amountPaid || sale.amount_paid || 0);
+      const paidRaw = Number(sale.amountPaid || sale.amount_paid || 0);
       const totalAmt = Number(sale.total || 0);
-      let status = sale.paymentStatus || sale.payment_status || 
-        (paid <= 0 ? 'Credit' : (paid >= totalAmt ? 'Paid' : 'Partial / Credit'));
+      // Walk-in fallback: if no paid info and no explicit status, treat as Paid
+      const isWalkIn = !sale.customerId && sale.customerId !== 0;
+      const paid = (paidRaw === 0 && !sale.paymentStatus && isWalkIn) ? totalAmt : paidRaw;
+      let status = sale.paymentStatus || sale.payment_status || (
+        paid <= 0 ? 'Credit' : (paid >= totalAmt ? 'Paid' : 'Partial / Credit')
+      );
       const statusOk = statusFilter === 'all' || 
         status.toLowerCase().startsWith(String(statusFilter).toLowerCase());
       
@@ -222,10 +226,13 @@ export default function Reports() {
   // Build enriched sales transactions for table
   const salesTransactions = useMemo(()=> {
     return filteredSales.map(s => {
-      const paid = Number(s.amountPaid || s.amount_paid || 0);
       const totalAmt = Number(s.total || 0);
-      const status = s.paymentStatus || s.payment_status || 
-        (paid <= 0 ? 'Credit' : (paid >= totalAmt ? 'Paid' : 'Partial / Credit'));
+      const isWalkIn = !s.customerId && s.customerId !== 0;
+      const paidRaw = Number(s.amountPaid || s.amount_paid || 0);
+      const paid = (paidRaw === 0 && !s.paymentStatus && isWalkIn) ? totalAmt : paidRaw;
+      const status = s.paymentStatus || s.payment_status || (
+        paid <= 0 ? 'Credit' : (paid >= totalAmt ? 'Paid' : 'Partial / Credit')
+      );
       const balance = Math.max(0, totalAmt - paid);
       const customerName = s.customerId ? 
         (s.customer?.name || customers.find(c=> c.id === s.customerId)?.name || 'Customer') : 'Walk-in';
