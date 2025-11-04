@@ -250,7 +250,6 @@ export default function Reports() {
         return sum;
       })();
       const paidRaw = Number(s.amountPaid || s.amount_paid || inferredPaid || 0);
-      const paid = (paidRaw === 0 && !s.paymentStatus && isWalkIn) ? totalAmt : paidRaw;
       
       // Use the paymentStatus from the sale object directly - it's what the user selected
       // Only fall back to calculation if paymentStatus is not set
@@ -260,8 +259,17 @@ export default function Reports() {
         if (isWalkIn) {
           status = 'Paid'; // Walk-in sales are always paid
         } else {
-          status = paid <= 0 ? 'Credit' : (paid >= totalAmt ? 'Paid' : 'Partial / Credit');
+          status = paidRaw <= 0 ? 'Credit' : (paidRaw >= totalAmt ? 'Paid' : 'Partial / Credit');
         }
+      }
+      
+      // If status is "Paid" but amountPaid is 0, set paid to total (fix for old sales)
+      // Also handle walk-in sales that should always be paid
+      let paid = paidRaw;
+      if (status === 'Paid' && paidRaw === 0) {
+        paid = totalAmt; // If marked as Paid but amountPaid is 0, assume full payment
+      } else if (isWalkIn && paidRaw === 0 && !s.paymentStatus) {
+        paid = totalAmt; // Walk-in sales are always fully paid
       }
       
       const balance = Math.max(0, totalAmt - paid);
