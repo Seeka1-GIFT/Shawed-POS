@@ -54,6 +54,13 @@ export default function Products() {
   const fileInputRef = useRef(null);
   const [showHistoryFor, setShowHistoryFor] = useState(null);
   const supplierMap = useMemo(()=> Object.fromEntries(suppliers.map(s=> [s.id, s.name])), [suppliers]);
+  const getSupplierName = (p) => {
+    if (!p) return '';
+    if (typeof p.supplierName === 'string') return p.supplierName;
+    if (p.supplier && typeof p.supplier.name === 'string') return p.supplier.name;
+    if (p.supplierId && supplierMap[p.supplierId]) return supplierMap[p.supplierId];
+    return '';
+  };
   const addVariant = () => setForm(f=> ({ ...f, variants: [...(f.variants||[]), { unit: '', size: '', color: '', qtyPerUnit: '', barcode: '' }] }));
   const updateVariant = (i, key, val) => setForm(f=> ({ ...f, variants: f.variants.map((v,idx)=> idx===i ? { ...v, [key]: val } : v) }));
   const removeVariant = (i) => setForm(f=> ({ ...f, variants: f.variants.filter((_,idx)=> idx!==i) }));
@@ -676,7 +683,7 @@ export default function Products() {
                           <td className={`py-2 px-4 truncate whitespace-nowrap ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>{product.name}</td>
                           <td className={`py-2 px-4 truncate whitespace-nowrap ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>{product.category}</td>
                           <td className={`py-2 px-4 truncate whitespace-nowrap ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>{product.barcode}</td>
-                          <td className={`py-2 px-4 truncate whitespace-nowrap ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>{product.supplierName}</td>
+                          <td className={`py-2 px-4 truncate whitespace-nowrap ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>{getSupplierName(product)}</td>
                           <td className={`py-2 px-4 text-center ${product.quantity <= (product.lowStockThreshold || 5) ? 'text-red-500 font-semibold' : product.quantity <= 20 ? 'text-yellow-500' : 'text-green-500'}`}>
                             {product.quantity}
                           </td>
@@ -748,7 +755,7 @@ export default function Products() {
                               <span>Qty: <span className={`font-semibold ${product.quantity <= (product.lowStockThreshold || 5) ? 'text-red-500' : 'text-green-500'}`}>{product.quantity}</span></span>
                               <span>Sell: <span className="font-semibold">{`$${getSell(product).toFixed(2)}`}</span></span>
                             </div>
-                            <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Supplier: {product.supplierName}</div>
+                            <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Supplier: {getSupplierName(product) || '-'}</div>
                           </div>
                         </div>
                       </div>
