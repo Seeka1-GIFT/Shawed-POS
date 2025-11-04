@@ -103,9 +103,14 @@ export default function Receipt({
   };
 
   const calculateTax = () => {
-    const taxRate = businessInfo.taxRate || 0;
-    const subtotal = calculateSubtotal();
-    return subtotal * (taxRate / 100);
+    // Apply fee as tax ONLY for merchant payments; otherwise 0
+    const paymentMethod = sale?.paymentMethod;
+    if (paymentMethod === 'merchant') {
+      // Use explicit fee if provided
+      const fee = Number(sale?.fee || 0);
+      return isNaN(fee) ? 0 : fee;
+    }
+    return 0;
   };
 
   const calculateGrandTotal = () => {
@@ -351,7 +356,18 @@ export default function Receipt({
               </div>
               <div className="flex justify-between text-sm mb-2">
                 <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Payment Method:</span>
-                <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{sale?.paymentMethod || 'Unknown'}</span>
+                <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+                  {(() => {
+                    const method = sale?.paymentMethod || '';
+                    const labels = {
+                      merchant: 'Merchant',
+                      evc_plus: 'Evc‑Plus',
+                      e_dahab: 'E‑Dahab',
+                      bank_transfer: 'Bank Transfer'
+                    };
+                    return labels[method] || method || 'Unknown';
+                  })()}
+                </span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Customer:</span>
@@ -395,10 +411,14 @@ export default function Receipt({
                 <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Subtotal:</span>
                 <span className={`${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>${subtotal.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between text-sm mb-2">
-                <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Tax ({businessInfo.taxRate || 0}%):</span>
-                <span className={`${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>${tax.toFixed(2)}</span>
-              </div>
+              {tax > 0 && (
+                <div className="flex justify-between text-sm mb-2">
+                  <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    {`Tax (${((tax / Math.max(subtotal, 1)) * 100).toFixed(1)}%)`}
+                  </span>
+                  <span className={`${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>${tax.toFixed(2)}</span>
+                </div>
+              )}
               {(sale?.discount || 0) > 0 && (
                 <div className="flex justify-between text-sm mb-2 text-red-500">
                   <span>Discount:</span>
