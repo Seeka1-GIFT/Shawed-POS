@@ -25,33 +25,33 @@ export default function PaymentGateway({
 
   const paymentMethods = [
     {
-      id: 'Merchent',
-      name: 'Merchent',
+      id: 'cash',
+      name: 'MARCHENT',
       icon: Banknote,
-      description: 'Pay with Merchent',
+      description: 'Pay with cash',
       color: 'text-green-600',
       bgColor: 'bg-green-50 dark:bg-green-900',
-      fee: 5%,
+      fee: 0, // 0% fee
       available: true
     },
     {
-      id: 'Evc-Plus',
-      name: 'Evc-Plus',
+      id: 'mpesa',
+      name: 'M-Pesa',
       icon: Smartphone,
-      description: 'Pay with Evc-Plus',
+      description: 'Mobile Money Payment',
       color: 'text-yellow-600',
       bgColor: 'bg-yellow-50 dark:bg-yellow-900',
-      fee: 0, // 2% fee
+      fee: 0.02, // 2% fee
       available: true
     },
     {
-      id: 'E-Dahab',
-      name: 'E-Dahab',
+      id: 'stripe',
+      name: 'Credit Card',
       icon: CreditCard,
-      description: 'Pay with E-Dahab',
+      description: 'Visa, Mastercard, American Express',
       color: 'text-blue-600',
       bgColor: 'bg-blue-50 dark:bg-blue-900',
-      fee: 0, // 2.9% fee
+      fee: 0.029, // 2.9% fee
       available: true
     },
     {
@@ -61,7 +61,7 @@ export default function PaymentGateway({
       description: 'Direct bank transfer',
       color: 'text-purple-600',
       bgColor: 'bg-purple-50 dark:bg-purple-900',
-      fee: 0, // 1.5% fee
+      fee: 0.015, // 1.5% fee
       available: true
     }
   ];
