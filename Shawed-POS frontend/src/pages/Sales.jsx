@@ -1,6 +1,7 @@
 import React, { useContext, useState, useMemo } from 'react';
 import { RealDataContext } from '../context/RealDataContext';
 import { ThemeContext } from '../context/ThemeContext';
+import { Link } from 'react-router-dom';
 import Receipt from '../components/Receipt';
 import BarcodeScanner from '../components/BarcodeScanner';
 import PaymentGateway from '../components/PaymentGateway';
@@ -15,7 +16,7 @@ import { motion } from 'framer-motion';
  * including subtotal, discount and total are derived on the fly.
  */
 export default function Sales() {
-  const { products, customers, addSale, updateProduct } = useContext(RealDataContext);
+  const { products, customers, sales = [], addSale, updateProduct } = useContext(RealDataContext);
   const { isDarkMode } = useContext(ThemeContext);
   const [query, setQuery] = useState('');
   const [cart, setCart] = useState([]);
@@ -516,8 +517,60 @@ export default function Sales() {
           </div>
         </div>
       </div>
+
+      {/* Recent Sales Transactions */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-800">Recent Sales</h3>
+          <Link to="/reports" className="text-sm text-blue-600 hover:text-blue-700">View All</Link>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-200">
+                <th className="text-left py-2 px-3 text-gray-700">Date</th>
+                <th className="text-left py-2 px-3 text-gray-700">Sale ID</th>
+                <th className="text-left py-2 px-3 text-gray-700">Customer</th>
+                <th className="text-left py-2 px-3 text-gray-700">Method</th>
+                <th className="text-right py-2 px-3 text-gray-700">Total</th>
+                <th className="text-right py-2 px-3 text-gray-700">Paid</th>
+                <th className="text-right py-2 px-3 text-gray-700">Balance</th>
+                <th className="text-left py-2 px-3 text-gray-700">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(
+                [...(sales||[])]
+                  .sort((a,b)=> new Date(b.saleDate || b.createdAt || b.date) - new Date(a.saleDate || a.createdAt || a.date))
+                  .slice(0,10)
+              ).map((s)=>{
+                const totalAmt = Number(s.total || 0);
+                const paidVal = Number(s.amountPaid || s.amount_paid || 0);
+                const status = s.paymentStatus || s.payment_status || (paidVal <= 0 ? 'Credit' : (paidVal >= totalAmt ? 'Paid' : 'Partial / Credit'));
+                const balanceRow = Math.max(0, totalAmt - paidVal);
+                const customerName = s.customerId ? (customers.find(c=> c.id===s.customerId)?.name || 'Customer') : 'Walk-in';
+                return (
+                  <tr key={s.id} className="border-b border-gray-100 hover:bg-gray-50">
+                    <td className="py-2 px-3 text-gray-900">{new Date(s.saleDate || s.createdAt || s.date).toLocaleDateString()}</td>
+                    <td className="py-2 px-3 text-gray-700">#{String(s.id || '').slice(-6)}</td>
+                    <td className="py-2 px-3 text-gray-700">{customerName}</td>
+                    <td className="py-2 px-3 text-gray-700">{s.paymentMethod || '-'}</td>
+                    <td className="py-2 px-3 text-right text-gray-900">${totalAmt.toFixed(2)}</td>
+                    <td className="py-2 px-3 text-right text-gray-900">${paidVal.toFixed(2)}</td>
+                    <td className="py-2 px-3 text-right text-gray-900">${balanceRow.toFixed(2)}</td>
+                    <td className={`py-2 px-3 ${status==='Paid' ? 'text-green-600' : (status.includes('Partial') ? 'text-yellow-600' : 'text-red-600')}`}>{status}</td>
+                  </tr>
+                );
+              })}
+              {(sales||[]).length === 0 && (
+                <tr><td colSpan="8" className="text-center py-4 text-gray-600">No sales yet</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
-    
+
     {/* Receipt Modal */}
     <Receipt 
       sale={lastSale}
